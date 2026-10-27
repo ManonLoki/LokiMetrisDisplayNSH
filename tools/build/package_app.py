@@ -42,6 +42,12 @@ def android_signing(directory=None):
     return ['--keystore', store, '--key-alias', values['keyAlias']], env
 
 
+def android_identity():
+    """Android follows the release version and build in nsh.json; the build is its versionCode."""
+    app = json.loads((ROOT / 'nsh.json').read_text())
+    return {'bundleId': ANDROID_ID, 'version': app['version'], 'build': app['build']}
+
+
 def apple_identity():
     path = ROOT / 'signing/apple/identity.json'
     return json.loads(path.read_text()) if path.is_file() else {'bundleId': APPLE_ID, 'version': '1.0.11', 'build': 20}
@@ -175,7 +181,7 @@ def build_widget_support(env, *, simulator, sdk_path, developer, deployment, log
 
 def mobile_command(cli, target, stage, *, ios_device=False, application_id=None):
     sdk_target = 'ios' if ios_device else 'ios-simulator'
-    identity = apple_identity() if target == 'ios' else {'bundleId': ANDROID_ID, 'version': '1.0.8', 'build': 10}
+    identity = apple_identity() if target == 'ios' else android_identity()
     return [cli, 'package', '--target', 'android' if target == 'android' else sdk_target,
             '--id', application_id or identity['bundleId'], '--app-version', identity['version'],
             '--build', str(identity['build']), '--out', stage]
