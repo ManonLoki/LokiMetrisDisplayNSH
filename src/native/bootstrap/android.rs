@@ -19,8 +19,10 @@ fn files_dir(env: &mut JNIEnv<'_>, context: &JObject<'_>) -> Result<PathBuf> {
     let directory = env
         .call_method(context, "getFilesDir", "()Ljava/io/File;", &[])?
         .l()?;
+    // Android's app mount namespace can expose /data/user/0 as a symlink.
+    // Resolve only this OS-owned root before adding any cache file paths.
     let path = env
-        .call_method(directory, "getAbsolutePath", "()Ljava/lang/String;", &[])?
+        .call_method(directory, "getCanonicalPath", "()Ljava/lang/String;", &[])?
         .l()?;
     Ok(jni_support::text(env, path)?.into())
 }

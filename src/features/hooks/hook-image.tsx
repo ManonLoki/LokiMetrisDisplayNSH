@@ -17,7 +17,7 @@ export function HookImageViewport(props: { hook: Accessor<HookItem>; connected: 
       src={source()!} resizeMode="contain" style={{ width: "100%", height: "100%" }}
       accessibilityLabel={`${agentDisplayName(props.hook().agent)} 的 Hook 图片`}
       onLoad={(size) => props.onImageLoad?.(props.hook().image ?? source()!, size)}
-      onError={() => failedSource.set(source())} /> : <Text style={{ color: color.muted, fontSize: 12, lineHeight: 16, padding: 6, textAlign: "center" }}>
+      onError={(error) => { console.warn(`Hook image ${props.hook().image ?? props.hook().slot}: ${error.message}`); failedSource.set(source()); }} /> : <Text style={{ color: color.muted, fontSize: 12, lineHeight: 16, padding: 6, textAlign: "center" }}>
         {source() && failedSource() === source() ? "图片无法读取" : props.hook().image == null ? "暂无图片" : props.connected() ? "图片尚未缓存" : "图片不在本地缓存中"}
       </Text> : null}
   </View>;

@@ -84,7 +84,7 @@ fn regular_path(path: &Path) -> Result<fs::Metadata, String> {
         checked.push(component.as_os_str());
         let metadata = fs::symlink_metadata(&checked).map_err(|_| "图片文件不可读取")?;
         if metadata.file_type().is_symlink() {
-            return Err("图片路径不能使用符号链接".into());
+            return Err(format!("图片路径不能使用符号链接: {}", checked.display()));
         }
         #[cfg(windows)]
         {
