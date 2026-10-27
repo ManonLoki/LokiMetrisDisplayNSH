@@ -1,6 +1,6 @@
 import { Storage } from "nsh";
 import type { LinkPort } from "../../../app/application";
-import { emptyView, type PairingRecord, type ViewState } from "../../../features/connection";
+import { emptyView, type PairingRecord } from "../../../features/connection";
 import { parseSnapshot, validDeviceId } from "../../../features/connection";
 import type { Snapshot } from "../../../shared/contracts/snapshot";
 import { acceptHandshake, acceptSnapshot, expirePairing, forgetDesktop, hostsFrom, selectDesktop } from "./view-fixture";

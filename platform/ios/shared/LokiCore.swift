@@ -68,28 +68,15 @@ enum JSONValue: Codable, Equatable {
 
 /// Rust `view::project` 的结果：所有文字、排序、筛选与阈值已决定，界面只按字段绘制。
 struct DisplayView: Codable, Equatable {
-    struct Hook: Codable, Equatable {
-        let name: String
-        let slot: Int
-        let behavior: String
-        let label: String
-        let image: String?
-        let accessibilityLabel: String
-        let imagePlaceholder: String
-    }
     struct Amount: Codable, Equatable {
         let text: String
         let compact: String
-        let compactWide: String
         let exact: String?
-        let quality: String
         let accessibilityLabel: String
     }
     struct Tokens: Codable, Equatable {
         let date: String
-        let zone: String
         let total: Amount
-        let dayDescription: String
         let dateAccessibility: String
     }
     struct Window: Codable, Equatable {
@@ -105,15 +92,12 @@ struct DisplayView: Codable, Equatable {
         let provider: String
         let name: String
         let plan: String?
-        let displayName: String
         let windows: [Window]
         let description: String
-        let widgetDescription: String
     }
     struct Quota: Codable, Equatable {
         let observedAtUnix: Int64
         let providers: [Provider]
-        let description: String
         var observedDate: Date { Date(timeIntervalSince1970: TimeInterval(observedAtUnix)) }
     }
     struct AgentRow: Codable, Equatable, Identifiable {
@@ -123,24 +107,15 @@ struct DisplayView: Codable, Equatable {
         let text: String
         let compact: String
         let exact: String?
-        let quality: String
         let accessibilityLabel: String
     }
-    let hooksAvailable: Bool
-    let hookCount: Int
     let hookCountText: String
     let hooksText: String
     let hooksSummary: String
-    let hooksDescription: String
-    let hooksWidgetFallback: String
-    let hookPlaceholder: String
     let hookLead: String?
-    let hooks: [Hook]
     let tokens: Tokens?
     let tokenFallback: String
     let tokenAccessibilityLabel: String
-    let tokenState: String
-    let tokenMessage: String
     let quota: Quota?
     let agents: [AgentRow]
     let agentsEmptyText: String
@@ -150,9 +125,6 @@ struct DisplayView: Codable, Equatable {
         let widgetEmptyCircular: String
         let widgetEmptyTitle: String
         let widgetEmptyHelp: String
-        let watchWaitingTitle: String
-        let watchQuotaWaitingTitle: String
-        let watchWaitingHelp: String
         let appleSyncText: String
         let appleSyncDescription: String
         let appleCompactSyncText: String
@@ -179,23 +151,15 @@ struct DisplayView: Codable, Equatable {
             "visibleAgents": visibleAgents as Any? ?? NSNull()]) else { throw LokiCore.Failure(description: "展示描述无效") }
         return labels
     }
-
-    /// 摘要快照或手机转发的完整快照都可投影。
-    static func project<T: Encodable>(_ snapshot: T) throws -> Self {
-        guard let view = try LokiCore.decode(Self.self, ["op": "view.project", "snapshot": try LokiCore.object(snapshot)]) else {
-            throw LokiCore.Failure(description: "展示投影无效")
-        }
-        return view
-    }
 }
 
-/// App、组件与 Watch 共用的毫秒时间戳换算。
+/// App 与组件共用的毫秒时间戳换算。
 extension Date {
     init(epochMs: Int64) { self.init(timeIntervalSince1970: Double(epochMs) / 1000) }
     var epochMs: Int64 { Int64(timeIntervalSince1970 * 1000) }
 }
 
-/// 组件与 Watch 共用的中文同步时间格式；静态保存，避免视图每次渲染重建 Locale。
+/// 组件的中文同步时间格式；静态保存，避免视图每次渲染重建 Locale。
 enum SyncTimeFormat {
     static let locale = Locale(identifier: "zh_CN")
     /// 读屏使用的完整年月日时分。

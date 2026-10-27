@@ -13,16 +13,19 @@ fn view_formats_totals_quota_hooks_and_rows() {
         view["tokens"]["total"]["exact"],
         "18,446,744,073,709,551,615"
     );
-    assert_eq!(view["tokens"]["total"]["quality"], "部分·估算");
-    assert_eq!(view["tokens"]["total"]["compactWide"], "18.45E");
     assert_eq!(
-        view["behaviorCounts"][0],
-        json!({"behavior": "running", "label": "运行", "count": 1, "text": "运行 1"})
+        view["tokens"]["total"]["accessibilityLabel"],
+        "总 Token，18446744073709551615，部分·估算"
     );
     assert_eq!(view["hooksText"], "Hooks 1");
-    assert_eq!(view["hooks"][0]["label"], "运行");
+    assert_eq!(view["hookCountText"], "1");
     let provider = &view["quota"]["providers"][0];
-    assert_eq!(provider["displayName"], "Codex，套餐 Plus");
+    assert!(
+        provider["description"]
+            .as_str()
+            .unwrap()
+            .starts_with("Codex，套餐 Plus，")
+    );
     assert_eq!(provider["windows"][0]["percent"], "75%");
     assert_eq!(provider["windows"][0]["level"], 2);
     // 旧桌面没有启用名单：不新增 Cursor 占位。
@@ -41,7 +44,7 @@ fn enabled_list_filters_quota_and_adds_cursor_default() {
     assert_eq!(
         view["agents"],
         json!([{"id": "default:cursor", "name": "Cursor", "plan": null,
-        "text": "0", "compact": "0", "exact": null, "quality": "", "accessibilityLabel": "Cursor，0"}])
+        "text": "0", "compact": "0", "exact": null, "accessibilityLabel": "Cursor，0"}])
     );
 }
 
@@ -54,6 +57,8 @@ fn missing_data_uses_disclosed_placeholders() {
     assert_eq!(view["tokenFallback"], "不可用");
     assert_eq!(view["agentsEmptyText"], "暂不可用");
     assert_eq!(view["hooksText"], "Hooks 未同步");
+    assert_eq!(view["hookCountText"], "—");
+    assert!(view["hookLead"].is_null());
 }
 
 #[test]

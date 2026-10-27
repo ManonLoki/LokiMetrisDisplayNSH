@@ -1,5 +1,5 @@
-//! 系统扩展的展示投影：所有文字、排序、筛选与阈值都在这里决定，
-//! SwiftUI、Watch 与 Android RemoteViews 只按字段绘制，日期按本机区域格式化。
+//! WidgetKit 的展示投影：所有文字、排序、筛选与阈值都在这里决定，
+//! SwiftUI 只按字段绘制，日期按本机区域格式化。
 use crate::{
     agents::agent_display_name,
     usage::{agents, formatting, quota},
@@ -14,37 +14,20 @@ pub fn describe(request: &Value) -> Value {
     text::describe(request)
 }
 
-/// 输入为已校验的摘要快照，或手机转发给手表的完整快照（Hook 可带图片摘要）。
+/// 输入为已校验的摘要快照；只输出 WidgetKit 界面与 [`describe`] 实际读取的字段。
 pub fn project(snapshot: &Value) -> Value {
     let enabled = enabled(snapshot);
     let tokens = &snapshot["tokens"];
     let token_error = !snapshot["tokenError"].is_null();
-    let mut hooks: Vec<_> = snapshot["hooks"].as_array().into_iter().flatten().collect();
-    hooks.sort_by_key(|hook| hook["slot"].as_u64());
-    let hooks: Vec<_> = hooks
-        .into_iter()
-        .map(|hook| {
-            let agent = hook["agent"].as_str().unwrap_or_default();
-            let name = agent_display_name(agent);
-            let label = behavior_label(hook["behavior"].as_str());
-            json!({
-                "agent": agent, "name": name, "slot": hook["slot"],
-                "behavior": hook["behavior"], "label": label,
-                "accessibilityLabel": format!("{name}，{label}"),
-                "imagePlaceholder": if hook["image"].is_null() { "暂无图片" } else { "图片未缓存" },
-                "image": hook["image"],
-            })
-        })
-        .collect();
     let available = snapshot["hooksAvailable"] == true;
-    let counts: Vec<_> = ["running", "asking", "error", "idle"]
+    let hooks = snapshot["hooks"].as_array().map_or(&[][..], Vec::as_slice);
+    let lead = hooks
         .iter()
-        .map(|state| {
-            let count = hooks.iter().filter(|hook| hook["behavior"] == *state).count();
-            let label = behavior_label(Some(state));
-            json!({ "behavior": state, "label": label, "count": count, "text": format!("{label} {count}") })
-        })
-        .collect();
+        .min_by_key(|hook| hook["slot"].as_u64())
+        .map(|hook| {
+            let name = agent_display_name(hook["agent"].as_str().unwrap_or_default());
+            format!("· {name} {}", behavior_label(hook["behavior"].as_str()))
+        });
     let providers: Vec<_> = snapshot["providerQuota"]["providers"]
         .as_array()
         .into_iter()
@@ -57,49 +40,26 @@ pub fn project(snapshot: &Value) -> Value {
         })
         .map(provider)
         .collect();
-    let hook_summary = if available {
-        format!("上次 Hooks {}", hooks.len())
-    } else {
-        "Hooks 未同步".into()
-    };
-    let hooks_description = counts
-        .iter()
-        .map(|item| item["text"].as_str().unwrap_or_default())
-        .collect::<Vec<_>>()
-        .join(" · ");
     let amount = (!tokens.is_null()).then(|| amount(&tokens["all"]));
-    let widget_token = text::widget_token(amount.as_ref(), true);
-    let quota_description = providers
-        .iter()
-        .map(|provider| provider["widgetDescription"].as_str().unwrap_or_default())
-        .collect::<Vec<_>>()
-        .join("；");
+    let fallback = if token_error {
+        "不可用"
+    } else {
+        "未同步"
+    };
     json!({
-        "hooksAvailable": available,
-        "hookCount": hooks.len(),
         "hookCountText": if available { hooks.len().to_string() } else { "—".into() },
         "hooksText": if available { format!("Hooks {}", hooks.len()) } else { "Hooks 未同步".into() },
-        "hooksSummary": hook_summary,
-        "hooksDescription": if available { hooks_description } else { "Hooks 暂不可用".into() },
-        "hooksWidgetFallback": "Hooks 暂不可用",
-        "hookPlaceholder": if available { "暂无活动" } else { "暂不可用" },
-        "hookLead": hooks.first().map(|hook| format!("· {} {}", text::string(&hook["name"]), text::string(&hook["label"]))),
-        "behaviorCounts": counts,
-        "hooks": hooks,
+        "hooksSummary": if available { format!("上次 Hooks {}", hooks.len()) } else { "Hooks 未同步".into() },
+        "hookLead": lead,
         "tokens": (!tokens.is_null()).then(|| json!({
-            "date": tokens["day"]["date"], "zone": tokens["day"]["zone"],
-            "startMs": tokens["day"]["startMs"], "endMs": tokens["day"]["endMs"],
-            "dayDescription": format!("桌面统计日期 {}，时区 {}", text::string(&tokens["day"]["date"]), text::string(&tokens["day"]["zone"])),
+            "date": tokens["day"]["date"],
             "dateAccessibility": format!("统计日期 {}，{}", text::string(&tokens["day"]["date"]), text::string(&tokens["day"]["zone"])),
             "total": amount,
         })),
-        "tokenFallback": if token_error { "不可用" } else { "未同步" },
-        "tokenAccessibilityLabel": format!("总 Token，{}", amount.as_ref().map_or(if token_error { "不可用" } else { "未同步" }, |value| text::string(&value["text"]))),
-        "tokenState": if !tokens.is_null() { "available" } else if token_error { "unavailable" } else { "pending" },
-        "tokenMessage": if token_error { "Token 暂不可用" } else { "Token 尚未同步" },
-        "widgetToken": widget_token,
+        "tokenFallback": fallback,
+        "tokenAccessibilityLabel": format!("总 Token，{}", amount.as_ref().map_or(fallback, |value| text::string(&value["text"]))),
         "quota": (!providers.is_empty()).then(|| json!({
-            "observedAtUnix": snapshot["providerQuota"]["observedAtUnix"], "providers": providers, "description": quota_description,
+            "observedAtUnix": snapshot["providerQuota"]["observedAtUnix"], "providers": providers,
         })),
         "agents": agent_rows(snapshot, enabled.as_deref()),
         "agentsEmptyText": if !tokens.is_null() { "无分项记录" } else if token_error { "暂不可用" } else { "尚未同步" },
@@ -131,9 +91,7 @@ fn amount(value: &Value) -> Value {
     let quality = formatting::amount_quality(value);
     json!({
         "text": text, "compact": formatting::token_compact(&text),
-        "compactWide": formatting::token_compact_wide(&text),
         "exact": numeric.then(|| formatting::token_exact(&text)),
-        "quality": quality,
         "accessibilityLabel": text::qualified(&format!("总 Token，{text}"), &quality),
     })
 }
@@ -159,7 +117,7 @@ fn provider(value: &Value) -> Value {
     let display_name = plan
         .as_ref()
         .map_or(name.to_owned(), |plan| format!("{name}，套餐 {plan}"));
-    let mut description = vec![display_name.clone()];
+    let mut description = vec![display_name];
     description.extend(windows.iter().map(|window| {
         format!(
             "{}剩余 {}",
@@ -167,22 +125,9 @@ fn provider(value: &Value) -> Value {
             text::string(&window["percent"])
         )
     }));
-    let widget_description = windows
-        .iter()
-        .map(|window| {
-            format!(
-                "{display_name} {}额度剩余 {}",
-                text::string(&window["label"]),
-                text::string(&window["percent"])
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("；");
     json!({
         "provider": value["provider"], "name": name, "plan": plan,
-        "displayName": display_name,
-        "description": description.join("，"), "widgetDescription": widget_description,
-        "windows": windows,
+        "description": description.join("，"), "windows": windows,
     })
 }
 
@@ -222,7 +167,6 @@ fn agent_rows(snapshot: &Value, enabled: Option<&[String]>) -> Vec<Value> {
                 "name": name, "plan": quota::plan_label(provider.and_then(|value| value["plan"].as_str())),
                 "text": text, "compact": formatting::token_compact(&text),
                 "exact": numeric.then(|| formatting::token_exact(&text)),
-                "quality": quality,
                 "accessibilityLabel": text::qualified(&format!("{name}，{text}"), &quality),
             })
         })

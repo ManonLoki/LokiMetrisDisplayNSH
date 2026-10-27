@@ -1,22 +1,5 @@
 import Foundation
 
-/// 已认证桌面授予的独立只读摘要凭据。字段只在 Swift 中搬运，校验与代次规则在 Rust。
-struct WidgetRefreshTarget: Codable, Equatable {
-    let version: Int
-    let sourceId: String
-    let deviceId: String
-    let host: String
-    let port: Int
-    let key: String
-    let generation: String
-
-    func validate() throws {
-        guard try LokiCore.call(["op": "target.valid", "target": LokiCore.object(self)]) as? Bool == true else {
-            throw WidgetSnapshotError.invalid
-        }
-    }
-}
-
 /// 摘要刷新：Rust 生成固定地址与加密请求体、校验并解密响应；这里只执行一次 POST。
 enum WidgetRefresh {
     enum Outcome: String { case success, newerCache, superseded, live, missingTarget, error }
@@ -41,18 +24,6 @@ enum WidgetRefresh {
                 }
             } catch { return .error }
         } onCancel: { gate.cancel() }
-    }
-
-    /// 不经共享目录的单次读取（watchOS 自有缓存）；返回 Rust 摘要记录。
-    static func fetch(_ target: WidgetRefreshTarget) async throws -> [String: Any] {
-        let targetObject = try LokiCore.object(target)
-        guard let request = try LokiCore.call(["op": "widget.request", "target": targetObject,
-            "nowMs": Date().epochMs]) as? [String: Any] else { throw WidgetSnapshotError.invalid }
-        let response = try await post(request)
-        guard let record = try LokiCore.call(["op": "widget.response", "target": targetObject, "request": request,
-            "status": response.status, "mediaType": response.mediaType ?? NSNull(), "body": response.body]) as? [String: Any]
-        else { throw WidgetSnapshotError.invalid }
-        return record
     }
 
     private struct Response { let status: Int; let mediaType: String?; let body: String }

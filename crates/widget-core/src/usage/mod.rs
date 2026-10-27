@@ -8,10 +8,6 @@ pub mod formatting {
         env!("CARGO_MANIFEST_DIR"),
         "/../../src/features/usage/formatting.rs"
     ));
-    /// Widget accessory layouts can use the full compact unit range.
-    pub fn token_compact_wide(raw: &str) -> String {
-        token_compact_to(raw, 5)
-    }
     /// Short disclosure used where the full accessibility label does not fit.
     pub fn amount_quality(amount: &Value) -> String {
         let completeness = match amount["completeness"].as_str() {

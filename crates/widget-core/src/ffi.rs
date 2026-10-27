@@ -1,6 +1,7 @@
-//! 系统扩展唯一入口：一个 JSON 请求换一个 JSON 结果。Swift 经 C ABI、Android 经
-//! 宿主 JNI 调用 [`call`]；原生层只做网络传输、文件目录定位与绘制。
-use crate::{snapshot, store::Store, summary, view, widget_http};
+//! WidgetKit 与主 App 后台任务的唯一 Swift 入口：一个 JSON 请求换一个 JSON 结果。
+//! Swift 经 C ABI 调用 [`call`]，只做网络传输、文件目录定位与绘制；主 App 的
+//! 连接 owner 直接使用 Rust API，不经过这里。
+use crate::{store::Store, summary, view, widget_http};
 use serde_json::{Value, json};
 use std::ffi::{CStr, CString, c_char};
 
@@ -21,72 +22,15 @@ fn dispatch(request: &Value) -> Result<Value, String> {
     let number = |key: &str| request[key].as_i64().ok_or_else(|| format!("缺少 {key}"));
     let store = || text("dir").map(Store::new);
     match text("op")? {
-        "view.project" => Ok(view::project(&request["snapshot"])),
         "view.describe" => Ok(view::describe(request)),
-        // 完整快照（含正文与图片摘要）的结构校验，与网络入口同一规则。
-        "snapshot.valid" => Ok(Value::Bool(
-            snapshot::project_snapshot(&request["snapshot"], &Value::Null).is_some(),
-        )),
-        "target.make" => Ok(widget_http::target(
-            text("sourceId")?,
-            text("deviceId")?,
-            text("host")?,
-            request["port"].as_u64().unwrap_or(0),
-            text("key")?,
-        )
-        .unwrap_or(Value::Null)),
-        "store.target" => Ok(store()?.load_target()?.unwrap_or(Value::Null)),
-        "target.valid" => Ok(Value::Bool(widget_http::valid_target(&request["target"]))),
-        "target.same" => Ok(Value::Bool(widget_http::same_connection(
-            &request["left"],
-            &request["right"],
-        ))),
-        // 不经共享存储的单次请求（watchOS 自有缓存）。
-        "widget.request" => {
-            Ok(widget_http::request(&request["target"], number("nowMs")?).unwrap_or(Value::Null))
-        }
-        "widget.response" => widget_http::response(
-            &request["target"],
-            &request["request"],
-            request["status"].as_u64().unwrap_or(0),
-            request["mediaType"].as_str(),
-            text("body")?.as_bytes(),
-        ),
-        "summary.fromMessage" => Ok(summary::from_message(
-            &request["message"],
-            text("sourceId")?,
-            number("receivedAtMs")?,
-        )
-        .unwrap_or(Value::Null)),
-        "widget.target" => Ok(widget_http::target_from_message(
-            &request["message"],
-            text("sourceId")?,
-            text("deviceId")?,
-            text("peer")?,
-        )
-        .unwrap_or(Value::Null)),
         "store.load" => {
             let now = number("nowMs")?;
             Ok(store()?.load_cached(now)?.map_or(Value::Null, |record| {
                 json!({
-                    "sourceId": record["sourceId"], "receivedAtMs": record["receivedAtMs"],
-                    "live": summary::is_live(&record, now), "view": view::project(&record["snapshot"]),
-                    "record": record,
+                    "receivedAtMs": record["receivedAtMs"], "view": view::project(&record["snapshot"]),
                 })
             }))
         }
-        "store.saveAuthenticated" => {
-            let target = Some(&request["target"]).filter(|value| !value.is_null());
-            store()?
-                .save_authenticated(&request["summary"], target)
-                .map(Value::Bool)
-        }
-        "store.renew" => store()?
-            .renew(text("sourceId")?, number("nowMs")?)
-            .map(Value::Bool),
-        "store.select" => store()?.select(text("sourceId")?).map(|_| Value::Null),
-        "store.forget" => store()?.forget(text("sourceId")?).map(|_| Value::Null),
-        "store.clear" => store()?.clear().map(|_| Value::Null),
         // 租约内的摘要无需重复请求；无凭据时返回空，调用方据此记录未授权。
         "widget.begin" => {
             let store = store()?;
@@ -129,7 +73,7 @@ fn dispatch(request: &Value) -> Result<Value, String> {
             Ok(json!({ "saved": saved, "newerCache": newer,
                 "outcome": if saved { "success" } else if newer { "newerCache" } else { "superseded" } }))
         }
-        "platform.refresh.limits" => Ok(json!({"interval":900,"backgroundBudget":12})),
+        "platform.refresh.limits" => Ok(json!({"interval":900})),
         "platform.refresh.diagnosticOrigin" => {
             let value = request["value"].as_str().unwrap_or_default();
             Ok(json!(if (1..=48).contains(&value.len())

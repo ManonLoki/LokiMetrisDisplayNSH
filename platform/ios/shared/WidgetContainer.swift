@@ -34,17 +34,6 @@ enum WidgetContainer {
         return try? LokiCore.decode(Entry.self, ["op": "store.load", "dir": directory.path, "nowMs": now])
     }
 
-    /// 原始摘要记录（手机转给手表时补图合并用）。
-    static func record(atMs now: Int64 = Date().epochMs) throws -> [String: Any]? {
-        let loaded = try LokiCore.call(["op": "store.load", "dir": directory().path, "nowMs": now])
-        return (loaded as? [String: Any])?["record"] as? [String: Any]
-    }
-
-    /// 已认证桌面授予的独立读取凭据；未授权时为 nil。
-    static func target() throws -> WidgetRefreshTarget? {
-        try LokiCore.decode(WidgetRefreshTarget.self, ["op": "store.target", "dir": directory().path])
-    }
-
     /// 每个真实执行入口留下有界结果，区分未调度、未授权和实际网络失败。
     /// 诊断写入失败不影响刷新，也不改变缓存中的真实接收时间。
     static func refresh(origin: String) async -> Bool {

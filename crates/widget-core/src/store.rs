@@ -1,14 +1,11 @@
 //! App 与系统扩展共享的最近摘要和独立读取凭据。跨进程文件锁让撤销、续租与在途
 //! HTTP 结果按顺序提交：迟到的结果不能覆盖更新的认证摘要，也不能恢复已撤销的来源。
 use crate::{summary, widget_http};
-use base64::{Engine, engine::general_purpose::STANDARD};
 use serde_json::Value;
-use serde_json::json;
 use std::{
     fs::{self, File, OpenOptions},
     io::{ErrorKind, Read},
     path::{Path, PathBuf},
-    sync::OnceLock,
     thread,
     time::{Duration, Instant},
 };
@@ -23,20 +20,6 @@ const LEGACY: [&str; 4] = [
     "display-widget-refresh-v1.json",
     "display-widget.lock",
 ];
-
-/// 平台密钥库对读取凭据的静态加密（Android Keystore 包裹的密钥）；未设置时按明文写入
-/// 应用私有或 App Group 目录。
-pub trait Sealer: Send + Sync {
-    fn seal(&self, plain: &[u8]) -> Option<Vec<u8>>;
-    fn open(&self, sealed: &[u8]) -> Option<Vec<u8>>;
-}
-
-static SEALER: OnceLock<Box<dyn Sealer>> = OnceLock::new();
-
-/// 进程内设置一次；之后写入的凭据都被加密，读取时拒绝明文。
-pub fn set_sealer(sealer: Box<dyn Sealer>) {
-    let _ = SEALER.set(sealer);
-}
 
 pub struct Store {
     directory: PathBuf,
@@ -203,26 +186,11 @@ impl Store {
     }
 
     fn read_target(&self) -> Option<Value> {
-        let stored = self.read(TARGET, 4_096)?;
-        let value = match SEALER.get() {
-            Some(sealer) => {
-                let sealed = STANDARD.decode(stored["sealed"].as_str()?).ok()?;
-                serde_json::from_slice(&sealer.open(&sealed)?).ok()?
-            }
-            None => stored,
-        };
-        Some(value).filter(widget_http::valid_target)
+        self.read(TARGET, 4_096).filter(widget_http::valid_target)
     }
 
     fn write_target(&self, value: &Value) -> Result<(), String> {
-        match SEALER.get() {
-            Some(sealer) => {
-                let plain = serde_json::to_vec(value).map_err(|error| error.to_string())?;
-                let sealed = sealer.seal(&plain).ok_or("读取凭据加密失败")?;
-                self.write(TARGET, &json!({ "sealed": STANDARD.encode(sealed) }))
-            }
-            None => self.write(TARGET, value),
-        }
+        self.write(TARGET, value)
     }
 
     fn path(&self, name: &str) -> PathBuf {
