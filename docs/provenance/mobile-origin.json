@@ -1,0 +1,1570 @@
+{
+  "source": "/Users/manonloki/Documents/study/kmp/LokiMetrisDisplay",
+  "sourceCommit": "3d4172b0bd3938bd857899102fb02865052181f3",
+  "sourceBranch": "main",
+  "sourceStatusPorcelain": "",
+  "copiedTrackedFiles": [
+    {
+      "path": ".gitattributes",
+      "sha256": "a869c36df5afcbf87cfdc1428452c6a698c86843750e3a1f29518bfdb872b960"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "4068ae1fa0a5a32a3163a8937ecbcbd404b73bb59d23140d893740b1269c8413"
+    },
+    {
+      "path": "README.md",
+      "sha256": "0b9b6f6879d46a032bdd05ebb2ce9bd34fcd6334641386be93f2a6a2805bd4d8"
+    },
+    {
+      "path": "androidApp/build.gradle.kts",
+      "sha256": "34776d6063f3adf156e444a24afff63a0e7f7a17a21ddba7186c7695f1b8e95a"
+    },
+    {
+      "path": "androidApp/src/main/AndroidManifest.xml",
+      "sha256": "2c082eea44b98ec84fd27a4999b69116482edca703a5a0cd87e601b1a7db4eaf"
+    },
+    {
+      "path": "androidApp/src/main/c/loki_metris_jni.c",
+      "sha256": "e9c0c1eac9405e0ceae0d4cc9a7e1204a6154627c96e0b4f96452d71995ec5fc"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/MainActivity.kt",
+      "sha256": "4aaf72a1e206f87cca597745a62ddd735b97c2a387dcfe4e64bcf15a93086616"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/application/DisplayApplication.kt",
+      "sha256": "e56352d83f6ba0a321f4e49878c01ae04688b70ca8171512558c6c30d7561fa4"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/overlay/AndroidOverlayPages.kt",
+      "sha256": "1dbe85e8ed951c49908ca240b4ecf3518143c2ac112ece1cd0467d7fddae6a2b"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/overlay/AndroidOverlayWindow.kt",
+      "sha256": "c47808f529abcf5025d2679b24fbae867673a46c5471097cfd0ed3576f0d1668"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/service/AndroidDisplayService.kt",
+      "sha256": "e2fbeee23fd1e9b3c0a3237ad82cc04006a139152374b7c1a7431643f424937e"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/App.kt",
+      "sha256": "d68c703197a0b547c909b2359dcb3d801012b16b2d5b032e847bd9525b10ee1b"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/CyberMotion.kt",
+      "sha256": "7d9cb72c3b2d38c1e847edef11c0880b8e5bf2750145c4de5b49f40fa6514f2f"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/PanelPage.kt",
+      "sha256": "2c4edd915e8eec789db103268735496d3ebe45008380fc38b0b0eaa27ab7df12"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/SettingsPage.kt",
+      "sha256": "60fd00a4fd1ad151c86f7c539e4fa2c6bcae0a5c877993f55ad62ddcf3b02dc9"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/UsageCard.kt",
+      "sha256": "97eb3288a3714a9453ba43ddd35a967e57cd6f693f9e2fd1763f8698842df910"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/platform/AndroidBackgroundSettings.kt",
+      "sha256": "164a2fbb061a04280b8dd73d605841ceef9da41edf213fe8d7b051540e66f7f0"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/platform/AndroidCyberMotion.kt",
+      "sha256": "9853d62f5f0622789fc4dd91e5ed51273c21df9f1910537d3600cb2499766e3b"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/platform/AndroidHookImage.kt",
+      "sha256": "215a7b7f0a5bf3d897116b0ccd6d40d416304ba88720de0babfa46f4f7b859aa"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/platform/AndroidQuotaTimestamp.kt",
+      "sha256": "c2a699d33ee96bb3ead43a1fdccc9c23ceafdec2706a8186512298eb7f6e827b"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidRefreshScheduler.kt",
+      "sha256": "2a199774a59d2cb78f4e827f21c1cf7148cb2c0e07404e57d04eae2770706bb3"
+    },
+    {
+      "path": "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/MetrisWidgetProvider.kt",
+      "sha256": "5e61aa6463cb85a1a6b8a7df35bcfc27271c20b49929933faa3e181f46594f52"
+    },
+    {
+      "path": "androidApp/src/main/res/drawable-nodpi/ic_launcher_foreground.png",
+      "sha256": "cb1348b4b9e872c5b02a9cc96f06a1b71ef963bef399015e01a916e86e82746b"
+    },
+    {
+      "path": "androidApp/src/main/res/drawable/ic_launcher_background.xml",
+      "sha256": "8473b273a45f0ef74ffafd9d17abbcd8b6f6752422a439bebd1d0a8758b667de"
+    },
+    {
+      "path": "androidApp/src/main/res/drawable/ic_sync_notification.xml",
+      "sha256": "7bcbf46e2d33cc2dbed525ad1e7b6d64d5edd5d3c5ca423b0f2f2bf4bf149a34"
+    },
+    {
+      "path": "androidApp/src/main/res/drawable/metris_widget_background.xml",
+      "sha256": "96cf324b2028234dea7a08f95d4c1db51608e95bd9748d6fb540b498d587cd8c"
+    },
+    {
+      "path": "androidApp/src/main/res/drawable/metris_widget_preview.xml",
+      "sha256": "8835ea7660eddcdc996d33cf1b4cf656ac3095bc505a2ca78a59c7ebafa2fa48"
+    },
+    {
+      "path": "androidApp/src/main/res/drawable/metris_widget_refresh.xml",
+      "sha256": "09816d1cdaff54634e16d1d59107e417ec2a35e0065456eae1fbbd88fcf1c313"
+    },
+    {
+      "path": "androidApp/src/main/res/drawable/metris_widget_refresh_background.xml",
+      "sha256": "2b0936f1524455ac4fca5398bc25c7364e3010296dedc0d778cba05f46ea4c92"
+    },
+    {
+      "path": "androidApp/src/main/res/layout/metris_widget.xml",
+      "sha256": "e2a6f1170f48a73d386300bad8e469fa16df3acdc61d7fcfb515161e52bd4c9f"
+    },
+    {
+      "path": "androidApp/src/main/res/layout/metris_widget_compact.xml",
+      "sha256": "caa33e002b17347eb154c581cabad8ca87c6c6acc79c3f5abfee88ce26409052"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "sha256": "993b38e238eaf485eca875727e0a128293d612a52e20ea8e2ef84a15493bb06e"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "sha256": "993b38e238eaf485eca875727e0a128293d612a52e20ea8e2ef84a15493bb06e"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "sha256": "cb377f563f8151bdb572292c4f65b0c43ac6d68905c5e6e24dd1331c3dbbdeff"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-hdpi/ic_launcher_round.png",
+      "sha256": "cb377f563f8151bdb572292c4f65b0c43ac6d68905c5e6e24dd1331c3dbbdeff"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "sha256": "1794aed42ec89e098dc3edae58df44bf3f6788b3f6f7c3232f07f72de76a0971"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-mdpi/ic_launcher_round.png",
+      "sha256": "1794aed42ec89e098dc3edae58df44bf3f6788b3f6f7c3232f07f72de76a0971"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "sha256": "2dd4f4aafc9565372d4ffc32a29ad7272ca24ea304e6dcf2ce13a433e2e2d8de"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-xhdpi/ic_launcher_round.png",
+      "sha256": "2dd4f4aafc9565372d4ffc32a29ad7272ca24ea304e6dcf2ce13a433e2e2d8de"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "sha256": "62e7bead89bf671a8d1ce08ec5cd928dcf9bde3629c36a3c6c891b790a466105"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-xxhdpi/ic_launcher_round.png",
+      "sha256": "62e7bead89bf671a8d1ce08ec5cd928dcf9bde3629c36a3c6c891b790a466105"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "sha256": "ba9d87953fafd0656e6c16344ab1b17702cdd282a75532a67db73f4eee6daf2d"
+    },
+    {
+      "path": "androidApp/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png",
+      "sha256": "ba9d87953fafd0656e6c16344ab1b17702cdd282a75532a67db73f4eee6daf2d"
+    },
+    {
+      "path": "androidApp/src/main/res/values-b+zh+Hant/metris_widget_strings.xml",
+      "sha256": "860aa1d08f024a06ee67f15ac52ea0883f6082060b0b442dfde9745546d82996"
+    },
+    {
+      "path": "androidApp/src/main/res/values-b+zh+Hant/strings.xml",
+      "sha256": "bb2c5245a060b2f2dfb1aa8c8a085dc20bfd2c58b395f2c0a8f1e7c1b788c414"
+    },
+    {
+      "path": "androidApp/src/main/res/values-zh/metris_widget_strings.xml",
+      "sha256": "860aa1d08f024a06ee67f15ac52ea0883f6082060b0b442dfde9745546d82996"
+    },
+    {
+      "path": "androidApp/src/main/res/values-zh/strings.xml",
+      "sha256": "bb2c5245a060b2f2dfb1aa8c8a085dc20bfd2c58b395f2c0a8f1e7c1b788c414"
+    },
+    {
+      "path": "androidApp/src/main/res/values/metris_widget_strings.xml",
+      "sha256": "860aa1d08f024a06ee67f15ac52ea0883f6082060b0b442dfde9745546d82996"
+    },
+    {
+      "path": "androidApp/src/main/res/values/strings.xml",
+      "sha256": "f3ca840921015b049c2a9a89a813b157d7682d1019fc347f8a7fe30e42400883"
+    },
+    {
+      "path": "androidApp/src/main/res/xml/data_extraction_rules.xml",
+      "sha256": "5cdfb7c59edec61121359b6223958de8a60d85fefd3fa03b5a05a4d8d63c023e"
+    },
+    {
+      "path": "androidApp/src/main/res/xml/metris_widget_info.xml",
+      "sha256": "4a27d1c97bfa322e077e639b4c71a41c42de01687130c4a8a3315f6a89335849"
+    },
+    {
+      "path": "appleDisplay/.gitignore",
+      "sha256": "acc718146d21aae829cba1761475e05de39d73209d83af2ab8487a74843cead0"
+    },
+    {
+      "path": "appleDisplay/Package.swift",
+      "sha256": "ed55722532ef58904872bc2ff3295af1c3cd66a4cf9e9f64a4eb6441cb38becc"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/DeviceIdentityPolicy.swift",
+      "sha256": "e597765a9ecf8c691b4404809e757664984d4d812ff74ae116e58649f523d1c9"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/LanAssetFiles.swift",
+      "sha256": "31326a39d2ba9c79665004e44ce61ecd5a136c38617d5b9f611788576ff1d5eb"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/LanDeviceFormFactor.swift",
+      "sha256": "4d7347e8ebb2399e5b523a8122c6d9a242cc0c85d22f2410385f15b195725e19"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/LanDisplaySnapshot.swift",
+      "sha256": "108146d022b5991d58a2748f21ef4e874b9d4b1bd7f431800c3f7c1939bb16aa"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/LanFrames.swift",
+      "sha256": "71941539ba758f2dc8321bdbf6dbc12637b5546998a2632f9ccdfecde54d8e92"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/LanImageAsset.swift",
+      "sha256": "c0e71ab53a026747c244faa1aa06f5435861e16631fbeb523502a4b926f9ae86"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/LanProjectionDelivery.swift",
+      "sha256": "38e455f3a5a02a1c319400037c713eaebd624c4e7d53f0b188659a2dd5da8ae6"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/LanSocket.swift",
+      "sha256": "0df1562661e470c5bff1226827009ff0dfcdd270463101b144b77ec626230d8e"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/ProviderPlanBadge.swift",
+      "sha256": "c8b51b0b4a41b78d8fa521f50d1b4f4a048ed36189f6ec59afa3281f55329bc4"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/SharedSupport.swift",
+      "sha256": "217c8452bd063989dbb3242fe15cb9526d8b3f445f4848d986ad101ca8fac710"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/WatchAssetCache.swift",
+      "sha256": "2de1b2da7521745d146a9bc6dc826f11f90c187db40134c454108c7c37b6c96e"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/WatchDisplayStore.swift",
+      "sha256": "2065f2fed1ee498920e7977e10985295ae3dca57745e7f277c98f6fde8cfee8d"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/WatchHTTPConfiguration.swift",
+      "sha256": "dd988d86daac749d18463db1414bea97d0df0c6df91dff3b8cb06c1aff18adbc"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/WatchProtocol.swift",
+      "sha256": "a2b6aa6cdc70dbca5aee61cc6c235cef4c3e64571f6cd8a8990a5d828947a14b"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/WidgetHTTPClient.swift",
+      "sha256": "67f14dce78dc266bc263a50614799ee9a4e00a528b97923a777e67f33319c6b4"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/WidgetRefreshTarget.swift",
+      "sha256": "75009ea5d6b8ab3386182bc73c239c66c87bce95d68fb8a2b7d6047dd86d856a"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/WidgetSnapshot.swift",
+      "sha256": "08843f7ddecebfcce884f3133920b65d4c7dcc5a3f3b15e686726305efa9b99a"
+    },
+    {
+      "path": "appleDisplay/Sources/AppleDisplay/WidgetSnapshotStore.swift",
+      "sha256": "a34e156fa75e56e8bc80654e1b03814a513993f5ecc8a63a3350c82a6d89f9f3"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/DeviceIdentityPolicyTests.swift",
+      "sha256": "9625054a0f7402b7cf33a53fb37bb075ba8505e34b1cca77f4a53b7c580f004a"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/EnabledAgentProjectionTests.swift",
+      "sha256": "a888165b7821aa205d72cfe7bc15cacff409c50e8df6561b40ae58ec16773658"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/LanAssetFilesTests.swift",
+      "sha256": "dadc432c9d19e0f8b7115c068c072c522b028a9e73643a9641e93fb37e3f9326"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/LanDiscoveryUpdateTests.swift",
+      "sha256": "53f3738415d9edb9152b1bdde4a81be817a0e826306e048e409501b5944b8ae7"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/LanDisplaySnapshotTests.swift",
+      "sha256": "8b41b69d056ea659b5bc13bdb1590b55e8a92a5a1edbce3bdfc9cd1838096642"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/LanFramesTests.swift",
+      "sha256": "2b027f7da0893cfa73b1a15a2b2c093721fb8633adaeb5a21df9f129507dc959"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/LanImageAssetTests.swift",
+      "sha256": "7bc1587a08008aa760fb62f2a3ab3fc7ad9c137cf38be8fdb1792b432cdd4042"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/LanProjectionDeliveryTests.swift",
+      "sha256": "ac38e659b8b794b038898bf916e8cca7e3dc0ab6a9f675f36a06b520951dc12f"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/LanRetrySchedulerTests.swift",
+      "sha256": "4c3f2ff33eff85eadaa0ab373f2245c1ac828a6d266b487934a29bc4191ef479"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/LanSocketTests.swift",
+      "sha256": "a61a03f9e3709610aa29408db075d18015ba4ee01b55ca5ae9934948ef9b9966"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/PhoneHookCacheTests.swift",
+      "sha256": "3cfb5299dd65457681ef0df7adef31438608238c4fd9063ed3e9ec658f5f82b6"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/ProviderQuotaTests.swift",
+      "sha256": "1c291138d8de1441fac3e13b9ca2b205688bebc891b19a008e364b570a94538e"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/SharedDisplayPolicyTests.swift",
+      "sha256": "57d29a0c2e22dd100d3bb7b07e962f47bec39014dae1a8438e1b5d741dd36bfd"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/SharedFilesTests.swift",
+      "sha256": "6f246b29008719d7b76a4b218078e6e8449552bbb814911fab83027cfcf35a87"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/TestSupport.swift",
+      "sha256": "27067410cd90d67f0c220d140b4fdd436c8e2548d2bdcdb402cc243a799bfa82"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/TokenNumberTests.swift",
+      "sha256": "f001dcdd240a49603eb8a5253842d0967d1f314075d350982090fa68dea08bc2"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/UsageDisplayOrderTests.swift",
+      "sha256": "db84d601325d273e8cc1ff5cf06e8caab6594ce4d650db195388442273e5c3db"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/WatchAssetCacheTests.swift",
+      "sha256": "e8da74c57fb9c686b058b5c26095114f193ee210ae65d82cf18fe9ceafe15e4d"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/WatchHTTPConfigurationTests.swift",
+      "sha256": "aa2c4aba34804311d98d793b47742e003af54e66044d4dc923cb5b536e3c8866"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/WatchSharedProtocolBoundaryTests.swift",
+      "sha256": "ed0e6e50ecb2fa9128ae490e59c837fdee826ac5351505b49875b54522d2d3a2"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/WatchTransferTests.swift",
+      "sha256": "b4daf3b664d626adc42c565869038f45e5f03662173cd4a5be5738a0e8651201"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/WidgetEndpointBoundaryTests.swift",
+      "sha256": "eb8280f8ef83e89e510f6542e2dbc71f31ae5e2fa866d7d19be0a9f0360ec689"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/WidgetHTTPClientTests.swift",
+      "sha256": "d7349cf794fbb65654306a6ea8bc899935de651f257a3cdcf9d8b64cd4f4fda7"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/WidgetRefreshStoreTests.swift",
+      "sha256": "050c55c69492bb0b20b65ca0b3ae69181537c2ab55755e201a9dcf9080096462"
+    },
+    {
+      "path": "appleDisplay/Tests/AppleDisplayTests/WidgetSnapshotTests.swift",
+      "sha256": "e5dafdc49429359b465dcc3a24ae13d895f9beeb52afedafadd4c54ad234052d"
+    },
+    {
+      "path": "branding/app-icon.png",
+      "sha256": "073e1aee636c19b43e1da2e2661514e8834b94dc72b59fb1391723fbfcb25cb8"
+    },
+    {
+      "path": "build.gradle.kts",
+      "sha256": "e213278013dcc6ed0c0ce2a11b5293cdbf8fd12c30a53b09bf33e4bff393259e"
+    },
+    {
+      "path": "docs/01-文件结构.md",
+      "sha256": "65c80ba1d48dba1bb9a353174773ecf2d3148a4ca04f7720e18265db2c70a898"
+    },
+    {
+      "path": "docs/02-技术架构.md",
+      "sha256": "5fc9a1250d854e0c18bfa9c4139eb6f806a6f3117115542f723269a16b701825"
+    },
+    {
+      "path": "docs/03-业务需求整理.md",
+      "sha256": "27eec00f0d6dd12be480714f40cb6ca03cb8aff14db6ca81a83063508c28d2fe"
+    },
+    {
+      "path": "docs/04-问题与技术路线.md",
+      "sha256": "b8de56219d653924a44b8a768a843d972c16350c6c71f0c7f14284160aca9453"
+    },
+    {
+      "path": "docs/05-历史开发与验证记录.md",
+      "sha256": "7f71e8ae619cc8f52e823f5ce63285d9cf5308e491ac1574ef5f28995be98e04"
+    },
+    {
+      "path": "docs/06-发布检查清单.md",
+      "sha256": "a2f748f91b5dd822389ea3adb35ae7eef8f423bb57dd9e55fb5083bc234d5927"
+    },
+    {
+      "path": "docs/07-当前架构.md",
+      "sha256": "266d619a1b9b3bd39627496b55b2c61457d4ef3c110db1205b53be83fe9c394b"
+    },
+    {
+      "path": "docs/08-KMP分层与优化路线.md",
+      "sha256": "aea980185dd2acbda7b5b14ebaee25afd91934e4101d62050096138a2dfe35a7"
+    },
+    {
+      "path": "docs/09-v1.0.6发布与UI验证.md",
+      "sha256": "1e1354bfc7b689501f525cc2f0b3938ca4cf859d68b335fcf4fdbe9a986b9f4e"
+    },
+    {
+      "path": "docs/10-v1.0.7发布与设备安装.md",
+      "sha256": "aa86f68e8160e616235b6da92e8eeed06afbb473c98d3ec39366df5af8ddabca"
+    },
+    {
+      "path": "docs/README.md",
+      "sha256": "3dd770004fdb61bf0acb53b656e67c25cfbe7cf5266401251f394b05faecd2e5"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-hook-detail.png",
+      "sha256": "113fc3025d968fe4430f4fb109c0ed34607c76228fc983d1e2d27cefb0fc755e"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-landscape.png",
+      "sha256": "cdf687ec4dbc19c0c97ca7917ebc215c574aeb63ef2875cafe7d349c446677a5"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-large-text.png",
+      "sha256": "0ec1f0db0aec38f5f624e6d7ac8d5153aff722f8b4b7ec1bdaf06be60f49088e"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-overlay-hooks.png",
+      "sha256": "b0ea0e975d0e6f2c72f639bde323a966575191b3618d267c2ed5fef69a94964d"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-overlay-token.png",
+      "sha256": "9c906a81520e6218cb66c2971f65b3b4ca2584c7f12968e45a504576fa0ca4bf"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-panel-compact.png",
+      "sha256": "b7b62ae9965fa49138cef3f44fec4139f8d52a5c1789fc96fef45b67ee80310c"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-panel.png",
+      "sha256": "c8952c654e98571d0e1a47f6d631bfb30f2d6bbe219d615b972d63fdd082e68e"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-settings.png",
+      "sha256": "d4fac0f7df0fe0603c4be4267ebdc407d99b98e86fcfadcc00d99292765f4bb1"
+    },
+    {
+      "path": "docs/images/v1.0.6/android-widget.png",
+      "sha256": "f78b4375bd73875a5e91520544808e5696d2b89ccdc8c25ba830f3eff8cd0169"
+    },
+    {
+      "path": "docs/images/v1.0.6/apple-widget-lockscreen.png",
+      "sha256": "e183e9f42714166d3734535ca8943d8d920cca3668aed1fb50b9c5137b4ffb43"
+    },
+    {
+      "path": "docs/images/v1.0.6/apple-widget-medium.png",
+      "sha256": "1848bde5580a65f666fa23185d946d92ab9575a837ccd5ddaba2e484449bc831"
+    },
+    {
+      "path": "docs/images/v1.0.6/apple-widget-small.png",
+      "sha256": "8be0311898d16c6745f4e6dc83bcae163715d37e973d9499320223fc1df46fe5"
+    },
+    {
+      "path": "docs/images/v1.0.6/ipad-landscape.png",
+      "sha256": "869a5dfd46522e1a09f2cae11ae06f5636f5ea22177d8fdf70cdf924d2bfcb6a"
+    },
+    {
+      "path": "docs/images/v1.0.6/iphone-customize.png",
+      "sha256": "3979de711466bb4caf24f83bb36503cd956b3a072bc4a3fe060bd94f4b8c0e69"
+    },
+    {
+      "path": "docs/images/v1.0.6/iphone-empty.png",
+      "sha256": "c66391b0c507fd412d33f86ca7caa5d11fc20338345cb3715821246db848388a"
+    },
+    {
+      "path": "docs/images/v1.0.6/iphone-hook-detail.png",
+      "sha256": "f78729ba65eb13bedf32aaab2a686bb53f49c78eec8de07321b4286ef0d698b8"
+    },
+    {
+      "path": "docs/images/v1.0.6/iphone-panel-scrolled.png",
+      "sha256": "c40f869ee05aeca600b67ba60d14330718b967d5579e27a2a1a5fd38daf3f5eb"
+    },
+    {
+      "path": "docs/images/v1.0.6/iphone-panel.png",
+      "sha256": "e4d0711400e9a8e3e9782f892de93fc1e4acd53a3ecfbb894156146a6f13086a"
+    },
+    {
+      "path": "docs/images/v1.0.6/iphone-settings-release.png",
+      "sha256": "7aeffb8d45f1b5197e44ec6d67d7d494ebaa53fe72ecc35758ea141d3ab006c0"
+    },
+    {
+      "path": "docs/images/v1.0.6/watch-hooks-gif.png",
+      "sha256": "934e63723dfd60a56a7b9c801bbd1722bda5814b7695afd8d04e442785e593a5"
+    },
+    {
+      "path": "docs/images/v1.0.6/watch-hooks.png",
+      "sha256": "1f2c5f489725be05e372b62b1732266198f452cd7331315fd7b2bad3640e703f"
+    },
+    {
+      "path": "docs/images/v1.0.6/watch-quota.png",
+      "sha256": "f1ad87956d4a16b4e7c8c295bf7f3d33e1be9e8b99fa8c5516fd808e81ea9b02"
+    },
+    {
+      "path": "docs/images/v1.0.6/watch-token.png",
+      "sha256": "88ff677dc7ba28c0c540e1cff12e98a9132ada54936122627e629cdcb519e969"
+    },
+    {
+      "path": "gradle.properties",
+      "sha256": "af49cca035cc4b4415e1e5d651db485fab4e1c3b6fac11fa0e612b233dde20c7"
+    },
+    {
+      "path": "gradle/gradle-daemon-jvm.properties",
+      "sha256": "bf1d1043d01512724e9544debc449e939092a9f55a64357072ee16bb2a6546ba"
+    },
+    {
+      "path": "gradle/libs.versions.toml",
+      "sha256": "5024eb87725356cfb3ba78a38ccbd8fd523b93885ee262e5af4084881daf8bcb"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "sha256": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "sha256": "2e60a9fe1f228d7267644819ff8af5f24c50d043cb1d5b32f659b1d9d9630c9d"
+    },
+    {
+      "path": "gradlew",
+      "sha256": "ab5c0cad16305af2e619c159c1f58dd68d07fab9c11e36701e109c0277407f7a"
+    },
+    {
+      "path": "gradlew.bat",
+      "sha256": "475c4f08cd57cf2faa819e7f36d72aa93f0ad646ea23a8f7fa3ef54dee1cbc52"
+    },
+    {
+      "path": "iosApp/AppLocalization/en.lproj/InfoPlist.strings",
+      "sha256": "23f3ebcbde56e25cd200f3efec916a6b0d1744e721a29dd095d6c1edea023e3d"
+    },
+    {
+      "path": "iosApp/AppLocalization/en.lproj/Localizable.strings",
+      "sha256": "dbaf879c4c83c0109fbe054cd92fffb26260343769b12d9c195b24b8603d8d88"
+    },
+    {
+      "path": "iosApp/AppLocalization/zh-Hans.lproj/InfoPlist.strings",
+      "sha256": "5b1ccee985ed800a65d3a493057edd2a258aaff58280a34cbc6b78c66401fd3e"
+    },
+    {
+      "path": "iosApp/AppLocalization/zh-Hans.lproj/Localizable.strings",
+      "sha256": "59af38f4647a917b4c289fc86aa53cb289c753c682b4e491af5e23e3f3508beb"
+    },
+    {
+      "path": "iosApp/AppLocalization/zh-Hant.lproj/InfoPlist.strings",
+      "sha256": "5b1ccee985ed800a65d3a493057edd2a258aaff58280a34cbc6b78c66401fd3e"
+    },
+    {
+      "path": "iosApp/AppLocalization/zh-Hant.lproj/Localizable.strings",
+      "sha256": "59af38f4647a917b4c289fc86aa53cb289c753c682b4e491af5e23e3f3508beb"
+    },
+    {
+      "path": "iosApp/Configuration/Config.xcconfig",
+      "sha256": "48191aa1012082e45a1eef99677cef704cbfdfb2079018496ab797a5624a5612"
+    },
+    {
+      "path": "iosApp/LokiMetrisWatch/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+      "sha256": "a251471b1d031028e721841caefd61d8bd452915c1cb3285a30ad15c827bc734"
+    },
+    {
+      "path": "iosApp/LokiMetrisWatch/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "sha256": "905471ec199137708ba2998c54552603d7f1db0bdd03e42f7c0f9491a0ee41ff"
+    },
+    {
+      "path": "iosApp/LokiMetrisWatch/Assets.xcassets/Contents.json",
+      "sha256": "f23266b9672263c92ced1d26fe4dafa75a14d530eb9bc5fc1f599034d597ab48"
+    },
+    {
+      "path": "iosApp/LokiMetrisWatch/Info.plist",
+      "sha256": "a7039cedacf70adab17b8538f6be5e1be9d01e68cd45d65d103d394c23e9fd4c"
+    },
+    {
+      "path": "iosApp/LokiMetrisWatch/LokiMetrisWatchApp.swift",
+      "sha256": "26dde63482a718de3372777d9f43cf59ea371df99a8d39e8b80b99bfeef7b9bb"
+    },
+    {
+      "path": "iosApp/LokiMetrisWatch/WatchHTTPConfigurationStore.swift",
+      "sha256": "ed90c90a2a234d97938eb1d97101247069d41dd20ccd2d47b7d215a9d88b1d1e"
+    },
+    {
+      "path": "iosApp/LokiMetrisWatch/WatchLinkEngine.swift",
+      "sha256": "c58f8dc2c77afacebcebe7a60e9c5ddcc44c1e9174fb716c5b23f19e2555d1ee"
+    },
+    {
+      "path": "iosApp/LokiMetrisWatch/WatchProviderQuotaContent.swift",
+      "sha256": "5c0ff09263de718b99aac67d2fa717497a1c1a37d4fec980d0d2a3e8705fc176"
+    },
+    {
+      "path": "iosApp/LokiMetrisWidgets/Info.plist",
+      "sha256": "1f430ec3d45792207734a99a3d22a14a94e0fa2022b08d7a6d34740588590836"
+    },
+    {
+      "path": "iosApp/LokiMetrisWidgets/LokiMetrisWidgets.entitlements",
+      "sha256": "d97e412463a621f604ddea9a547150e5d8815127c6a3967bd6d438b976f34e30"
+    },
+    {
+      "path": "iosApp/LokiMetrisWidgets/LokiMetrisWidgets.swift",
+      "sha256": "cbfba82ce9c2a87cb2cf5f487c506983d3c5f97fb2a29ceeb1cdb113753a34fc"
+    },
+    {
+      "path": "iosApp/WidgetShared/WidgetContainer.swift",
+      "sha256": "954090b343a349813e5a3ca978160aa19a92fd2417ad50b1d24d9243e0d8cfc1"
+    },
+    {
+      "path": "iosApp/iosApp.xcodeproj/project.pbxproj",
+      "sha256": "7ffa45a9988c2721eee2abdae99dbed8af78b1fb7454119beb13faf4b34185b6"
+    },
+    {
+      "path": "iosApp/iosApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+      "sha256": "b649cb25291f3511abf0e96f5d997977aab37e1ac4bddaa8b0aa87deca09ceda"
+    },
+    {
+      "path": "iosApp/iosApp.xcodeproj/xcshareddata/xcschemes/LokiMetrisWatch.xcscheme",
+      "sha256": "9b42975800908e4b0d462a65ce6ff62ad0d4f90e7dd2580d8943f4580aed2bbf"
+    },
+    {
+      "path": "iosApp/iosApp/Assets.xcassets/AccentColor.colorset/Contents.json",
+      "sha256": "8379257957dfd802098d66526a141ecf7a8df8be1b7a7a6eba6a7ecfcf185ede"
+    },
+    {
+      "path": "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+      "sha256": "a251471b1d031028e721841caefd61d8bd452915c1cb3285a30ad15c827bc734"
+    },
+    {
+      "path": "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "sha256": "9c7e9fac64aa938713329ae27f8cf3f1207bb6ef3ae23e96a6b94431ce511425"
+    },
+    {
+      "path": "iosApp/iosApp/Assets.xcassets/Contents.json",
+      "sha256": "3068ae11b833a8ea03990d2ea2a2b5fe7b3c47fbda56de956a4b84888f6c6af8"
+    },
+    {
+      "path": "iosApp/iosApp/BackgroundRefreshScheduler.swift",
+      "sha256": "8c2ac49410466a5791567923815a31aaf3d6b2f1ffa5ec6d1363898c1b74c314"
+    },
+    {
+      "path": "iosApp/iosApp/BackgroundTargetStore.swift",
+      "sha256": "ca663e5dae5305c40ccdccd1516e01bd83ca8fb6838d06449ebefc9a1827fd1d"
+    },
+    {
+      "path": "iosApp/iosApp/ContentView.swift",
+      "sha256": "39646bf20968dd4b5fbe37e15b85e003bce2ede73bb47e1733e9e3ae9b4be3c9"
+    },
+    {
+      "path": "iosApp/iosApp/CyberMotion.swift",
+      "sha256": "6deb269f7291f864c063a696008621bc29389e042b1b47d8cc456fe1c2a36cc4"
+    },
+    {
+      "path": "iosApp/iosApp/DeviceIdentityStore.swift",
+      "sha256": "d8a2818241a8562959c98ec9169d09fac34e671e9d24caeb9a3a685b5df09652"
+    },
+    {
+      "path": "iosApp/iosApp/DeviceSettings.swift",
+      "sha256": "c22fe05deefd715cbdaa13f8b5d49a4537d81b7f527b9aff55cea2cb886d1d3c"
+    },
+    {
+      "path": "iosApp/iosApp/HookAssetImage.swift",
+      "sha256": "dec7aea02ded65683b5bf6f6e6c181b2ed4b72850e2d8a25787b965afea72ddb"
+    },
+    {
+      "path": "iosApp/iosApp/IOSAssetCache.swift",
+      "sha256": "862764f42f08d91f0b4e6a38fd502995a7484f82ed8025bb5bdc136379b42ee8"
+    },
+    {
+      "path": "iosApp/iosApp/IOSDisplayCache.swift",
+      "sha256": "8e7e74c29ddf8fc1007e1721d109739cb323dabdae6e213e2fbfcd8571cb356b"
+    },
+    {
+      "path": "iosApp/iosApp/Info.plist",
+      "sha256": "1f4ae18829d40e2cf5a6c2087a3c8917c21bc755cac09e802c16a34c53957a70"
+    },
+    {
+      "path": "iosApp/iosApp/LanDisplayPage.swift",
+      "sha256": "931ac5a97ca91f97b04e27dfca7dc4478a8a9262638309def27f2afe39679708"
+    },
+    {
+      "path": "iosApp/iosApp/LanLinkEngine+Connection.swift",
+      "sha256": "03b7beab8b795a710cbc9674d40689b741523803bff1a859a22ec256f5fca080"
+    },
+    {
+      "path": "iosApp/iosApp/LanLinkEngine+Display.swift",
+      "sha256": "a6e8ffa913fc62561633428f3b1dc65899a0e0cca948d1c6c20153403fc13c9b"
+    },
+    {
+      "path": "iosApp/iosApp/LanLinkEngine.swift",
+      "sha256": "2d66e583c8efa602a43f39ff024b4c64fb3419bed14adfa63b4261e35aa5b1f9"
+    },
+    {
+      "path": "iosApp/iosApp/LanLinkModel.swift",
+      "sha256": "a0d1ca22707fc4bc13d01fc73f2c6e9b00b78775a1127830664cff630df4b609"
+    },
+    {
+      "path": "iosApp/iosApp/MobileBridge.h",
+      "sha256": "98ce8212e63f43d4c763f6c551a2db7a65de26c1028e6d30c04eebcc2bd03866"
+    },
+    {
+      "path": "iosApp/iosApp/NativeLinkBridge.swift",
+      "sha256": "388277b9ee2fb15558898e03550279df8f1a173039eb6ef4331a0840395ec309"
+    },
+    {
+      "path": "iosApp/iosApp/PairingStore.swift",
+      "sha256": "8d286236250be2963c235384e3f384d1610571795df3159fafeba5168fb63e7a"
+    },
+    {
+      "path": "iosApp/iosApp/PanelPreferences.swift",
+      "sha256": "b4951b0021b4c690d0e472fd2506914e56ab9b091d4f714f539733ce0f9960df"
+    },
+    {
+      "path": "iosApp/iosApp/PhoneWatchBridge.swift",
+      "sha256": "c3a42d25c7e1a02398998661acce3214517c3ca2846797e412ba5ede3337a003"
+    },
+    {
+      "path": "iosApp/iosApp/Preview Content/Preview Assets.xcassets/Contents.json",
+      "sha256": "3068ae11b833a8ea03990d2ea2a2b5fe7b3c47fbda56de956a4b84888f6c6af8"
+    },
+    {
+      "path": "iosApp/iosApp/WidgetSnapshotPublisher.swift",
+      "sha256": "62ec80780b074399a4f0a73dcd34b1532fc1e32f7fc1b225ab6400987cd1b97a"
+    },
+    {
+      "path": "iosApp/iosApp/iOSApp.swift",
+      "sha256": "9fcf9193ec542644f2a5dc99963241790f5c11adeb3f843606d258e677a15252"
+    },
+    {
+      "path": "iosApp/iosApp/iosApp.entitlements",
+      "sha256": "d97e412463a621f604ddea9a547150e5d8815127c6a3967bd6d438b976f34e30"
+    },
+    {
+      "path": "scripts/build_apple_shared.py",
+      "sha256": "5060bca891f97506c9708c40fef31f6155e49172e04161061111b1aa7efff9d2"
+    },
+    {
+      "path": "scripts/build_mobile_native.py",
+      "sha256": "362870d86de6a5856337c149935b3ddde7e9bc984180ca66080905492d70a5bc"
+    },
+    {
+      "path": "scripts/generate_app_icons.swift",
+      "sha256": "837f89ad2f5425ec069d2dc9acc5206c138fcb96077e42682b4e1cd28c62c780"
+    },
+    {
+      "path": "scripts/prepare_android_signing.py",
+      "sha256": "5320a0b9ee7f1c1ced2023dea429e5a31236180ddc6935dabf31b67df22c7c26"
+    },
+    {
+      "path": "scripts/test_apple_shared.py",
+      "sha256": "5d84d7c1f1f02ba7d330725a16fdee06323d24c624deec0744fd20b0fe5df607"
+    },
+    {
+      "path": "settings.gradle.kts",
+      "sha256": "d17ccfda5c7a1989d293bdffc0355382a99ecb255fbf59bd7fac242be8e9d5a6"
+    },
+    {
+      "path": "sharedLogic/build.gradle.kts",
+      "sha256": "38bed83b4cc60a365df7447cb6eeafb7a9c25d541b519a2d6ded55d7aaba5979"
+    },
+    {
+      "path": "sharedLogic/src/androidHostTest/kotlin/com/manonloki/lokimetrisdisplay/AndroidLanNetworkStateTest.kt",
+      "sha256": "e85cf4ba4d5a74a37227b0a31441e48aca094994a13959796761617c68665643"
+    },
+    {
+      "path": "sharedLogic/src/androidHostTest/kotlin/com/manonloki/lokimetrisdisplay/AndroidWidgetDataTest.kt",
+      "sha256": "f931153a64b6c4fd5c3b492df9653c5b8d427bd1920cb1d726d2d714c39791b7"
+    },
+    {
+      "path": "sharedLogic/src/androidHostTest/kotlin/com/manonloki/lokimetrisdisplay/ProviderQuotaCodecTest.kt",
+      "sha256": "a88551ee6548aa58d887f89e2fe9ee8ebf51bb370e25c4325bd2aa2555a98cc5"
+    },
+    {
+      "path": "sharedLogic/src/androidHostTest/kotlin/com/manonloki/lokimetrisdisplay/WidgetEndpointRulesAndroidTest.kt",
+      "sha256": "91062bf0745dc712cf2579dfd354a82c7c789b1be3d69579bec54fbd25704249"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanBrowser.kt",
+      "sha256": "e35e7ad56c2cef95d9be144b9d10cb850b116cb0a50a21c2214c456b7743aab5"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanEngine.kt",
+      "sha256": "8bc8fb769d0a81e4b705e5de66fd23425e468ee6753e0d42fa6e18cff46b57e8"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanNetworkMonitor.kt",
+      "sha256": "79e7b436859287ac9a4d9bb544dae274ca0579bb84157b7579ba490d74952f1e"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanSocket.kt",
+      "sha256": "ce14ad9c70a6aa7cf51617359738fdf33a57948220a062f7373114684c4ac0a5"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/json/AndroidDisplayJson.kt",
+      "sha256": "b97c3601317b27da84982063ac1d03e12a27fad7385c5781423d8fe9b1cd6fd0"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/json/JsonFields.kt",
+      "sha256": "38ed8e5d7c6a218d808a2043ceaa5d6e71e30db975edfbadd8c3a6b834fb5774"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/nativebridge/NativeLinkBridge.kt",
+      "sha256": "856dd82ad2c35d6e7749b2382ca7c6e6a1f0d0e1e76586c7f0092d30023c6a33"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/rules/UnicodeComparison.android.kt",
+      "sha256": "9e1ac1a3fd3ce00590b6f8963753da94ad6e48d6d48ba96eee241f936fa39dcf"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidAssetCache.kt",
+      "sha256": "b6ef99e057ab2a11c9098c7e74c076a4d1786353b2bc94893702e8b416963091"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidDeviceSettings.kt",
+      "sha256": "3292c5a7eb62c8aa625c688d88b2b822039e90b27e8df68602399d8e826159c8"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidDisplayStore.kt",
+      "sha256": "9a5b89b12b388571225660e94e44ee164684d785801aac229e2b53e7daf712f2"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidPairingStore.kt",
+      "sha256": "92fd7a094451673f346f57c8d12a01dee01591102655731c803513053716af34"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetCodec.kt",
+      "sha256": "3c8828808984fe0dfbef1b33698e1ea9c6e4a31cbea96838535f3a8ad9f5e0ad"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetCrypto.kt",
+      "sha256": "8820bba8357766354c06ac4a5c65f2863a0cc9ae9c816ef2a115d9f579fbaec0"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetHttpClient.kt",
+      "sha256": "422a333d40ba1943651d87abbdb6df36804eb89fad42c901098050b7109da5fb"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetNetwork.kt",
+      "sha256": "b1ba9dfce0726591fbb071c5bcecb7ef906333192be1a5493bab9688dd9f2b97"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetStore.kt",
+      "sha256": "b1d992d2be6ee1914b570ab30d7d4956db8bd8716c5dbb43ba486f934bade5bf"
+    },
+    {
+      "path": "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetTarget.kt",
+      "sha256": "8da3dc5ab4b9a8fed286e9cb67cc45d811340e0741c092e229182ce757f98f21"
+    },
+    {
+      "path": "sharedLogic/src/appleMain/kotlin/com/manonloki/lokimetrisdisplay/rules/UnicodeComparison.apple.kt",
+      "sha256": "fabc0e299fd1ecadb4cfca52e7d277de4e4dc978c41f728ff22dd80ea029d49c"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/connection/TerminalLinkEngine.kt",
+      "sha256": "fd5e12bf1dacceeaaa341e1f22ab7d8bb9d982b0e68e9a5598f898a4f37e97dd"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/domain/AgentIdentity.kt",
+      "sha256": "98415cb8748892ecea3126a84afc51705a14d7b2d25917cd0ca0aefe6b0f3d54"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/domain/PanelConfiguration.kt",
+      "sha256": "7a25f8ec076e991c431be74bde6dbf17e99149077d298f07af1ed528a83b72bc"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/domain/ProviderQuota.kt",
+      "sha256": "896e45f8615f8ae64835e78eba7f12a733a486fff6f97bf0b29ddbf39cc345f9"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/domain/TerminalDisplay.kt",
+      "sha256": "557805cdc7e13c0439989361cd9327c2dcd9e31b0eb5294a1b5ce79161fccd80"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/presentation/ImageDecodePolicy.kt",
+      "sha256": "64dda4e2af9c687f75e47d074425d00f1accb088aa087b518b6226589ccac06b"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/presentation/TerminalDisplayProjection.kt",
+      "sha256": "85780c465e53bb5efc267e5c5b67db3fdc370125b03201ef01e073526e7a6cfd"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/presentation/TokenFormatting.kt",
+      "sha256": "7a342ff7bf14452b9da09e9719518cab097cb5e008b2173e5452e826c89d9847"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/presentation/UsageDisplayPolicy.kt",
+      "sha256": "427ad5de888ca77b44222ac5b69c5a617310c707c4c1d5a0b40ca7a6f6106c71"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/AssetTransferPolicy.kt",
+      "sha256": "8a7beca7b74311ac55ac6395c4469535570542acb06daf2f2eef235983877c18"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/MdnsProtocol.kt",
+      "sha256": "c28fe80796ad687a79c70809b69df2882fac97cba9e315f516b2a5538f621476"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalCapabilities.kt",
+      "sha256": "44e6ba5efece5db954844107164bdb8828e4ec3cd3e79d4fda7877990dddb1f2"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalConnectionTiming.kt",
+      "sha256": "cd65df4a152c5aa6e61c75e9cf703d06de051a99cb9926b9418ae05e632cc18f"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalDeviceType.kt",
+      "sha256": "ad11682013bcacb4811a50dd9df9f580f8a201385b6c52a6343b553312b165d2"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalFramePolicy.kt",
+      "sha256": "9d7e571766718433eb1f4007b1cd7f405a08f7824a0ca51be82dc0775ae1f6c9"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalJsonBoundary.kt",
+      "sha256": "6b527f1a199d9c5bb1429d73e8724007acd2838bd1ea7a4e974a35e8f9ec4124"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalTransport.kt",
+      "sha256": "31c0c3b1362790f4a90dfb76beee400a77ffdd8fd4bea10ce981517f4497a13c"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/WatchTransferPolicy.kt",
+      "sha256": "4ee74b187efa4665bfc5149202fc30e39c7835b8da7fd0cddf78b2e79bcf6c9e"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/WidgetHttpPolicy.kt",
+      "sha256": "a583ec673c21ac922fa9e72c94433263ee056b1268f359246f0a53887aa5e198"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/rules/UnicodeComparison.kt",
+      "sha256": "5e466e087811501d7c24f347ae15e2d40c296daa7ade1fd623661bf65f992cff"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/rules/ValueRules.kt",
+      "sha256": "3e23eba39f155efca0c38809d7b788405fe394c2e0086b72b35f0fad3563864e"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/CommittedRecords.kt",
+      "sha256": "286fa48954ee507ecf6cc84eb9265cf63c49f4c53fbab88c49cb3bc7b63cdc7b"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/DeviceIdentityRules.kt",
+      "sha256": "88c6650ba616535bb885047f333fb4653b46bb20f0adf764bb58f508bb0a122c"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/HookImageCachePolicy.kt",
+      "sha256": "855ace1d0f73559bc348546f7d9bfd6a6f15da59b4d7294253f698843dca1881"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/ImageCachePolicy.kt",
+      "sha256": "7c3711ddc80e985cde2f7d6b8d76419706930d0d8a3afd72331a565933a9b8dc"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/RefreshConnection.kt",
+      "sha256": "68d095c1927f93d3141f4ce98bc430f2ecf2740c150f4077ac785bb2e6b73199"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/SnapshotPolicy.kt",
+      "sha256": "5506890b611ee6105846e2f0da6b9e41012b5c7c2d14c22179a8c6aa4f7c80d1"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/TerminalWidgetSnapshot.kt",
+      "sha256": "bb4610ab7e3272b8877bbddc4742b8f7e0f8b959de129b87c37d7832c99ec809"
+    },
+    {
+      "path": "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/WatchConfigurationPolicy.kt",
+      "sha256": "ac84e2df98b71f8805a5f8a3d46c8a00c8823a12ac58ad7238d7ce5498158c63"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/AssetTransferPolicyTest.kt",
+      "sha256": "e478b3ca6fbb706c33c46fe8f1622074708786f62480b586b1fba2b737a6ebf0"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/DeviceIdentityRulesTest.kt",
+      "sha256": "4688e0438c9dae1cda7779b25aaf3383cabbb8a37198b95a24ca3e9c31c3a980"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/HookImageCachePolicyTest.kt",
+      "sha256": "d2a4d62c1a1e7b7c272a135ffb00d752f60e5aca9f1d45e9910c3ace950dbe26"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/ImageCachePolicyTest.kt",
+      "sha256": "27a24762c7b7674d5b934293262b29f958957086d30568fa41c30481c50cdbf8"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/ImageDecodePolicyTest.kt",
+      "sha256": "34a0f459e246c2afece7352af6185086b3b3b4545d0743730d0bba40ef12d7d5"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/MdnsProtocolTest.kt",
+      "sha256": "ac253c3e914672ae4a54bdbbbcb3f58a40d202f1777c3e396760611aca90d967"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/PanelConfigurationTest.kt",
+      "sha256": "9982924d565ec56503ca4084f263658123475defb5d4d0500e640c708b4703a2"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/ProviderQuotaTest.kt",
+      "sha256": "ac0420f7fe94b0dedd84bdebbf39bd5019f6455170a0d259e812f6af33ed52e3"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/RefreshConnectionTest.kt",
+      "sha256": "d78eaab681d726631dcdf8f06209bb7bdcf5839ffa2eba3c34266d7b330b0c75"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/SnapshotPolicyTest.kt",
+      "sha256": "0c8e8e25337d5a1218b409d6feb4402978f46eae631e4842a2778696520a18af"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalAssetFormatTest.kt",
+      "sha256": "7cc4616a3e4a411f61fc777e74b3c04327bc52f197817f97a81c8da56b7e560f"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalCapabilitiesTest.kt",
+      "sha256": "6afbe2051f71d842eb6d105bb74797d240567db50b9fd46a658fded12f3725d3"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalConnectionTimingTest.kt",
+      "sha256": "64d665fb288eeffa060ed62bf967493a869ad146a99b00a886314f9f485875b1"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalDeviceTypeTest.kt",
+      "sha256": "86e7f3133872b6482b3a06a02ae6d696ed14156b692c709ea5c92c9c35b98ed8"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalFramePolicyTest.kt",
+      "sha256": "c75746fa8f6f78a95b89e3cee00826211bb5017ace7e673654f41e595195b259"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalTransportTest.kt",
+      "sha256": "9d419d9d313a92fe08f149809a47283fb4fc3f85d6928a265b26bea9ab212df7"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalUsageDisplayTest.kt",
+      "sha256": "76122acd8ba8f52e45bdf8b829501f65e0d5c58f6ba42a034b375e3df7c4404e"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalWidgetSnapshotTest.kt",
+      "sha256": "a85171a1f2407f46e736d5cfe1a0fbebd01d9dfff5912b83884990cec76c6945"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TokenFormattingTest.kt",
+      "sha256": "3fab4ff8faee2e620858366df21888962eb2bae81f6b3441943e2a8e879175fd"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/UsageDisplayPolicyTest.kt",
+      "sha256": "af3e5219757ba71becdb0aa753c42baad4c84e0cc643232cb29546807c38b579"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/WatchConfigurationPolicyTest.kt",
+      "sha256": "912953b35e9b8a1ffe72b142999fc5769dcea258bcaf13c1f5cacc80e4029819"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/WatchTransferPolicyTest.kt",
+      "sha256": "965106d32853b5bb3100a8d50692eaf46f47de4b469224111ed4831fe09a8671"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/WidgetEndpointRulesTest.kt",
+      "sha256": "63bd7367da4c8007b7b3484d5a31f73dcae58b8d29ff197ad302be6c571a8c3c"
+    },
+    {
+      "path": "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/WidgetHttpPolicyTest.kt",
+      "sha256": "9c679a404b75b6f13d2dd495892350bfdfc9323c7af16b8940a70f5ddbc87f81"
+    },
+    {
+      "path": "signing/README.md",
+      "sha256": "0c74f60b4b19278d48a475d00a845f3073c363808ed6aa3d9849c3a3c73d64c6"
+    },
+    {
+      "path": "signing/lokimetris-certificate.pem",
+      "sha256": "7bb28f41c81841743d300a2daf4a181cdaf2a885c8cb7fc64c4ebf650b58707c"
+    }
+  ],
+  "excluded": [
+    "AGENTS.md",
+    ".archify/**",
+    "untracked and ignored files, including build caches and signing secrets"
+  ],
+  "adaptedFiles": [
+    "androidApp/build.gradle.kts",
+    "androidApp/src/main/AndroidManifest.xml",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/MainActivity.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/application/DisplayApplication.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/overlay/AndroidOverlayWindow.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/service/AndroidDisplayService.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidRefreshScheduler.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/MetrisWidgetProvider.kt",
+    "appleDisplay/Package.swift",
+    "appleDisplay/Sources/AppleDisplay/LanDisplaySnapshot.swift",
+    "appleDisplay/Sources/AppleDisplay/LanImageAsset.swift",
+    "appleDisplay/Sources/AppleDisplay/SharedSupport.swift",
+    "appleDisplay/Sources/AppleDisplay/WatchAssetCache.swift",
+    "appleDisplay/Sources/AppleDisplay/WatchDisplayStore.swift",
+    "appleDisplay/Sources/AppleDisplay/WatchHTTPConfiguration.swift",
+    "appleDisplay/Sources/AppleDisplay/WatchProtocol.swift",
+    "appleDisplay/Tests/AppleDisplayTests/LanDisplaySnapshotTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/LanImageAssetTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/TestSupport.swift",
+    "appleDisplay/Tests/AppleDisplayTests/WatchAssetCacheTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/WatchHTTPConfigurationTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/WatchTransferTests.swift",
+    "build.gradle.kts",
+    "gradle/libs.versions.toml",
+    "iosApp/LokiMetrisWatch/LokiMetrisWatchApp.swift",
+    "iosApp/LokiMetrisWatch/WatchLinkEngine.swift",
+    "iosApp/LokiMetrisWatch/WatchProviderQuotaContent.swift",
+    "iosApp/LokiMetrisWidgets/LokiMetrisWidgets.swift",
+    "iosApp/WidgetShared/WidgetContainer.swift",
+    "iosApp/iosApp.xcodeproj/project.pbxproj",
+    "iosApp/iosApp/BackgroundRefreshScheduler.swift",
+    "iosApp/iosApp/DeviceSettings.swift",
+    "iosApp/iosApp/MobileBridge.h",
+    "iosApp/iosApp/PhoneWatchBridge.swift",
+    "iosApp/iosApp/iOSApp.swift",
+    "scripts/generate_app_icons.swift",
+    "scripts/prepare_android_signing.py",
+    "settings.gradle.kts",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanNetworkMonitor.kt",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidDeviceSettings.kt",
+    "signing/README.md"
+  ],
+  "adaptationReasons": {
+    "androidApp/build.gradle.kts": "Android-only system adapter and NSH host integration; KMP and Compose app UI removed. 嵌入运行时构建跟踪本地 crates 源码，避免共享 Rust 变更继续使用旧 APK 缓存。",
+    "androidApp/src/main/AndroidManifest.xml": "同一 APK 支持手机、平板与电视：声明触摸屏/Wi-Fi/小组件非必需、leanback 启动器与横幅。",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/MainActivity.kt": "只接系统权限与 Activity 生命周期；操作反馈改为稳定结果码，由 Rust 投影文案，普通界面与悬浮窗 chrome 共用 NSH。",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/application/DisplayApplication.kt": "发布真实进程生命周期；Widget 目标资格交共享 Rust 连接 owner 串行查询，原生不维护授权镜像。",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/overlay/AndroidOverlayWindow.kt": "删除原生标题/关闭/外框 UI；透明容器只处理 NSH 实测标题区域的系统坐标拖动与 WindowManager 安全区。",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/service/AndroidDisplayService.kt": "保留 Service/窗口/系统通知执行；通知文案由 Rust 投影、结果以稳定代码报告，悬浮窗关闭直接走进程 owner。",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidRefreshScheduler.kt": "Android-only system adapter and NSH host integration; KMP and Compose app UI removed.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/MetrisWidgetProvider.kt": "RemoteViews 只按 Rust view.project/view.describe 绘制；保留本机日期格式、尺寸裁剪与字宽测量，不生成业务描述。",
+    "appleDisplay/Package.swift": "Foundation system-extension rules and NSH host integration; Kotlin framework and ordinary SwiftUI app UI removed.",
+    "appleDisplay/Sources/AppleDisplay/LanDisplaySnapshot.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "appleDisplay/Sources/AppleDisplay/LanImageAsset.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "appleDisplay/Sources/AppleDisplay/SharedSupport.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "appleDisplay/Sources/AppleDisplay/WatchAssetCache.swift": "Foundation system-extension rules and NSH host integration; Kotlin framework and ordinary SwiftUI app UI removed. 清理共享 Rust/NSH 迁移后无生产消费者的代码、测试分支或编译引用；保留活动系统入口与边界验证。",
+    "appleDisplay/Sources/AppleDisplay/WatchDisplayStore.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "appleDisplay/Sources/AppleDisplay/WatchHTTPConfiguration.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "appleDisplay/Sources/AppleDisplay/WatchProtocol.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "appleDisplay/Tests/AppleDisplayTests/LanDisplaySnapshotTests.swift": "Foundation system-extension rules and NSH host integration; Kotlin framework and ordinary SwiftUI app UI removed.",
+    "appleDisplay/Tests/AppleDisplayTests/LanImageAssetTests.swift": "清理共享 Rust/NSH 迁移后无生产消费者的代码、测试分支或编译引用；保留活动系统入口与边界验证。",
+    "appleDisplay/Tests/AppleDisplayTests/TestSupport.swift": "Uses the Rust display core (crates/display-core): renders its view model or calls its store/HTTP protocol; native code keeps transport, system APIs and drawing. 清理共享 Rust/NSH 迁移后无生产消费者的代码、测试分支或编译引用；保留活动系统入口与边界验证。",
+    "appleDisplay/Tests/AppleDisplayTests/WatchAssetCacheTests.swift": "清理共享 Rust/NSH 迁移后无生产消费者的代码、测试分支或编译引用；保留活动系统入口与边界验证。",
+    "appleDisplay/Tests/AppleDisplayTests/WatchHTTPConfigurationTests.swift": "Uses the Rust display core (crates/display-core): renders its view model or calls its store/HTTP protocol; native code keeps transport, system APIs and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/WatchTransferTests.swift": "Uses the Rust display core (crates/display-core): renders its view model or calls its store/HTTP protocol; native code keeps transport, system APIs and drawing. 清理共享 Rust/NSH 迁移后无生产消费者的代码、测试分支或编译引用；保留活动系统入口与边界验证。",
+    "build.gradle.kts": "Android-only system adapter and NSH host integration; KMP and Compose app UI removed.",
+    "gradle/libs.versions.toml": "Android-only system adapter and NSH host integration; KMP and Compose app UI removed.",
+    "iosApp/LokiMetrisWatch/LokiMetrisWatchApp.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "iosApp/LokiMetrisWatch/WatchLinkEngine.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "iosApp/LokiMetrisWatch/WatchProviderQuotaContent.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "iosApp/LokiMetrisWidgets/LokiMetrisWidgets.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "iosApp/WidgetShared/WidgetContainer.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "iosApp/iosApp.xcodeproj/project.pbxproj": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "iosApp/iosApp/BackgroundRefreshScheduler.swift": "改为驱动共享 Rust 连接 owner：宿主只提交生命周期与网络事实，读取 Rust 宿主投影。",
+    "iosApp/iosApp/DeviceSettings.swift": "Foundation system-extension rules and NSH host integration; Kotlin framework and ordinary SwiftUI app UI removed. 清理共享 Rust/NSH 迁移后无生产消费者的代码、测试分支或编译引用；保留活动系统入口与边界验证。",
+    "iosApp/iosApp/MobileBridge.h": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "iosApp/iosApp/PhoneWatchBridge.swift": "Apple 系统外壳接入 platform_rules 与 owner.phone/owner.watch；完整同步状态机、校验、修订、缓存/图像策略和描述移到共享 Rust，Swift 保留真实系统 facts、字节编码、effects 执行与原生扩展排版。",
+    "iosApp/iosApp/iOSApp.swift": "Foundation system-extension rules and NSH host integration; Kotlin framework and ordinary SwiftUI app UI removed.",
+    "scripts/generate_app_icons.swift": "Platform/source layout reorganized for the shared NSH application.",
+    "scripts/prepare_android_signing.py": "Platform/source layout reorganized for the shared NSH application.",
+    "settings.gradle.kts": "Android-only system adapter and NSH host integration; KMP and Compose app UI removed.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanNetworkMonitor.kt": "改为驱动共享 Rust 连接 owner：宿主只提交生命周期与网络事实，读取 Rust 宿主投影。",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidDeviceSettings.kt": "保留原 SharedPreferences 位置与提交；既有身份、默认名称和失败关闭规则由 Rust android.boot 处理。",
+    "signing/README.md": "Android-only system adapter and NSH host integration; KMP and Compose app UI removed."
+  },
+  "addedFiles": {
+    "crates/display-core/src/feedback.rs": "新增系统通知/反馈与系统扩展完整描述投影及回归；平台只传事实、格式化本机日期并绘制。",
+    "crates/display-core/src/feedback_test.rs": "新增系统通知/反馈与系统扩展完整描述投影及回归；平台只传事实、格式化本机日期并绘制。",
+    "crates/display-core/src/platform_rules/cache.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/cache_test.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/configuration.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/configuration_test.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/image.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/image_test.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/lease.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/lease_test.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/mod.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/sha256.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/sha256_test.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/transfer.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/transfer_test.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/validation.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/platform_rules/validation_test.rs": "本轮从 Android/Apple 外壳下沉的纯平台兼容规则及相邻边界测试；SHA-256 只使用标准库，无新增依赖。",
+    "crates/display-core/src/view_text.rs": "新增系统通知/反馈与系统扩展完整描述投影及回归；平台只传事实、格式化本机日期并绘制。",
+    "crates/display-core/src/view_text_test.rs": "新增系统通知/反馈与系统扩展完整描述投影及回归；平台只传事实、格式化本机日期并绘制。",
+    "crates/display-core/src/watch_owner/common.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/context_owner_test.rs": "完整 owner 的后台 context、配置撤销、实际编码缓存命中、来源验证与宽整数事件轨迹回归。",
+    "crates/display-core/src/watch_owner/mod.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/owner_test.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/phone.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/phone_cache.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/phone_owner_test.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/phone_sync.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/watch.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/watch_owner_test.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/watch_receive.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "crates/display-core/src/watch_owner/watch_sync.rs": "本轮下沉手机/手表完整同步 owner 与事件轨迹测试；Swift 仅执行返回的 effects 并报告真实结果。",
+    "docs/development/PORTING.md": "本轮平台到共享 Rust/NSH 的完整迁移映射、精度兼容及测试保留记录。",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/connection/RustLinkHost.kt": "Android 宿主接入共享 Rust 连接 owner：生命周期、网络、多播锁与小组件摘要。",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/nativebridge/CoreProjection.kt": "新增复用既有 RustLink.core JNI 的 JSON 投影调用端口，不新增规则或运行时依赖。",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/nativebridge/RustLink.kt": "共享 Rust 连接 owner 的 JNI 入口。",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/nsh/NshHostSession.kt": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/nsh/NshProcessBridge.kt": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/nsh/NshSystemRouter.kt": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/overlay/OverlayDragRegion.kt": "新增 NSH 悬浮窗 chrome 与实测标题拖动区域接线/边界测试；原生不绘制标题与关闭按钮。",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/storage/LegacyPairingStore.kt": "旧版 Android 配对记录的一次性迁移读取。",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/storage/RustVaultKey.kt": "Rust 凭据存储的 Keystore 包裹密钥。",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/WidgetShare.kt": "Native shell over the Rust display core: one C/JNI entry, network transport or system-extension glue.",
+    "platforms/android/app/src/test/kotlin/com/manonloki/lokimetrisdisplay/AndroidLanNetworkStateTest.kt": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/android/app/src/test/kotlin/com/manonloki/lokimetrisdisplay/OverlayDragRegionTest.kt": "新增 NSH 悬浮窗 chrome 与实测标题拖动区域接线/边界测试；原生不绘制标题与关闭按钮。",
+    "platforms/apple/app/LokiMetrisWatch/WatchHookImage.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/app/LokiMetrisWatch/WatchLinkEngine+Effects.swift": "新增 Swift 系统 effects 执行器；业务状态/授权/ACK/超时由共享 Rust owner 决策。",
+    "platforms/apple/app/LokiMetrisWatch/WatchLinkEngine+Persistence.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/app/iosApp/NshMainView.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/app/iosApp/NshProjection.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/app/iosApp/PhoneWatchBridge+Effects.swift": "新增 Swift 系统 effects 执行器；业务状态/授权/ACK/超时由共享 Rust owner 决策。",
+    "platforms/apple/app/iosApp/PhoneWatchBridge+Session.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/app/iosApp/PhoneWatchConfigurationRevisionStore.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/app/iosApp/RustLinkModel.swift": "iOS 宿主接入共享 Rust 连接 owner：前后台、后台刷新、小组件与手表同步。",
+    "platforms/apple/shared/Sources/AppleDisplay/AppleImageRules.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/shared/Sources/AppleDisplay/LanTransportRules.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/shared/Sources/AppleDisplay/LokiCore.swift": "Native shell over the Rust display core: one C/JNI entry, network transport or system-extension glue.",
+    "platforms/apple/shared/Sources/AppleDisplay/PhoneDisplayCache.swift": "Native shell over the Rust display core: one C/JNI entry, network transport or system-extension glue.",
+    "platforms/apple/shared/Sources/AppleDisplay/PlatformRules.swift": "新增 platform.* 的 Swift 类型与精确整数桥接，以及 Foundation/JSON/系统 API 的边界回归。",
+    "platforms/apple/shared/Sources/AppleDisplay/WatchWireRules.swift": "Native system integration or migrated system-extension rules; ordinary application UI is shared NSH.",
+    "platforms/apple/shared/Sources/AppleDisplay/WidgetRefresh.swift": "Native shell over the Rust display core: one C/JNI entry, network transport or system-extension glue.",
+    "platforms/apple/shared/Tests/AppleDisplayTests/PlatformRulesBoundaryTests.swift": "新增 platform.* 的 Swift 类型与精确整数桥接，以及 Foundation/JSON/系统 API 的边界回归。",
+    "platforms/apple/shared/Tests/AppleDisplayTests/WatchOwnerBoundaryTests.swift": "经真实 Rust C ABI 驱动手机/手表 owner 的 Foundation 不透明 state、修订 UInt64 极值、RPC 与 ACK 全链路边界回归。",
+    "platforms/apple/shared/Tests/AppleDisplayTests/WidgetRefreshLiveTests.swift": "Native shell over the Rust display core: one C/JNI entry, network transport or system-extension glue.",
+    "src/app/overlay-chrome.tsx": "新增 NSH 悬浮窗 chrome 与实测标题拖动区域接线/边界测试；原生不绘制标题与关闭按钮。",
+    "src/native/connection/widget_authorization.rs": "新增连接 owner 串行 Widget 目标资格查询及忘记配对后的撤销回归。",
+    "src/native/connection/widget_authorization_test.rs": "新增连接 owner 串行 Widget 目标资格查询及忘记配对后的撤销回归。",
+    "src/native/mobile_host/actions.rs": "新增 Android 启动身份与名称的共享 Rust 规则及既有安装失败关闭/名称保持测试。",
+    "src/native/mobile_host/actions_test.rs": "新增 Android 启动身份与名称的共享 Rust 规则及既有安装失败关闭/名称保持测试。",
+    "tools/checks/test_build_inputs.py": "Checks that Gradle embedded-runtime inputs cover every declared local Cargo runtime dependency.",
+    "crates/display-core/src/phone_host.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "crates/display-core/src/phone_host_test.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "crates/display-core/src/watch_cache_test.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/nativebridge/AndroidHostState.kt": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "platforms/android/app/src/test/kotlin/com/manonloki/lokimetrisdisplay/NshRouterEffectsTest.kt": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "platforms/apple/shared/Tests/AppleDisplayTests/PhoneHostBoundaryTests.swift": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "src/native/connection/asset_cache.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "src/native/connection/asset_cache_test.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "src/native/mobile_host/android_permissions.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "src/native/mobile_host/android_permissions_test.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "src/native/mobile_host/android_router.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "src/native/mobile_host/android_router_test.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "src/native/mobile_host/android_service.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "src/native/mobile_host/android_service_test.rs": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "tools/checks/test_platform_sources.py": "2026-10-27 follow-up: native host decisions/cache lookup ported to Rust, with adjacent behavior and native execution/ABI regression coverage; source inventory checks include local additions.",
+    "platforms/android/app/src/main/res/drawable/tv_banner.xml": "TV launcher banner used by the live leanback manifest entry."
+  },
+  "relocatedFiles": {
+    ".gitattributes": "platforms/android/.gitattributes",
+    ".gitignore": "platforms/android/.gitignore",
+    "androidApp/build.gradle.kts": "platforms/android/app/build.gradle.kts",
+    "androidApp/src/main/AndroidManifest.xml": "platforms/android/app/src/main/AndroidManifest.xml",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/MainActivity.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/MainActivity.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/application/DisplayApplication.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/application/DisplayApplication.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/overlay/AndroidOverlayWindow.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/overlay/AndroidOverlayWindow.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/service/AndroidDisplayService.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/service/AndroidDisplayService.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidRefreshScheduler.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidRefreshScheduler.kt",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/MetrisWidgetProvider.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/MetrisWidgetProvider.kt",
+    "androidApp/src/main/res/drawable-nodpi/ic_launcher_foreground.png": "platforms/android/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png",
+    "androidApp/src/main/res/drawable/ic_launcher_background.xml": "platforms/android/app/src/main/res/drawable/ic_launcher_background.xml",
+    "androidApp/src/main/res/drawable/ic_sync_notification.xml": "platforms/android/app/src/main/res/drawable/ic_sync_notification.xml",
+    "androidApp/src/main/res/drawable/metris_widget_background.xml": "platforms/android/app/src/main/res/drawable/metris_widget_background.xml",
+    "androidApp/src/main/res/drawable/metris_widget_preview.xml": "platforms/android/app/src/main/res/drawable/metris_widget_preview.xml",
+    "androidApp/src/main/res/drawable/metris_widget_refresh.xml": "platforms/android/app/src/main/res/drawable/metris_widget_refresh.xml",
+    "androidApp/src/main/res/drawable/metris_widget_refresh_background.xml": "platforms/android/app/src/main/res/drawable/metris_widget_refresh_background.xml",
+    "androidApp/src/main/res/layout/metris_widget.xml": "platforms/android/app/src/main/res/layout/metris_widget.xml",
+    "androidApp/src/main/res/layout/metris_widget_compact.xml": "platforms/android/app/src/main/res/layout/metris_widget_compact.xml",
+    "androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher.xml": "platforms/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+    "androidApp/src/main/res/mipmap-hdpi/ic_launcher.png": "platforms/android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+    "androidApp/src/main/res/mipmap-mdpi/ic_launcher.png": "platforms/android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+    "androidApp/src/main/res/mipmap-xhdpi/ic_launcher.png": "platforms/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+    "androidApp/src/main/res/mipmap-xxhdpi/ic_launcher.png": "platforms/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+    "androidApp/src/main/res/mipmap-xxxhdpi/ic_launcher.png": "platforms/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+    "androidApp/src/main/res/values-b+zh+Hant/strings.xml": "platforms/android/app/src/main/res/values-b+zh+Hant/strings.xml",
+    "androidApp/src/main/res/values-zh/strings.xml": "platforms/android/app/src/main/res/values-zh/strings.xml",
+    "androidApp/src/main/res/values/metris_widget_strings.xml": "platforms/android/app/src/main/res/values/metris_widget_strings.xml",
+    "androidApp/src/main/res/values/strings.xml": "platforms/android/app/src/main/res/values/strings.xml",
+    "androidApp/src/main/res/xml/data_extraction_rules.xml": "platforms/android/app/src/main/res/xml/data_extraction_rules.xml",
+    "androidApp/src/main/res/xml/metris_widget_info.xml": "platforms/android/app/src/main/res/xml/metris_widget_info.xml",
+    "appleDisplay/.gitignore": "platforms/apple/shared/.gitignore",
+    "appleDisplay/Package.swift": "platforms/apple/shared/Package.swift",
+    "appleDisplay/Sources/AppleDisplay/LanAssetFiles.swift": "platforms/apple/shared/Sources/AppleDisplay/LanAssetFiles.swift",
+    "appleDisplay/Sources/AppleDisplay/LanDisplaySnapshot.swift": "platforms/apple/shared/Sources/AppleDisplay/LanDisplaySnapshot.swift",
+    "appleDisplay/Sources/AppleDisplay/LanImageAsset.swift": "platforms/apple/shared/Sources/AppleDisplay/LanImageAsset.swift",
+    "appleDisplay/Sources/AppleDisplay/LanProjectionDelivery.swift": "platforms/apple/shared/Sources/AppleDisplay/LanProjectionDelivery.swift",
+    "appleDisplay/Sources/AppleDisplay/ProviderPlanBadge.swift": "platforms/apple/shared/Sources/AppleDisplay/ProviderPlanBadge.swift",
+    "appleDisplay/Sources/AppleDisplay/SharedSupport.swift": "platforms/apple/shared/Sources/AppleDisplay/SharedSupport.swift",
+    "appleDisplay/Sources/AppleDisplay/WatchAssetCache.swift": "platforms/apple/shared/Sources/AppleDisplay/WatchAssetCache.swift",
+    "appleDisplay/Sources/AppleDisplay/WatchDisplayStore.swift": "platforms/apple/shared/Sources/AppleDisplay/WatchDisplayStore.swift",
+    "appleDisplay/Sources/AppleDisplay/WatchHTTPConfiguration.swift": "platforms/apple/shared/Sources/AppleDisplay/WatchHTTPConfiguration.swift",
+    "appleDisplay/Sources/AppleDisplay/WatchProtocol.swift": "platforms/apple/shared/Sources/AppleDisplay/WatchProtocol.swift",
+    "appleDisplay/Tests/AppleDisplayTests/LanAssetFilesTests.swift": "platforms/apple/shared/Tests/AppleDisplayTests/LanAssetFilesTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/LanDisplaySnapshotTests.swift": "platforms/apple/shared/Tests/AppleDisplayTests/LanDisplaySnapshotTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/LanImageAssetTests.swift": "platforms/apple/shared/Tests/AppleDisplayTests/LanImageAssetTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/LanProjectionDeliveryTests.swift": "platforms/apple/shared/Tests/AppleDisplayTests/LanProjectionDeliveryTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/SharedFilesTests.swift": "platforms/apple/shared/Tests/AppleDisplayTests/SharedFilesTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/TestSupport.swift": "platforms/apple/shared/Tests/AppleDisplayTests/TestSupport.swift",
+    "appleDisplay/Tests/AppleDisplayTests/WatchAssetCacheTests.swift": "platforms/apple/shared/Tests/AppleDisplayTests/WatchAssetCacheTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/WatchHTTPConfigurationTests.swift": "platforms/apple/shared/Tests/AppleDisplayTests/WatchHTTPConfigurationTests.swift",
+    "appleDisplay/Tests/AppleDisplayTests/WatchTransferTests.swift": "platforms/apple/shared/Tests/AppleDisplayTests/WatchTransferTests.swift",
+    "branding/app-icon.png": "assets/branding/app-icon.png",
+    "build.gradle.kts": "platforms/android/build.gradle.kts",
+    "gradle.properties": "platforms/android/gradle.properties",
+    "gradle/gradle-daemon-jvm.properties": "platforms/android/gradle/gradle-daemon-jvm.properties",
+    "gradle/libs.versions.toml": "platforms/android/gradle/libs.versions.toml",
+    "gradle/wrapper/gradle-wrapper.jar": "platforms/android/gradle/wrapper/gradle-wrapper.jar",
+    "gradle/wrapper/gradle-wrapper.properties": "platforms/android/gradle/wrapper/gradle-wrapper.properties",
+    "gradlew": "platforms/android/gradlew",
+    "gradlew.bat": "platforms/android/gradlew.bat",
+    "iosApp/AppLocalization/en.lproj/InfoPlist.strings": "platforms/apple/app/AppLocalization/en.lproj/InfoPlist.strings",
+    "iosApp/AppLocalization/en.lproj/Localizable.strings": "platforms/apple/app/AppLocalization/en.lproj/Localizable.strings",
+    "iosApp/AppLocalization/zh-Hans.lproj/InfoPlist.strings": "platforms/apple/app/AppLocalization/zh-Hans.lproj/InfoPlist.strings",
+    "iosApp/AppLocalization/zh-Hans.lproj/Localizable.strings": "platforms/apple/app/AppLocalization/zh-Hans.lproj/Localizable.strings",
+    "iosApp/AppLocalization/zh-Hant.lproj/InfoPlist.strings": "platforms/apple/app/AppLocalization/zh-Hant.lproj/InfoPlist.strings",
+    "iosApp/AppLocalization/zh-Hant.lproj/Localizable.strings": "platforms/apple/app/AppLocalization/zh-Hant.lproj/Localizable.strings",
+    "iosApp/Configuration/Config.xcconfig": "platforms/apple/app/Configuration/Config.xcconfig",
+    "iosApp/LokiMetrisWatch/Assets.xcassets/AppIcon.appiconset/AppIcon.png": "platforms/apple/app/LokiMetrisWatch/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+    "iosApp/LokiMetrisWatch/Assets.xcassets/AppIcon.appiconset/Contents.json": "platforms/apple/app/LokiMetrisWatch/Assets.xcassets/AppIcon.appiconset/Contents.json",
+    "iosApp/LokiMetrisWatch/Assets.xcassets/Contents.json": "platforms/apple/app/LokiMetrisWatch/Assets.xcassets/Contents.json",
+    "iosApp/LokiMetrisWatch/Info.plist": "platforms/apple/app/LokiMetrisWatch/Info.plist",
+    "iosApp/LokiMetrisWatch/LokiMetrisWatchApp.swift": "platforms/apple/app/LokiMetrisWatch/LokiMetrisWatchApp.swift",
+    "iosApp/LokiMetrisWatch/WatchHTTPConfigurationStore.swift": "platforms/apple/app/LokiMetrisWatch/WatchHTTPConfigurationStore.swift",
+    "iosApp/LokiMetrisWatch/WatchLinkEngine.swift": "platforms/apple/app/LokiMetrisWatch/WatchLinkEngine.swift",
+    "iosApp/LokiMetrisWatch/WatchProviderQuotaContent.swift": "platforms/apple/app/LokiMetrisWatch/WatchProviderQuotaContent.swift",
+    "iosApp/LokiMetrisWidgets/Info.plist": "platforms/apple/app/LokiMetrisWidgets/Info.plist",
+    "iosApp/LokiMetrisWidgets/LokiMetrisWidgets.entitlements": "platforms/apple/app/LokiMetrisWidgets/LokiMetrisWidgets.entitlements",
+    "iosApp/LokiMetrisWidgets/LokiMetrisWidgets.swift": "platforms/apple/app/LokiMetrisWidgets/LokiMetrisWidgets.swift",
+    "iosApp/WidgetShared/WidgetContainer.swift": "platforms/apple/app/WidgetShared/WidgetContainer.swift",
+    "iosApp/iosApp.xcodeproj/project.pbxproj": "platforms/apple/app/iosApp.xcodeproj/project.pbxproj",
+    "iosApp/iosApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata": "platforms/apple/app/iosApp.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+    "iosApp/iosApp.xcodeproj/xcshareddata/xcschemes/LokiMetrisWatch.xcscheme": "platforms/apple/app/iosApp.xcodeproj/xcshareddata/xcschemes/LokiMetrisWatch.xcscheme",
+    "iosApp/iosApp/Assets.xcassets/AccentColor.colorset/Contents.json": "platforms/apple/app/iosApp/Assets.xcassets/AccentColor.colorset/Contents.json",
+    "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/AppIcon.png": "platforms/apple/app/iosApp/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+    "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/Contents.json": "platforms/apple/app/iosApp/Assets.xcassets/AppIcon.appiconset/Contents.json",
+    "iosApp/iosApp/Assets.xcassets/Contents.json": "platforms/apple/app/iosApp/Assets.xcassets/Contents.json",
+    "iosApp/iosApp/BackgroundRefreshScheduler.swift": "platforms/apple/app/iosApp/BackgroundRefreshScheduler.swift",
+    "iosApp/iosApp/DeviceSettings.swift": "platforms/apple/app/iosApp/DeviceSettings.swift",
+    "iosApp/iosApp/Info.plist": "platforms/apple/app/iosApp/Info.plist",
+    "iosApp/iosApp/MobileBridge.h": "platforms/apple/app/iosApp/MobileBridge.h",
+    "iosApp/iosApp/PhoneWatchBridge.swift": "platforms/apple/app/iosApp/PhoneWatchBridge.swift",
+    "iosApp/iosApp/iOSApp.swift": "platforms/apple/app/iosApp/iOSApp.swift",
+    "iosApp/iosApp/iosApp.entitlements": "platforms/apple/app/iosApp/iosApp.entitlements",
+    "scripts/generate_app_icons.swift": "tools/mobile/generate_app_icons.swift",
+    "scripts/prepare_android_signing.py": "tools/mobile/prepare_android_signing.py",
+    "settings.gradle.kts": "platforms/android/settings.gradle.kts",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanNetworkMonitor.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanNetworkMonitor.kt",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidDeviceSettings.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidDeviceSettings.kt",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetNetwork.kt": "platforms/android/app/src/main/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetNetwork.kt",
+    "signing/README.md": "platforms/android/signing/README.md",
+    "signing/lokimetris-certificate.pem": "platforms/android/signing/lokimetris-certificate.pem"
+  },
+  "removedFiles": {
+    "README.md": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/overlay/AndroidOverlayPages.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/App.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/CyberMotion.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/PanelPage.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/SettingsPage.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/UsageCard.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/platform/AndroidBackgroundSettings.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/platform/AndroidCyberMotion.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/platform/AndroidHookImage.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "androidApp/src/main/kotlin/com/manonloki/lokimetrisdisplay/ui/platform/AndroidQuotaTimestamp.kt": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "docs/01-文件结构.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/02-技术架构.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/03-业务需求整理.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/04-问题与技术路线.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/05-历史开发与验证记录.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/06-发布检查清单.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/07-当前架构.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/08-KMP分层与优化路线.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/09-v1.0.6发布与UI验证.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/10-v1.0.7发布与设备安装.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/README.md": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-hook-detail.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-landscape.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-large-text.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-overlay-hooks.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-overlay-token.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-panel-compact.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-panel.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-settings.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/android-widget.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/apple-widget-lockscreen.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/apple-widget-medium.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/apple-widget-small.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/ipad-landscape.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/iphone-customize.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/iphone-empty.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/iphone-hook-detail.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/iphone-panel-scrolled.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/iphone-panel.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/iphone-settings-release.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/watch-hooks-gif.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/watch-hooks.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/watch-quota.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "docs/images/v1.0.6/watch-token.png": "移除过期发布截图和历史架构/开发记录；当前文档与可重复验证统一位于根 docs/ 和 tools/",
+    "iosApp/iosApp/ContentView.swift": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "iosApp/iosApp/CyberMotion.swift": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "iosApp/iosApp/HookAssetImage.swift": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "iosApp/iosApp/LanDisplayPage.swift": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "iosApp/iosApp/PanelPreferences.swift": "Ordinary mobile UI is implemented once in NSH, or retired pointer/history material has been consolidated into current docs/tools.",
+    "scripts/build_apple_shared.py": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "scripts/test_apple_shared.py": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/build.gradle.kts": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/androidHostTest/kotlin/com/manonloki/lokimetrisdisplay/AndroidLanNetworkStateTest.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/androidHostTest/kotlin/com/manonloki/lokimetrisdisplay/AndroidWidgetDataTest.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/androidHostTest/kotlin/com/manonloki/lokimetrisdisplay/ProviderQuotaCodecTest.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/androidHostTest/kotlin/com/manonloki/lokimetrisdisplay/WidgetEndpointRulesAndroidTest.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/rules/UnicodeComparison.android.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/appleMain/kotlin/com/manonloki/lokimetrisdisplay/rules/UnicodeComparison.apple.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/WatchTransferPolicy.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/HookImageCachePolicy.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/WatchConfigurationPolicy.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/HookImageCachePolicyTest.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/WatchConfigurationPolicyTest.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/WatchTransferPolicyTest.kt": "KMP source/build chain removed; required Android system rules are Android-only Kotlin and Apple extension rules are Foundation Swift.",
+    "androidApp/src/main/c/loki_metris_jni.c": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "appleDisplay/Sources/AppleDisplay/LanDeviceFormFactor.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "appleDisplay/Sources/AppleDisplay/LanFrames.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "appleDisplay/Sources/AppleDisplay/LanSocket.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "appleDisplay/Tests/AppleDisplayTests/LanDiscoveryUpdateTests.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "appleDisplay/Tests/AppleDisplayTests/LanFramesTests.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "appleDisplay/Tests/AppleDisplayTests/LanRetrySchedulerTests.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "appleDisplay/Tests/AppleDisplayTests/LanSocketTests.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "iosApp/iosApp/BackgroundTargetStore.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "iosApp/iosApp/IOSAssetCache.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "iosApp/iosApp/LanLinkEngine+Connection.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "iosApp/iosApp/LanLinkEngine+Display.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "iosApp/iosApp/LanLinkEngine.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "iosApp/iosApp/LanLinkModel.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "iosApp/iosApp/NativeLinkBridge.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "iosApp/iosApp/PairingStore.swift": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanBrowser.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanEngine.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/connection/AndroidLanSocket.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/nativebridge/NativeLinkBridge.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidAssetCache.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidDisplayStore.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/storage/AndroidPairingStore.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/connection/TerminalLinkEngine.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/presentation/ImageDecodePolicy.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/AssetTransferPolicy.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalConnectionTiming.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalDeviceType.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalFramePolicy.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalTransport.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/CommittedRecords.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/ImageCachePolicy.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/AssetTransferPolicyTest.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/ImageCachePolicyTest.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/ImageDecodePolicyTest.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalConnectionTimingTest.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalDeviceTypeTest.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalFramePolicyTest.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalTransportTest.kt": "配对、会话、发现、凭据与图片缓存迁入共享 Rust 连接 owner（src/native/connection），移动宿主不再自建协议状态机。",
+    "scripts/build_mobile_native.py": "移动端不再构建独立协议桥；连接 owner 随 NSH 运行时一起构建。",
+    "appleDisplay/Sources/AppleDisplay/WidgetHTTPClient.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Sources/AppleDisplay/WidgetRefreshTarget.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Sources/AppleDisplay/WidgetSnapshot.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Sources/AppleDisplay/WidgetSnapshotStore.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/EnabledAgentProjectionTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/ProviderQuotaTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/SharedDisplayPolicyTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/TokenNumberTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/UsageDisplayOrderTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/WidgetEndpointBoundaryTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/WidgetHTTPClientTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/WidgetRefreshStoreTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Tests/AppleDisplayTests/WidgetSnapshotTests.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "iosApp/iosApp/WidgetSnapshotPublisher.swift": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/json/AndroidDisplayJson.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetCodec.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetCrypto.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetHttpClient.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetStore.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/widget/AndroidWidgetTarget.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/domain/AgentIdentity.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/domain/ProviderQuota.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/domain/TerminalDisplay.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/presentation/TerminalDisplayProjection.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/presentation/TokenFormatting.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/presentation/UsageDisplayPolicy.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalCapabilities.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/TerminalJsonBoundary.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/WidgetHttpPolicy.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/rules/UnicodeComparison.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/DeviceIdentityRules.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/RefreshConnection.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/SnapshotPolicy.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/storage/TerminalWidgetSnapshot.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/DeviceIdentityRulesTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/ProviderQuotaTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/RefreshConnectionTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/SnapshotPolicyTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalAssetFormatTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalCapabilitiesTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalUsageDisplayTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TerminalWidgetSnapshotTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/TokenFormattingTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/UsageDisplayPolicyTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/WidgetEndpointRulesTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/WidgetHttpPolicyTest.kt": "Display rules, the widget summary store and the widget HTTP protocol moved into the Rust display core (crates/display-core), shared by NSH, WidgetKit, watchOS and Android widgets; native code keeps only transport and drawing.",
+    "appleDisplay/Sources/AppleDisplay/DeviceIdentityPolicy.swift": "Device identity (Keychain read, recovery from pairing accounts, conflict refusal, first creation) moved into Rust (src/native/identity.rs) behind loki_link_identity.",
+    "appleDisplay/Tests/AppleDisplayTests/DeviceIdentityPolicyTests.swift": "Device identity (Keychain read, recovery from pairing accounts, conflict refusal, first creation) moved into Rust (src/native/identity.rs) behind loki_link_identity.",
+    "iosApp/iosApp/DeviceIdentityStore.swift": "Device identity (Keychain read, recovery from pairing accounts, conflict refusal, first creation) moved into Rust (src/native/identity.rs) behind loki_link_identity.",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/domain/PanelConfiguration.kt": "Panel preference defaults, restore and persistence moved into Rust (src/native/mobile_host, shared/contracts/panel); hosts pass legacy values once.",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/PanelConfigurationTest.kt": "Panel preference defaults, restore and persistence moved into Rust (src/native/mobile_host, shared/contracts/panel); hosts pass legacy values once.",
+    "sharedLogic/src/androidMain/kotlin/com/manonloki/lokimetrisdisplay/json/JsonFields.kt": "共享 Rust owner 已接管 JSON 协议校验；Android JSON 扩展无任何生产或测试调用，清理迁移遗留。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/protocol/MdnsProtocol.kt": "启动时的既有身份/名称规则迁到 Rust android.boot 与 platform_rules/validation；原生只读取 SharedPreferences。",
+    "sharedLogic/src/commonMain/kotlin/com/manonloki/lokimetrisdisplay/rules/ValueRules.kt": "规范 UUID 与零值校验由共享 Rust validation 实现，不保留 Kotlin 镜像。",
+    "sharedLogic/src/commonTest/kotlin/com/manonloki/lokimetrisdisplay/MdnsProtocolTest.kt": "镜像 Kotlin 规则已删除；边界改由 platform_rules/validation_test.rs 与 mobile_host/actions_test.rs 验证。",
+    "androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml": "Byte-identical round icon removed; Android roundIcon now references the existing launcher icon and the generator emits only one copy.",
+    "androidApp/src/main/res/mipmap-hdpi/ic_launcher_round.png": "Byte-identical round icon removed; Android roundIcon now references the existing launcher icon and the generator emits only one copy.",
+    "androidApp/src/main/res/mipmap-mdpi/ic_launcher_round.png": "Byte-identical round icon removed; Android roundIcon now references the existing launcher icon and the generator emits only one copy.",
+    "androidApp/src/main/res/mipmap-xhdpi/ic_launcher_round.png": "Byte-identical round icon removed; Android roundIcon now references the existing launcher icon and the generator emits only one copy.",
+    "androidApp/src/main/res/mipmap-xxhdpi/ic_launcher_round.png": "Byte-identical round icon removed; Android roundIcon now references the existing launcher icon and the generator emits only one copy.",
+    "androidApp/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png": "Byte-identical round icon removed; Android roundIcon now references the existing launcher icon and the generator emits only one copy.",
+    "androidApp/src/main/res/values-b+zh+Hant/metris_widget_strings.xml": "Localized overrides were byte-identical to default Widget strings; Android now uses the same default resources.",
+    "androidApp/src/main/res/values-zh/metris_widget_strings.xml": "Localized overrides were byte-identical to default Widget strings; Android now uses the same default resources.",
+    "appleDisplay/Tests/AppleDisplayTests/PhoneHookCacheTests.swift": "Obsolete Swift rule wrapper tests removed; meaningful media-history, configuration and HTTP regressions moved to Rust watch_cache_test.rs, with native ABI/files tests retained.",
+    "appleDisplay/Tests/AppleDisplayTests/WatchSharedProtocolBoundaryTests.swift": "Retired Swift lease/transfer wrappers removed; Rust platform_rules/watch_owner cover policy, and Swift keeps actual Codable/C ABI boundaries.",
+    "iosApp/iosApp/IOSDisplayCache.swift": "Read-only asset lookup and validation moved into Rust connection/asset_cache.rs and loki_link_cached_assets; Swift executes only ABI and file-handle effects.",
+    "iosApp/iosApp/Preview Content/Preview Assets.xcassets/Contents.json": "Unused empty Xcode preview asset catalog removed together with DEVELOPMENT_ASSET_PATHS."
+  },
+  "layoutVersion": 2,
+  "migrationScope": "原始 import 路径与 SHA-256 保留；普通 UI 与 Android 悬浮窗 chrome 共用 NSH，平台纯规则/完整 Watch 同步 owner/系统扩展描述在 Rust，系统 API 与 effects 执行、原生扩展排版留 Platform。此处记录当时的迁移范围，旧 PORTING 文档已退役；当前架构见 docs/architecture/overview.md。",
+  "removedLocalFiles": {
+    "platforms/android/app/src/test/kotlin/com/manonloki/lokimetrisdisplay/NshSystemRouterTest.kt": "Queue/token decision traces moved to Rust android_router_test.rs; NshRouterEffectsTest retains callback dispatch/failure coverage."
+  },
+  "status": "historical: imported native hosts and system extensions retired in favor of the NSH application",
+  "retiredAt": "2026-10-27",
+  "note": "Original paths, imported hashes and migration mappings below are historical evidence, not a list of maintained files.",
+  "historicalSourceAudit": "tools/checks/verify_platform_sources.py",
+  "currentDocumentation": "docs/architecture/overview.md"
+}

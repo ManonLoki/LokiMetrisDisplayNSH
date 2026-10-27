@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/ManonLoki/LokiMetis.git",
+  "revision": "28b73e602060d750197b2b7384bdb8f3e30f107f",
+  "version": "0.9.3",
+  "pairingSource": "git+https://github.com/ManonLoki/LokiMetis.git?rev=28b73e602060d750197b2b7384bdb8f3e30f107f#28b73e602060d750197b2b7384bdb8f3e30f107f",
+  "mobileBridgeSource": "git+https://github.com/ManonLoki/LokiMetis.git?rev=28b73e602060d750197b2b7384bdb8f3e30f107f#28b73e602060d750197b2b7384bdb8f3e30f107f",
+  "licenses": [
+    {
+      "file": "pairing-license.en.md",
+      "sha256": "996d4b6cf2467c23e0fa7010d5721bacbc41150dbe2806e9f3984f0f9f407201"
+    },
+    {
+      "file": "pairing-license.zh-CN.md",
+      "sha256": "0cd4f75f9cc1d03414d36d124e548a0adbac9c11a93ac38f5512b3401b774f0d"
+    }
+  ],
+  "vendoredProtocolSource": false
+}

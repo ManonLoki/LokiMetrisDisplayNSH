@@ -1,0 +1,538 @@
+{
+  "kind": "local-source-snapshot",
+  "sourceRoot": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display",
+  "snapshotRoot": "output/docs-rebuild-20261027-183101/source-evidence",
+  "revision": "9940073af8de38b77a8c27c6e1c3eb8269f0d5d1",
+  "note": "Source directory has no Git metadata; this commit only identifies the copied source bytes. No upstream revision is asserted. The reserved local.invalid URL is an identity for this local fixture, not an existing remote.",
+  "files": [
+    {
+      "path": "App.tsx",
+      "sha256": "649d5b2a0af00a6b544b6d8a15ae3b2301c8a11f62db61655cf97fd3a9432d66"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "0614df3c67fa77aeca4028b704a5a2d783ce92ef5fb37004b72f9e59ed72d86a"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "52c6e7dc2c81b5eeea7abf815dcbfab597fc7fdcedc637149d553eb3857d2554"
+    },
+    {
+      "path": "nsh.json",
+      "sha256": "3c19dece7551fe327081c167e86e1349b2e7028bb2b97fcda1a61886421b9ab2"
+    },
+    {
+      "path": "platform/watchos/Sources/BackgroundDelivery.swift",
+      "sha256": "fb4ce8e7d3b78c422e42ca4afa76dad16b96daaa9a6b02292367374161f9a29d"
+    },
+    {
+      "path": "platform/watchos/Sources/ContentView.swift",
+      "sha256": "e9b57f775694101c304514e1dce2e001b8143d54f1027d9d740cd347dbab7f2d"
+    },
+    {
+      "path": "platform/watchos/Sources/Contract.swift",
+      "sha256": "76de4cab6eb8970b86f817b1d4fc12ef6eaedba672d173225444059e6913d0e5"
+    },
+    {
+      "path": "platform/watchos/Sources/HookDetailView.swift",
+      "sha256": "ee5565daed64bcf26e92f8f4e589ad8a491422dda1f97b1a52430a48b18fccd5"
+    },
+    {
+      "path": "platform/watchos/Sources/ProviderQuotaTitle.swift",
+      "sha256": "c8b51b0b4a41b78d8fa521f50d1b4f4a048ed36189f6ec59afa3281f55329bc4"
+    },
+    {
+      "path": "platform/watchos/Sources/SnapshotCache.swift",
+      "sha256": "65332984369189c4b90ce481d06f0079dd28913953d3308611f470f0c7a772c9"
+    },
+    {
+      "path": "platform/watchos/Sources/SyncStatus.swift",
+      "sha256": "f19a455b1b2080894f35688814001fee18da318b12b1895506cb0ed360c0eb50"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchAmount.swift",
+      "sha256": "09fc5744fe6d7a097322862faa035f5e0bc495540b5d03d655e0c056e5c49935"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchHookImage.swift",
+      "sha256": "18420cc39f7b51239c68eabf94bdca2b27d3002111961a20b3ef8661020e0789"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchImageAsset.swift",
+      "sha256": "4f561d7a717c2e84cd7fe1cae899fb3a12a9ef49c88ddbaed34c9ee3de733876"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchModel.swift",
+      "sha256": "975e647e24d64da4549bd8de4cf3da08cd39895779daf7c3b2bb7bdfce0591b6"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchPanel.swift",
+      "sha256": "a0ae940d797de0d78e4b7a0d1e7f251c8fd6fa4489a10524e274131e0177c61d"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchPresentation.swift",
+      "sha256": "6fc2a5da3773ca7cca6287cc750c6e2af80f0c587f225c7c9f09d95b18edb3c5"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchProviderQuotaContent.swift",
+      "sha256": "771f016a8b55125d4e44435845a66d1f13c3615f8b8486a14b1863e2deea6025"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchRuntime.swift",
+      "sha256": "b7ae090fd5fa24b294aa9c4d388ab8c904bd4ac3ddd437509788c348bdc5ee84"
+    },
+    {
+      "path": "platform/watchos/Sources/WatchSession.swift",
+      "sha256": "83d244ae7f6168aa75bcd655d5ce30a4c23386598240271486cb96094227b4a2"
+    },
+    {
+      "path": "src/app/application.tsx",
+      "sha256": "86ba04959cc3f600b67dac0e65b736add11733597f43c287d6c190e7d8f8ef64"
+    },
+    {
+      "path": "src/app/mod.rs",
+      "sha256": "5bd6e96287745b022caf3d7b76233078060a37a09caa19ae49fa2a7eda6247c7"
+    },
+    {
+      "path": "src/app/navigation-layout.ts",
+      "sha256": "0b96cef9c47be59e50e1a184273e3c8f97804ad3fc6cc8605c78d90ee037e54c"
+    },
+    {
+      "path": "src/app/navigation.tsx",
+      "sha256": "97eecd201782eb0fd7c9f059e33f55ae6cc626cb3394102a1499e6e418620f45"
+    },
+    {
+      "path": "src/app/runtime.ts",
+      "sha256": "bda65447ae643b1eab6379ec492eb070d9114ac65356c5444191273336932a8e"
+    },
+    {
+      "path": "src/app/settings.rs",
+      "sha256": "ab3b6324a4e08018ba5e6b09b1d07e2238bbd9d0d67e6c4c13d7b8d721f04aba"
+    },
+    {
+      "path": "src/features/connection/connection-settings.tsx",
+      "sha256": "14317e70dd4521ea3251bf36ce487780f29879b665b8a9a0192cc9d756b378c6"
+    },
+    {
+      "path": "src/features/connection/device-settings.tsx",
+      "sha256": "365cf2a6eb74ba23d62527084efcffc14f0936463ef616b915c45cfdd7c70315"
+    },
+    {
+      "path": "src/features/connection/identity.rs",
+      "sha256": "6cd1a386d5779dc6f717f83981a1a3ec43b8bf92b1d041d8c5b1d3d4e46e5be1"
+    },
+    {
+      "path": "src/features/connection/identity.ts",
+      "sha256": "4a0f045dadd1a63f28b83b0744d09d325d7b52e2a167b0df5f71b95225682764"
+    },
+    {
+      "path": "src/features/connection/index.ts",
+      "sha256": "84391cfa558e130f9e8f3fc377be2778e307c7021a4514620500795432989a90"
+    },
+    {
+      "path": "src/features/connection/mod.rs",
+      "sha256": "8fc798b58db595015b6dc573907684286cbfd96b595d2e18a95393a71aa9d0f1"
+    },
+    {
+      "path": "src/features/connection/model.rs",
+      "sha256": "b55fe6e396bf58d19864175dd36c571c7a7008a642607da1d0354ae2ae73e922"
+    },
+    {
+      "path": "src/features/connection/model.ts",
+      "sha256": "cce7ca41cb21949202e5b9e5e627e68455dc13232d5613bc7a75b541ecff24d8"
+    },
+    {
+      "path": "src/features/connection/snapshot.rs",
+      "sha256": "196d6f5b5e045b6c511c18e1239ed5ccdf03e92a912c118fcfaf551d61ed4040"
+    },
+    {
+      "path": "src/features/connection/snapshot.ts",
+      "sha256": "a9c7a85d05cedc8b8916d8fe5efe6474769f836023be0e2df108ae220fe4b1ab"
+    },
+    {
+      "path": "src/features/dashboard/dashboard.tsx",
+      "sha256": "c009fa513a3f1c91d33c30574a10d604d445a0a3d4f64a6ac2f86aea098c87c9"
+    },
+    {
+      "path": "src/features/dashboard/index.ts",
+      "sha256": "f2818bde818f06c3137da001d9774909ba6625e1bfffb580a648d560f38f86ae"
+    },
+    {
+      "path": "src/features/hooks/controller.ts",
+      "sha256": "3f5d92ec4b6ccdb179201a90aa8f4692bf7ca20bd6984e2c523341ecc3215ebf"
+    },
+    {
+      "path": "src/features/hooks/hook-card.tsx",
+      "sha256": "528918938bf7c834cebf0c7a83d2ea590783e04367cf9a1dd50ea6a64b2a9639"
+    },
+    {
+      "path": "src/features/hooks/hook-detail.tsx",
+      "sha256": "d909ca6cebca935d531cd6cae4e700cbee62c597faa5aa6b66bcc32abe071bdb"
+    },
+    {
+      "path": "src/features/hooks/hook-image.tsx",
+      "sha256": "1e418d01f7c587bcd2f8924d139854dd526697ae4032ee9b66d39918c9d5a99e"
+    },
+    {
+      "path": "src/features/hooks/hook-status.tsx",
+      "sha256": "b049fa3c8a65f1eebaab673e0eb532bbc94ce9720a9ca96327e34014798735c6"
+    },
+    {
+      "path": "src/features/hooks/hooks-pane.tsx",
+      "sha256": "73a257e0694f10486378691b3b037ab0799e2507e743ced3aeb67c5b58cb172d"
+    },
+    {
+      "path": "src/features/hooks/index.ts",
+      "sha256": "8b8a320b00f81debf9ccf4faf304ba36786d2faa9d039d532428524c517f5e2d"
+    },
+    {
+      "path": "src/features/hooks/mod.rs",
+      "sha256": "f27c9ba41767c6974240af01ca8e744b81dadac743f000d06640c7f8e9ed94bd"
+    },
+    {
+      "path": "src/features/hooks/model.ts",
+      "sha256": "565e2ff1d774230432393682296ea71cb75299b38c4d5f6a9bd3ba75d102d8f1"
+    },
+    {
+      "path": "src/features/hooks/paging.ts",
+      "sha256": "3e706ed1f016c20517fa1d0e3f452afa23289172058838e15ce88c2dff071b40"
+    },
+    {
+      "path": "src/features/mod.rs",
+      "sha256": "2d100bc0b08eaa8703530455db935126a447827fa938d4807eebd6d3359719eb"
+    },
+    {
+      "path": "src/features/settings/index.ts",
+      "sha256": "04c796d8789f0c0aaf115c9cebcfffc950a85ed0cbcf2a4833e34c1baddaff9c"
+    },
+    {
+      "path": "src/features/settings/panel-settings.tsx",
+      "sha256": "70fbb80b124401579848b476778a0f1e3dbb9981312973259450ef6b99955780"
+    },
+    {
+      "path": "src/features/settings/settings-page.tsx",
+      "sha256": "5d6b373483100a037e632b2cd938b9e0cd10c7137aa6fbac3dc118baa9368fc7"
+    },
+    {
+      "path": "src/features/usage/agents.rs",
+      "sha256": "0d5d84f373fe80d2d47ed0c6f6f3f71c525687072aac7425efaa5824123461a9"
+    },
+    {
+      "path": "src/features/usage/formatting.rs",
+      "sha256": "d5fa725bed355912bf21f209a394c271a01c446a81c2ed8f8d76e1215c673b14"
+    },
+    {
+      "path": "src/features/usage/index.ts",
+      "sha256": "e2f25d39a816b669f1de36efb5c638dd60baecf2ed22e92d8eb651df2716dc8f"
+    },
+    {
+      "path": "src/features/usage/logic.ts",
+      "sha256": "0c19df19db022b35f997c6345eb328afe1f5ee1c51b14e75924a2b78d5b33c68"
+    },
+    {
+      "path": "src/features/usage/mod.rs",
+      "sha256": "72e07414d1387abcd5b2a0f196b7a7a17235014cfb821fac3484bbcc504fe50f"
+    },
+    {
+      "path": "src/features/usage/quota.rs",
+      "sha256": "beec81669bc120a364cc627fa83982f5bf3581bfc65260d62b2077a9d538b3d5"
+    },
+    {
+      "path": "src/features/usage/rows.rs",
+      "sha256": "69e6eec8c584d28afe3b930ea3a906af08a61d0dccdaa54c5f21aef6e42edb4d"
+    },
+    {
+      "path": "src/features/usage/usage-card.tsx",
+      "sha256": "2e3868863b584bc49838d3560fb5483c0aa2c5617ff329b05d89a171033bb9f2"
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "0632174ece55e29b0dba00764f742e32ab5154b55e4ba97d018949f64274ed31"
+    },
+    {
+      "path": "src/native/android/java/com/manonloki/lokimetrisdisplay/bridge/DisplayActivity.java",
+      "sha256": "482a2c10044f55ef7bf074e274c84b60460dd4571528eb4623fe589cfb963a5c"
+    },
+    {
+      "path": "src/native/android/java/com/manonloki/lokimetrisdisplay/bridge/DisplayApplication.java",
+      "sha256": "ffab967fcaa3e443f775c7016caeb20f1a6f15ba2e8491d500ea18a2fcba2bd6"
+    },
+    {
+      "path": "src/native/bootstrap/android.rs",
+      "sha256": "d5d88be117ec9ede9ecb95c583bec3de87beeb6f8f84c0b2c6e3d9892a86a4fa"
+    },
+    {
+      "path": "src/native/bootstrap/android_context.rs",
+      "sha256": "3d04cade5469263279c34972317f0be6c331dbb0b64e3e075b3845362e82f1f5"
+    },
+    {
+      "path": "src/native/bootstrap/android_jni.rs",
+      "sha256": "aa8c50644efe111ebf94f026337e068f4588c337ab081b23bfa7edc94cec1e9a"
+    },
+    {
+      "path": "src/native/bootstrap/android_key_record.rs",
+      "sha256": "add3160fbe57bdd8b805575f2fbac35c91ceeda727b5dceefc0f7a80b41b5fc5"
+    },
+    {
+      "path": "src/native/bootstrap/android_keys.rs",
+      "sha256": "872313d7ce524b5813be776bdcb254ee106787af65ffc2909f9e505dd647fdee"
+    },
+    {
+      "path": "src/native/bootstrap/ios.rs",
+      "sha256": "da5da508e39d5f3796730312eb8a699f69235c1789b1e9da93ade1271ca9a07f"
+    },
+    {
+      "path": "src/native/bootstrap/mod.rs",
+      "sha256": "b8bb50a2d0e01735e95c89eeed451b062bcd362f20b29b5359c9dd3a93bfb504"
+    },
+    {
+      "path": "src/native/companion/ios.rs",
+      "sha256": "e2fe5a5baf9b7d5c8ea2c501186f4db404a91f56911d8292efdce644078271ec"
+    },
+    {
+      "path": "src/native/companion/ios_files.rs",
+      "sha256": "81fc5ee5c44d4c647161c9ac5695725113ab2ec70adf3d1fa5c19fd7702814dd"
+    },
+    {
+      "path": "src/native/companion/ios_policy.rs",
+      "sha256": "71a26f2e920afeaeb524e9a567d121cb4283ef8e8eb000509e8e1029c69409e2"
+    },
+    {
+      "path": "src/native/companion/ios_session.rs",
+      "sha256": "105cad3a07daaf0d40ebf933613d044ea67bcd109869f11264902c95eaa960c5"
+    },
+    {
+      "path": "src/native/companion/mod.rs",
+      "sha256": "b9509d716942e9cb468dbf9f29a8ae03218735f26f26196ca61d49be252b2935"
+    },
+    {
+      "path": "src/native/companion/store.rs",
+      "sha256": "3ec25a1664374180812f2aee96e355d977b42707fc6a958390e62ee7fb566982"
+    },
+    {
+      "path": "src/native/connection/asset_cache.rs",
+      "sha256": "ad4a4293f21bb3373670d0a7fd681c5d26579feda7da580fb7bfe1938ec0e564"
+    },
+    {
+      "path": "src/native/connection/assets.rs",
+      "sha256": "0082621768625b5ef406f88bc29ea39f338ebeebd8542c1c61fd0b7f18ddc2eb"
+    },
+    {
+      "path": "src/native/connection/commands.rs",
+      "sha256": "1efdcc543c0d55f8712f97a24c92a0e890fdddad18a3a50a402d58226729ccef"
+    },
+    {
+      "path": "src/native/connection/discovery/bonjour.rs",
+      "sha256": "1965a2ea054f23580467b572a2b97dd23a73d4fc7a88a1c9a6eee5cd61bdc86a"
+    },
+    {
+      "path": "src/native/connection/discovery/bonjour_dns.rs",
+      "sha256": "2e0bfdd63a177ef024fb0c29a3d86812f70152e8316522c72378a03501c3fa03"
+    },
+    {
+      "path": "src/native/connection/discovery/mdns.rs",
+      "sha256": "542a382c58de2d2b1579bcd56a1c5823588682e9f6c2a1c6b9e810bc9b4a2e73"
+    },
+    {
+      "path": "src/native/connection/discovery/mod.rs",
+      "sha256": "27cc2f31da197ff9343514f499cdcb76e95d4a33df70ae9ac7ec18e3ed25b553"
+    },
+    {
+      "path": "src/native/connection/host.rs",
+      "sha256": "824efb2ad9a5aeb17578982efbc1a66cfc7aabad8a08b815ed9eaac0ec9c9e2a"
+    },
+    {
+      "path": "src/native/connection/mod.rs",
+      "sha256": "2ce4d1a824dfb8c099f10ed2a318ec5e4231b5ba2f2126c0aea7705d9b976da5"
+    },
+    {
+      "path": "src/native/connection/owner.rs",
+      "sha256": "fafa2a832f3fe305b0e171e4320d9d97f705306704afaa4a133fb641ef24a0f2"
+    },
+    {
+      "path": "src/native/connection/pairing.rs",
+      "sha256": "47bfa16d38916b3475b2db809959ff6ea7cd393d5ec5b511464da8ee290a6e1f"
+    },
+    {
+      "path": "src/native/connection/projection.rs",
+      "sha256": "811e1ee3e5a0bb80a19d68f3ca7471b4dec9565a996771b81e750d5b6a46c9a5"
+    },
+    {
+      "path": "src/native/connection/session.rs",
+      "sha256": "515de55688dbeb8d46d26f9c7207acda3f97b5a1a6695bf2880a7018890f138f"
+    },
+    {
+      "path": "src/native/connection/snapshot.rs",
+      "sha256": "d4facec4fd4242e2525d9576be90efa5cea019e41b93a6c69b5cc8e0554ad594"
+    },
+    {
+      "path": "src/native/connection/storage.rs",
+      "sha256": "bb767e8c1431c77892a2e5f6eca45e74e04378c744dbced777a57e6e0b993c74"
+    },
+    {
+      "path": "src/native/connection/wire.rs",
+      "sha256": "3ab9ec8c07b48520556b7024cfc7a91e9c6c2a020d49d1651628f76e988c2aea"
+    },
+    {
+      "path": "src/native/credentials/android.rs",
+      "sha256": "3d434b0db69d6b5e82f97183e0a88722e18b3e1b875003cfa97cea29a8ca55c7"
+    },
+    {
+      "path": "src/native/credentials/linux.rs",
+      "sha256": "8d3784e89c0a0032c974533125c082beeba2ca0667cfc9954a0cfd165bd34860"
+    },
+    {
+      "path": "src/native/credentials/macos.rs",
+      "sha256": "88faaa9c81985ebb72893d9f99eaeb53c0023c7b44ef4b9d2836b0004710b4c4"
+    },
+    {
+      "path": "src/native/credentials/mod.rs",
+      "sha256": "e6b18e753e4ad9ff19f4eecbf4bed8eee1d6e82db8a4f0d28c95b9bc1e6384f0"
+    },
+    {
+      "path": "src/native/credentials/windows.rs",
+      "sha256": "db8868e2352d1ba47dc0be91f4dd034ff3da461f536c04b91e7f12e7ac4ddcfa"
+    },
+    {
+      "path": "src/native/exports.rs",
+      "sha256": "cc36b9dc41fe98e54a9bd838ca365e8e52c30d1bae512d7af4a28fcaec667985"
+    },
+    {
+      "path": "src/native/identity.rs",
+      "sha256": "e907ce04b17e1732d97d591a10cf318001fe00f30be0e336a02df5a8c82947e8"
+    },
+    {
+      "path": "src/native/image/decode.rs",
+      "sha256": "1911d24769a689581c46b10679eecfc17b01bea3ba254b7fa30d8992b94c57c5"
+    },
+    {
+      "path": "src/native/image/fixtures.rs",
+      "sha256": "f0eedc191d9d1f9c13fc6f1d094475d9e21b53e2026fd1abd1faf70636d3061c"
+    },
+    {
+      "path": "src/native/image/lzw.rs",
+      "sha256": "be71ce74345ccfe20ea09c0daaa44de3942e5c4c99f1d875d7c58c4297c689b4"
+    },
+    {
+      "path": "src/native/image/mod.rs",
+      "sha256": "c461ec2a965091b7f8d574bb45030bf89a96682dba31cebaa31574975cea6ff0"
+    },
+    {
+      "path": "src/native/image/source.rs",
+      "sha256": "6d33325f6164b9cb90e4dcfc1aee634d36027c10142c732152a7ad639a1f1170"
+    },
+    {
+      "path": "src/native/image/worker.rs",
+      "sha256": "04d72d659f9790b7398f2e1186fb49aa0ed125d807ec39e787c7b8b5f0b95920"
+    },
+    {
+      "path": "src/native/lifecycle/ios.rs",
+      "sha256": "d4d734570b6b6c94ae549de9d117c122d1f97dff2412fb213c0c11f0fa4382f5"
+    },
+    {
+      "path": "src/native/lifecycle/ios_observers.rs",
+      "sha256": "4ab35c4bc7f58e8c30cc2d74a7ac158420d60650da405305a9c31061b48fd5a9"
+    },
+    {
+      "path": "src/native/lifecycle/ios_state.rs",
+      "sha256": "aa729ff40e1595070d4c9b9c048bee80a26e84536732c63c7227835803b4ab88"
+    },
+    {
+      "path": "src/native/lifecycle/linux.rs",
+      "sha256": "6bca9f8976dafde2d4b1da2b7868d4936f242f788d0cf2972dd7d45192407652"
+    },
+    {
+      "path": "src/native/lifecycle/macos.rs",
+      "sha256": "55bc1577bb3026851d8d611e0e7964eb3061d2cee3c5f959d1c61d2dd5e9eff6"
+    },
+    {
+      "path": "src/native/lifecycle/mod.rs",
+      "sha256": "8b0458326679b7cc53dbdd78df5257ca5f0bd0571146f86c6a423bd74d3f589e"
+    },
+    {
+      "path": "src/native/lifecycle/windows.rs",
+      "sha256": "9ab2d36e400c5648404384666edd68945ba133d1d94a6700510910395fd43a54"
+    },
+    {
+      "path": "src/native/mod.rs",
+      "sha256": "9a8e26797e50f5ab7f9496a4b278adaa2262518c1251392476c5c673fc0e6be3"
+    },
+    {
+      "path": "src/native/presentation.rs",
+      "sha256": "da6049e69e4e5dd77c437b99183ca120cb2e8e28fbe8a9df47509bb93b22dd6b"
+    },
+    {
+      "path": "src/shared/contracts/mod.rs",
+      "sha256": "5bdff9fe284fe79ffdac906f9ab001f5d4b30f99fabeedb3b2fc01fe4f186c32"
+    },
+    {
+      "path": "src/shared/contracts/panel.rs",
+      "sha256": "1ada5c58ce4c072f9ef9e1754e99867b00a33412b09c34c0f6d64eeb154f7458"
+    },
+    {
+      "path": "src/shared/contracts/panel.ts",
+      "sha256": "036f0d6f07c348a93718a62e6c89c8c801c70db323124ab3ef14953a918d95cd"
+    },
+    {
+      "path": "src/shared/contracts/snapshot.rs",
+      "sha256": "947541043981d9780aa970b3702be2f0f4691ce459850675fa9c0f0da4a0f7d6"
+    },
+    {
+      "path": "src/shared/contracts/snapshot.ts",
+      "sha256": "6c8e790d564845c9e083373b6e25c641266c9c3fbc61fa1f5d8007088d08b4e2"
+    },
+    {
+      "path": "src/shared/domain/agents.rs",
+      "sha256": "34606151318a2223ce476b236e5fc3f39a46190827a821edb8e01298342e4046"
+    },
+    {
+      "path": "src/shared/domain/agents.ts",
+      "sha256": "44c986f0f257a9709fd72377b035d6ca6f29c4cae67234f0467961d7a9b66e03"
+    },
+    {
+      "path": "src/shared/domain/identity.rs",
+      "sha256": "3fe77165eab5a8224efb4fb9ed7f260e616fda2d458b8981e203457f616c2438"
+    },
+    {
+      "path": "src/shared/domain/mod.rs",
+      "sha256": "228e00a00b60b4d39146e7347d588cec5786f382bfd755b16445b15c4373a920"
+    },
+    {
+      "path": "src/shared/logic.ts",
+      "sha256": "027195294fce291772b54ae5af83499eb545813d4ea8d5778755ff607182cb43"
+    },
+    {
+      "path": "src/shared/mod.rs",
+      "sha256": "fcf935733ba48b8680257028ea25d79d803778cc91d4168559cab64cd7b24fc0"
+    },
+    {
+      "path": "src/shared/ui/effects.tsx",
+      "sha256": "d53e2974183013894d695a3ec54ac799179b789b151f86a2cb7a561e679454c2"
+    },
+    {
+      "path": "src/shared/ui/image-frames.ts",
+      "sha256": "b9166740c43d325d54e5955127b9a452a18e4cac33205b3b3269b59aaa2f6899"
+    },
+    {
+      "path": "src/shared/ui/image-playback.ts",
+      "sha256": "8abc95dad061e2b3c0ec29a25e7c48eacd512d7528e3ca1acdc575d7b4daaa5a"
+    },
+    {
+      "path": "src/shared/ui/image.tsx",
+      "sha256": "255b31a22d8957e4bd888d16512a3da7782c047aca86681cb7b49292e696f938"
+    },
+    {
+      "path": "src/shared/ui/remote-focus.tsx",
+      "sha256": "eacf8b25f1cde98dd73b3cd7b78990ead9ec1b3738144629dff4849d475cd507"
+    },
+    {
+      "path": "src/shared/ui/settings-components.tsx",
+      "sha256": "342b891275f8e10c4b89b6ac7ced44db00228bea439467b1fe475e0f45d777c2"
+    },
+    {
+      "path": "src/shared/ui/theme.ts",
+      "sha256": "d305aa3db14690315818132d4db0d9c9ca421a8f850cc44c820ceb48a81a5ca3"
+    }
+  ],
+  "repositoryIdentity": "https://local.invalid/loki-metris-mobile-display-source-snapshot.git"
+}

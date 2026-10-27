@@ -1,0 +1,10 @@
+{
+  "name": "诡秘神谕",
+  "id": "com.manonloki.lokimetrisdisplay.desktop",
+  "version": "1.0.0",
+  "build": 1,
+  "appearance": "dark",
+  "statusBar": { "foreground": "light" },
+  "icon": "src/assets/branding/app-icon.png",
+  "rust": "."
+}

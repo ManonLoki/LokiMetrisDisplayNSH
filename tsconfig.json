@@ -1,0 +1,5 @@
+{
+  "extends": "./.nsh/tsconfig.json",
+  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["output", "vendor", "platforms"]
+}
