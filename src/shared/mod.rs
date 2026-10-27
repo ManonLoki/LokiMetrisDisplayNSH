@@ -1,4 +1,4 @@
-//! 不依赖页面或系统宿主的共同契约和身份规则。
+//! 不依赖页面或系统宿主的共同契约和 Agent 规则。
 pub(crate) mod contracts;
 pub(crate) mod domain;
 
@@ -18,8 +18,6 @@ pub(crate) fn dispatch(op: &str, args: &[Value]) -> Option<Result<Value, String>
     let result = match op {
         "shared.defaultPanel" => Ok(contracts::panel::default_panel()),
         "shared.restorePanel" => Ok(contracts::panel::restore_panel(argument(args, 0).as_str())),
-        "shared.normalizeComparisonText" => text_argument(args, 0)
-            .map(|text| Value::String(domain::agents::normalize_comparison_text(text))),
         "shared.canonicalAgentKey" => text_argument(args, 0)
             .map(|text| Value::String(domain::agents::canonical_agent_key(text))),
         "shared.agentDisplayName" => text_argument(args, 0)

@@ -223,16 +223,15 @@ pub fn write(service: &str, account: &str, value: &str) -> Result<(), String> {
     Ok(())
 }
 pub fn delete(service: &str, account: &str) -> Result<(), String> {
-    if let Some(value) = lookup(service, account)? {
-        if let Some(index) = value
+    if let Some(value) = lookup(service, account)?
+        && let Some(index) = value
             .strip_prefix(PREFIX)
             .or_else(|| value.strip_prefix(DELETED))
-        {
-            if value.starts_with(PREFIX) {
-                store(service, account, &format!("{DELETED}{index}"))?;
-            }
-            cleanup(service, account, index)?;
+    {
+        if value.starts_with(PREFIX) {
+            store(service, account, &format!("{DELETED}{index}"))?;
         }
+        cleanup(service, account, index)?;
     }
     clear(service, account)
 }

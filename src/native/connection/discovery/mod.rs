@@ -157,13 +157,13 @@ impl Owner {
                     },
                 );
                 let selected = self.selected.as_deref() == Some(id.as_str());
-                if moved && selected && self.wire.as_ref().is_some_and(|w| w.peer != address) {
+                if moved && selected && self.socket.as_ref().is_some_and(|w| w.peer != address) {
                     self.failed("桌面地址已变化，正在恢复连接…".into());
                 } else if self.selected.is_none() && self.records.contains_key(&id) {
                     self.selected = Some(id.clone());
                     self.view["selectedId"] = serde_json::json!(id);
                     self.retry_at = Some(Instant::now());
-                } else if self.wire.is_none() && selected && self.active() {
+                } else if self.socket.is_none() && selected && self.active() {
                     self.retries = 0;
                     self.retry_at = Some(Instant::now());
                 }

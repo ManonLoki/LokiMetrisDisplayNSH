@@ -1,4 +1,4 @@
-use super::super::{connection_test::files, storage};
+use super::super::{connection_test::files, persistence};
 use super::*;
 
 fn image() -> Vec<u8> {
@@ -13,13 +13,13 @@ fn image_cache_rechecks_replacement_length_magic_and_hash() {
     let bytes = image();
     let descriptor = AssetDescriptor::from_bytes(&bytes).unwrap();
     let path = directory.join(&descriptor.hash);
-    storage::atomic_write(&path, &bytes).unwrap();
+    persistence::atomic_write(&path, &bytes).unwrap();
     assert!(verify_file(&path, &descriptor).is_ok());
     let mut corrupt = bytes.clone();
     corrupt[10] ^= 1;
-    storage::atomic_write(&path, &corrupt).unwrap();
+    persistence::atomic_write(&path, &corrupt).unwrap();
     assert!(verify_file(&path, &descriptor).is_err());
-    storage::atomic_write(&path, &bytes).unwrap();
+    persistence::atomic_write(&path, &bytes).unwrap();
     assert!(verify_file(&path, &descriptor).is_ok());
     fs::write(&path, b"GIF89a").unwrap();
     assert!(verify_file(&path, &descriptor).is_err());

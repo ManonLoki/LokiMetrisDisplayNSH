@@ -7,7 +7,7 @@ struct CompanionManifest: Codable, Equatable {
     let revision: String
     let sourceId: String?
     let receivedAtMs: UInt64?
-    let snapshot: DisplaySnapshot?
+    let snapshot: Snapshot?
     let assets: [AssetDescriptor]
 
     var sequence: UInt64? { canonicalUnsigned(revision).flatMap { $0 > 0 ? $0 : nil } }
@@ -44,7 +44,7 @@ struct AssetDescriptor: Codable, Equatable {
     }
 }
 
-struct DisplaySnapshot: Codable, Equatable {
+struct Snapshot: Codable, Equatable {
     let version: Int
     let tokens: TokenUsage?
     let tokenError: String?

@@ -1,6 +1,6 @@
 import { Text, View, computed, type Accessor } from "nsh";
 import { AlertDialog } from "nsh/base";
-import type { Host, ViewState } from "./model";
+import type { Host, ViewState } from "./view-state";
 import { validDeviceId } from "./identity";
 import { CyberConnectionDot, CyberPressable } from "../../shared/ui/effects";
 import { SettingsCard, SettingsDivider, SettingsIcon, row, outlineButton, textButton } from "../../shared/ui/settings-components";

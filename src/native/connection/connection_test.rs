@@ -1,10 +1,10 @@
 use super::*;
 use super::{
     commands::QueuedCommand,
+    framed_socket::{FramedSocket, SocketEvent},
     owner::Owner,
-    snapshot::validate_snapshot,
-    storage::{atomic_write, file_url, private_dir},
-    wire::{Wire, WireEvent},
+    persistence::{atomic_write, file_url, private_dir},
+    snapshot_admission::validate_snapshot,
 };
 use loki_metris_pairing::{SenderSession, assets::AssetDescriptor, session::AwaitingDeviceProof};
 use serde_json::{Value, json};
@@ -316,12 +316,12 @@ fn native_snapshot_boundary_rejects_malformed_before_online() {
 fn tcp_frame_limit_is_checked_before_allocating_remote_payload() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let (tx, rx) = mpsc::sync_channel(8);
-    let _wire = Wire::connect(listener.local_addr().unwrap(), true, 1, tx);
+    let _wire = FramedSocket::connect(listener.local_addr().unwrap(), true, 1, tx);
     let (mut peer, _) = listener.accept().unwrap();
     peer.write_all(&((HANDSHAKE_FRAME + 1) as u32).to_be_bytes())
         .unwrap();
     match rx.recv_timeout(Duration::from_secs(2)).unwrap() {
-        Event::Wire(1, WireEvent::Closed(reason)) => assert_eq!(reason, "无效网络帧长度"),
+        Event::Socket(1, SocketEvent::Closed(reason)) => assert_eq!(reason, "无效网络帧长度"),
         _ => panic!("expected the oversized handshake frame to close the wire"),
     }
 }
@@ -330,7 +330,7 @@ fn tcp_frame_limit_is_checked_before_allocating_remote_payload() {
 fn handshake_peer_cannot_send_the_next_phase_before_the_owner_advances() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let (tx, rx) = mpsc::sync_channel(8);
-    let _wire = Wire::connect(listener.local_addr().unwrap(), true, 7, tx);
+    let _wire = FramedSocket::connect(listener.local_addr().unwrap(), true, 7, tx);
     let (mut peer, _) = listener.accept().unwrap();
     let mut frames = Vec::new();
     for value in [json!({"first":1}), json!({"second":2})] {
@@ -340,7 +340,7 @@ fn handshake_peer_cannot_send_the_next_phase_before_the_owner_advances() {
     }
     peer.write_all(&frames).unwrap();
     match rx.recv_timeout(Duration::from_secs(2)).unwrap() {
-        Event::Wire(7, WireEvent::Closed(reason)) => assert_eq!(reason, "握手阶段提前发送数据"),
+        Event::Socket(7, SocketEvent::Closed(reason)) => assert_eq!(reason, "握手阶段提前发送数据"),
         _ => panic!("expected pre-sent handshake data to close the wire"),
     }
 }
@@ -358,4 +358,20 @@ fn file_url_encodes_private_paths_without_accepting_remote_filenames() {
     atomic_write(&path, b"second").unwrap();
     assert_eq!(fs::read(&path).unwrap(), b"second");
     assert!(!path.with_extension("pending").exists());
+}
+
+#[test]
+fn native_and_projected_snapshot_share_agent_identity_rules() {
+    let v = snapshot(vec![]);
+    // NFC-equal names are one agent for the UI, so the network boundary must reject them too.
+    let mut bad = v.clone();
+    bad["tokens"]["agents"] = json!([
+        {"agent":"caf\u{e9}","amount":amount("1")},
+        {"agent":"cafe\u{301}","amount":amount("2")}
+    ]);
+    assert!(validate_snapshot(&bad).is_err());
+    assert!(crate::features::connection::snapshot::project_snapshot(&bad, &Value::Null).is_none());
+    let mut bad = v;
+    bad["enabledAgents"] = json!(["claudeCode", "claude-code"]);
+    assert!(validate_snapshot(&bad).is_err());
 }

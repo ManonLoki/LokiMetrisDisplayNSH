@@ -1,8 +1,8 @@
 # 应用架构图维护
 
-[打开交互图](lokimetris.html) · [应用架构](../../docs/architecture/overview.md) · [上一版架构图](../architecture-lokimetris-20261027-183101/lokimetris.html)
+[打开交互图](lokimetris.html) · [应用架构](../../docs/architecture/overview.md)
 
-本图使用全局安装的 archify 3.2.0，采用 architecture 模式整理 NSH 应用、连接 owner、系统安全存储、图片处理和 Watch 配套数据流。查看器支持主题切换、Live／Still 和导出。旧版图及回执保留。
+本图使用全局安装的 archify 3.2.0，采用 architecture 模式整理 NSH 应用、连接 owner、系统安全存储、图片处理和 Watch 配套数据流。查看器支持主题切换、Live／Still 和导出。
 
 ## 文件与版本
 
@@ -12,8 +12,8 @@
 | [lokimetris.html](lokimetris.html) | 包含 SVG 与查看器的独立 HTML |
 | [lokimetris.delivery.json](lokimetris.delivery.json) | 规范／产物 SHA-256 和交付回执 |
 | [source-evidence.json](source-evidence.json) | 本地证据快照身份与 132 个源码 SHA-256 |
-| [安装记录](../../output/archify-update-20261027-184140/installation.json) | 3.0.1 → 3.2.0 的版本、全局路径、备份及上游树哈希 |
-| [发布包校验](../../output/archify-update-20261027-184140/archive-verification.json) | 官方 v3.2.0 发布归档与 GitHub 资产 SHA-256 比对 |
+| 安装记录（本机记录：`output/archify-update-20261027-184140/installation.json`） | 3.0.1 → 3.2.0 的版本、全局路径、备份及上游树哈希 |
+| 发布包校验（本机记录：`output/archify-update-20261027-184140/archive-verification.json`） | 官方 v3.2.0 发布归档与 GitHub 资产 SHA-256 比对 |
 
 全局技能及入口分别为 `~/.agents/skills/archify/` 和该目录下的 `bin/archify.mjs`，使用 Node.js 执行。`package.json` 与 `skill-release.json` 均为 3.2.0，自检通过。没有安装额外运行依赖。
 
@@ -41,6 +41,6 @@ node "$ARCHIFY_SKILL/bin/archify.mjs" finalize architecture \
 
 ## 验证记录
 
-[finalize 回执](../../output/archify-update-20261027-184140/finalize/lokimetris.finalize-summary.json) 记录规范、交付、严格检查和浏览器检查结果。源码依据、输出字节和回执相互绑定。
+finalize 回执（本机记录：`output/archify-update-20261027-184140/finalize/lokimetris.finalize-summary.json`） 记录规范、交付、严格检查和浏览器检查结果。源码依据、输出字节和回执相互绑定。
 
-[浏览器回执](../../output/archify-update-20261027-184140/finalize/lokimetris.browser-check.json) 验证四个桌面尺寸的浅色主题及两端尺寸的深色主题。[视觉捕获回执](../../output/archify-update-20261027-184140/visual-check/lokimetris.visual-check.json) 与 [联系表](../../output/archify-update-20261027-184140/visual-check/lokimetris.visual-check.html) 保存截图；截图自动检查与实际视觉复核分别记录于 [本轮摘要](../../output/archify-update-20261027-184140/summary.json)。
+浏览器回执（本机记录：`output/archify-update-20261027-184140/finalize/lokimetris.browser-check.json`） 验证四个桌面尺寸的浅色主题及两端尺寸的深色主题。视觉捕获回执（本机记录：`output/archify-update-20261027-184140/visual-check/lokimetris.visual-check.json`） 与 联系表（本机记录：`output/archify-update-20261027-184140/visual-check/lokimetris.visual-check.html`） 保存截图；截图自动检查与实际视觉复核分别记录于 本轮摘要（本机记录：`output/archify-update-20261027-184140/summary.json`）。

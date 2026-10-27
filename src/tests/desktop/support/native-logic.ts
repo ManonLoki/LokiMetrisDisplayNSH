@@ -13,7 +13,7 @@ function key(op: string, args: unknown[]): string {
 
 /** 同一批规则在 open 选择的真实宿主执行，套件只断言结果；headless 与桌面共用。 */
 export async function nativeFunctions(queries: NativeQuery[]) {
-  const app = await open("./NativeLogicApp.tsx", { storage: { "test.nativeQueries": JSON.stringify(queries) } });
+  const app = await open("./native-logic-app.tsx", { storage: { "test.nativeQueries": JSON.stringify(queries) } });
   try {
     await app.waitFor("native-logic-ready", { timeout: 15_000 });
     const replies = JSON.parse(app.storage()["test.nativeReplies"]) as NativeReply[];

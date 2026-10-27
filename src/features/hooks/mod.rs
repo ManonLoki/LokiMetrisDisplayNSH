@@ -11,3 +11,7 @@ pub(crate) fn dispatch(op: &str, args: &[Value]) -> Option<Result<Value, String>
         }))
     })
 }
+
+#[cfg(test)]
+#[path = "hooks_test.rs"]
+mod hooks_test;

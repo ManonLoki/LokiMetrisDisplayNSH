@@ -6,7 +6,7 @@
 | --- | --- |
 | bundle ID | `com.manonloki.lokimetrisdisplay.LokiMetrisDisplay` |
 | team ID | `VV84X2M6C6` |
-| 版本 / build | `1.0.7` / `15` |
+| 版本 / build | `1.0.8` / `16` |
 | application-identifier | `VV84X2M6C6.com.manonloki.lokimetrisdisplay.LokiMetrisDisplay` |
 
 以配置文件实际值为准；Watch 工程默认 companion ID、团队和版本与之匹配。已有安装应沿用原 bundle ID 与团队，包括曾使用的团队后缀。移动包装器支持 `--id`，模拟器的 application-identifier 也必须同步匹配。

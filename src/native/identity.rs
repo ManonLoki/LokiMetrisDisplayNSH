@@ -25,16 +25,16 @@ pub(crate) fn load(
     save: impl FnOnce(&str) -> Result<bool, Failure>,
     generate: impl FnOnce() -> String,
 ) -> Result<String, Failure> {
-    use crate::shared::domain::identity::valid_id;
+    use crate::features::connection::identity::valid_device_id;
     if let Some(saved) = read()? {
-        return if valid_id(&saved) {
+        return if valid_device_id(&saved) {
             Ok(saved)
         } else {
             Err(Failure::InvalidIdentity)
         };
     }
     let identity = generate();
-    if !valid_id(&identity) {
+    if !valid_device_id(&identity) {
         return Err(Failure::InvalidIdentity);
     }
     if !save(&identity)? && read()?.as_deref() != Some(identity.as_str()) {

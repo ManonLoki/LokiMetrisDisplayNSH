@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import time
 
@@ -46,10 +47,10 @@ def main():
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    scenario = (ROOT / "src/tests/scenarios/DesktopAnimation.scenario.tsx").read_text()
-    scenario = scenario.replace('"__APP_ENTRY__"', json.dumps(str(ROOT / "src/tests/desktop/NativeApp.tsx")))
+    scenario = (ROOT / "src/tests/scenarios/desktop-animation.scenario.tsx").read_text()
+    scenario = scenario.replace('"__APP_ENTRY__"', json.dumps(str(ROOT / "src/tests/desktop/native-app.tsx")))
     scenario = scenario.replace('"__OUTPUT_DIRECTORY__"', json.dumps(str(output)))
-    target = ROOT / ".nsh/test/DesktopAnimation.test.tsx"
+    target = ROOT / ".nsh/test/desktop-animation.test.tsx"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(scenario)
     fixture = app = None
@@ -65,8 +66,11 @@ def main():
                 if fixture.poll() is not None or time.monotonic() > deadline:
                     raise RuntimeError("Animation fixture did not become ready; inspect fixture.log")
                 time.sleep(0.1)
+            # A fresh identity per run: a pairing left by an interrupted run must not change the scenario.
+            data = output / "native-data"
+            shutil.rmtree(data, ignore_errors=True)
             env = os.environ.copy()
-            env["LOKI_TEST_DATA_DIR"] = str(output / "native-data")
+            env["LOKI_TEST_DATA_DIR"] = str(data)
             with (output / "app.log").open("w") as log:
                 app = subprocess.Popen(["nsh", "test", str(target), "--target", "macos", "--verbose",
                                         "--junit", str(output / "results.xml")], cwd=ROOT, env=env,

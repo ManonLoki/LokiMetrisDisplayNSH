@@ -24,16 +24,20 @@ pub(super) fn form_factor() -> String {
     "desktop".into()
 }
 
-#[cfg(target_os = "android")]
-pub(super) fn observe(handle: std::sync::Weak<super::connection::Handle>) {
-    android::observe(handle);
-}
-
+/// Keeps system activity observation alive for as long as the Link owns it.
 #[cfg(target_os = "ios")]
-pub(super) fn observe(
-    handle: std::sync::Weak<super::connection::Handle>,
-) -> super::lifecycle::ActivityObserver {
-    ios::observe(handle)
+pub(super) type ActivityGuard = super::lifecycle::ActivityObserver;
+#[cfg(not(target_os = "ios"))]
+pub(super) type ActivityGuard = ();
+
+/// Starts pushing system foreground facts into the owner; desktop polls them instead.
+pub(super) fn observe(handle: std::sync::Weak<super::connection::Handle>) -> ActivityGuard {
+    #[cfg(target_os = "ios")]
+    return ios::observe(handle);
+    #[cfg(target_os = "android")]
+    return android::observe(handle);
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    drop(handle)
 }
 
 #[cfg(target_os = "android")]
@@ -42,4 +46,5 @@ pub(super) fn foreground() -> Option<bool> {
 }
 
 #[cfg(any(target_os = "android", test))]
+#[path = "android/key_record.rs"]
 mod android_key_record;

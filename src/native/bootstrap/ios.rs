@@ -1,4 +1,5 @@
 //! Standalone NSH startup using the existing iOS container and private Keychain.
+use crate::features::connection::identity::{DEFAULT_NAME, apple_name_error};
 use crate::native::{connection, identity, lifecycle};
 use serde_json::{Value, json};
 use std::{
@@ -7,8 +8,6 @@ use std::{
     ptr,
     sync::Weak,
 };
-
-const DEFAULT_NAME: &str = "LokiMetris Display";
 
 /// Restore the same iOS identity and files without a Swift host.
 pub(super) fn configure(
@@ -28,12 +27,12 @@ pub(super) fn configure(
     let root = home.join("Library/Application Support");
     let saved = preference("mdns.deviceName").and_then(|value| value.as_str().map(str::to_owned));
     let name = saved
-        .filter(|value| crate::shared::domain::identity::apple_name_error(value).is_none())
+        .filter(|value| apple_name_error(value).is_none())
         .unwrap_or_else(|| DEFAULT_NAME.into());
     let legacy_panel = legacy_panel(&root);
     serde_json::from_value(json!({
         "root": root, "deviceId": device_id, "name": name,
-        "hostIdentity": true, "hostLifecycle": true, "platform": "ios",
+        "hostIdentity": true, "hostLifecycle": true, "platform": "ios", "watchCompanion": true,
         "appVersion": bundle_string("CFBundleShortVersionString").unwrap_or_else(|| "1.0".into()),
         "legacyPanel": legacy_panel,
     }))

@@ -2,7 +2,7 @@
 use super::{
     Command, Event, Handle, now_ms,
     owner::{Lifecycle, Owner},
-    storage,
+    persistence,
 };
 use loki_metris_pairing::valid_device_name;
 use serde_json::{Value, json};
@@ -88,7 +88,7 @@ impl Owner {
                     self.cancel();
                     self.selected = None;
                     self.view["selectedId"] = Value::Null;
-                    storage::erase_snapshot(&self.root);
+                    persistence::erase_snapshot(&self.root);
                     self.clear_display();
                 }
                 self.view["status"] = json!("已忘记，可重新配对");
@@ -97,7 +97,7 @@ impl Owner {
                 if !valid_device_name(&name) {
                     return Err("设备名称无效".into());
                 }
-                storage::save_name(&self.root, &self.id, &name)?;
+                persistence::save_name(&self.root, &self.id, &name)?;
                 self.name = name;
                 self.view["deviceName"] = json!(self.name);
             }
@@ -108,7 +108,7 @@ impl Owner {
             Command::Refresh => {
                 if self.capabilities.contains("snapshotQueryV1") && self.view["connected"] == true {
                     self.send_secure(json!({"type":"snapshotRequest"}))?;
-                } else if self.wire.is_none() {
+                } else if self.socket.is_none() {
                     self.retries = 0;
                     self.update_discovery();
                     if self.selected.is_some() {
@@ -135,7 +135,7 @@ impl Owner {
         self.view["error"] = Value::Null;
         self.retries = 0;
         if switched {
-            storage::erase_snapshot(&self.root);
+            persistence::erase_snapshot(&self.root);
             self.clear_display();
         }
         // 中间选择仍须按 FIFO 生效，后续 Forget 才能忘掉正确对象；

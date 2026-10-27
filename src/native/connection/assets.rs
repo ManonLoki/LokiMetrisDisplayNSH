@@ -1,6 +1,6 @@
 //! 图片分块接收与私有磁盘缓存。
 //! 只有长度和摘要都校验成功的私有缓存文件，才会转换成界面可读的 URI。
-use super::{err, owner::Owner, storage};
+use super::{err, owner::Owner, persistence};
 use loki_metris_pairing::assets::{AssetChunk, AssetDescriptor, AssetReceiver};
 use serde_json::{Value, json};
 use std::{
@@ -78,7 +78,7 @@ impl Owner {
             };
             let path = asset_dir(&self.root).join(hash);
             if read_asset(&path, &d).is_ok() {
-                self.view["images"][hash] = json!(storage::file_url(&path));
+                self.view["images"][hash] = json!(persistence::file_url(&path));
                 continue;
             }
             let receiver = AssetReceiver::new(d.clone()).map_err(err)?;
@@ -111,11 +111,11 @@ impl Owner {
         self.assets.progress = None;
         let dir = asset_dir(&self.root);
         let path = dir.join(&d.hash);
-        let stored = storage::private_dir(&dir)
-            .and_then(|_| storage::atomic_write(&path, &bytes))
+        let stored = persistence::private_dir(&dir)
+            .and_then(|_| persistence::atomic_write(&path, &bytes))
             .and_then(|_| read_asset(&path, &d));
         if stored.is_ok() {
-            self.view["images"][&d.hash] = json!(storage::file_url(&path));
+            self.view["images"][&d.hash] = json!(persistence::file_url(&path));
         } else {
             self.assets.failed.insert(d.hash);
             self.view["assetWarning"] = json!("图片缓存保存失败，文字与用量仍可显示。");
@@ -211,7 +211,7 @@ impl Owner {
         for d in descriptors {
             let path = asset_dir(&self.root).join(&d.hash);
             if read_asset(&path, &d).is_ok() {
-                self.view["images"][&d.hash] = json!(storage::file_url(&path));
+                self.view["images"][&d.hash] = json!(persistence::file_url(&path));
             }
         }
     }

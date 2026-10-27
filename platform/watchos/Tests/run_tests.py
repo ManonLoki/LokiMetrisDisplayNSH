@@ -31,9 +31,9 @@ def main():
         subprocess.run(command, check=True, cwd=ROOT)
         presentation = Path(directory) / 'presentation-tests'
         subprocess.run(['xcrun', 'swiftc', str(sources / 'Sources/Contract.swift'),
-                        str(sources / 'Sources/WatchAmount.swift'), str(sources / 'Tests/PresentationTests.swift'),
+                        str(sources / 'Sources/AmountText.swift'), str(sources / 'Sources/DisplayNames.swift'), str(sources / 'Tests/PresentationTests.swift'),
                         '-o', str(presentation)], check=True, cwd=ROOT)
-        subprocess.run([str(presentation)], check=True, cwd=ROOT)
+        subprocess.run([str(presentation), str(ROOT / 'src/tests/fixtures/display-names.json')], check=True, cwd=ROOT)
         images = Path(directory) / 'image-tests'
         subprocess.run(['xcrun', 'swiftc', str(sources / 'Sources/WatchImageAsset.swift'),
                         str(sources / 'Tests/ImageTests.swift'), '-o', str(images)], check=True, cwd=ROOT)

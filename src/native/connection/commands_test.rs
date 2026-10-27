@@ -103,7 +103,7 @@ fn background_then_select_preserves_the_selection_without_connecting() {
     owner.apply(next(&rx)).unwrap();
     assert_eq!(owner.selected.as_deref(), Some(B));
     assert!(!owner.active());
-    assert!(owner.wire.is_none());
+    assert!(owner.socket.is_none());
     // 后台不开启配对窗口。
     assert!(owner.protocol.pairing_revision().is_none());
 }
@@ -120,7 +120,7 @@ fn select_then_background_keeps_the_selection_but_never_opens_its_revoked_window
     owner.apply(next(&rx)).unwrap();
     assert_eq!(owner.selected.as_deref(), Some(B));
     assert!(owner.protocol.pairing_revision().is_none());
-    assert!(owner.wire.is_none());
+    assert!(owner.socket.is_none());
     owner.apply(next(&rx)).unwrap();
     assert!(!owner.active());
     assert!(owner.pairing_offer.is_none());

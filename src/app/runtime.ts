@@ -87,7 +87,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
   async function poll() {
     if (disposed) return;
     const raw = runtime.link.poll();
-    const next = raw === lastNativeState ? state.view() : nativeView(raw, state.view());
+    const next = raw === lastNativeState ? state.view() : nativeView(raw);
     if (raw !== lastNativeState) {
       lastNativeState = raw;
       onView(next);
@@ -120,7 +120,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
             const identity = restored.initialize!;
             const raw = runtime.link.initialize(identity.id, identity.name);
             nativeStarted = true;
-            const next = nativeView(raw, state.view());
+            const next = nativeView(raw);
             state.view.set(next);
             lastNativeState = raw;
             await update({ op: "initialized", view: next });

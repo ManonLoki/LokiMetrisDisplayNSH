@@ -12,12 +12,12 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `Sources/WatchRuntime.swift`、`Sources/WatchModel.swift` | 进程启动、模型通知、前台恢复和后台任务 |
+| `Sources/LokiMetrisWatchApp.swift`、`Sources/WatchRuntime.swift`、`Sources/WatchModel.swift` | 进程启动、模型通知、前台恢复和后台任务 |
 | `Sources/WatchSession.swift`、`Sources/BackgroundDelivery.swift` | WatchConnectivity 回调、串行写入和一次性完成 |
 | `Sources/Contract.swift`、`Sources/SnapshotCache.swift` | v1 契约、顺序校验、文件验证和冷启动恢复 |
 | `Sources/ContentView.swift`、`Sources/HookDetailView.swift` | 三页面与 Hook 详情 |
 | `Sources/WatchImageAsset.swift`、`Sources/WatchHookImage.swift` | 有界解码与可见播放 |
-| `Sources/WatchAmount.swift`、`Sources/WatchPresentation.swift` | 精确数字、名称和展示规则 |
+| `Sources/AmountText.swift`、`Sources/DisplayNames.swift`、`Sources/BehaviorStyle.swift` | 精确数字、Agent 与状态名称（与 Rust 共用 `src/tests/fixtures/display-names.json` 校验）、状态配色 |
 
 `WatchRuntime` 在 App 初始化时创建缓存及会话，包括纯后台启动。`.backgroundTask(.watchConnectivity)` 等待系统待收内容与串行磁盘队列，最多等待 20 秒，取消和正常完成共用一次性 continuation。
 

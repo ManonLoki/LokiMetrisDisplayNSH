@@ -44,12 +44,12 @@ def android_signing(directory=None):
 
 def apple_identity():
     path = ROOT / 'signing/apple/identity.json'
-    return json.loads(path.read_text()) if path.is_file() else {'bundleId': APPLE_ID, 'version': '1.0.7', 'build': 15}
+    return json.loads(path.read_text()) if path.is_file() else {'bundleId': APPLE_ID, 'version': '1.0.8', 'build': 16}
 
 
 def mobile_command(cli, target, stage, *, ios_device=False, application_id=None):
     sdk_target = 'ios' if ios_device else 'ios-simulator'
-    identity = apple_identity() if target == 'ios' else {'bundleId': ANDROID_ID, 'version': '1.0.7', 'build': 9}
+    identity = apple_identity() if target == 'ios' else {'bundleId': ANDROID_ID, 'version': '1.0.8', 'build': 10}
     return [cli, 'package', '--target', 'android' if target == 'android' else sdk_target,
             '--id', application_id or identity['bundleId'], '--app-version', identity['version'],
             '--build', str(identity['build']), '--out', stage]

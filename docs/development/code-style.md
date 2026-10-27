@@ -6,7 +6,7 @@
 
 | 位置 | 职责 |
 | --- | --- |
-| `App.tsx`、`src/app/` | 入口、装配、导航、设置用例与运行时连接 |
+| `App.tsx`、`src/app/` | 入口、装配、导航与运行时连接 |
 | `src/features/` | connection、usage、hooks、settings、dashboard 各业务 |
 | `src/shared/` | 跨业务契约、领域规则和 UI 组件 |
 | `src/native/` | NSH 导出、连接 owner、凭据、生命周期、图片及 Watch 同步 |

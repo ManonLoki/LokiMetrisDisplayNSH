@@ -1,11 +1,12 @@
 //! 配对、恢复和加密会话仍由同一个 owner 线程推进。
 //! 拆分文件不会创建第二个密码状态机；序号消耗和 ACK 顺序继续由共享 Rust 核心决定。
 use super::{
-    Material, err, now_ms,
+    Material, err,
+    framed_socket::{FramedSocket, Phase},
+    now_ms,
     owner::Owner,
-    snapshot::validate_snapshot,
-    storage::decode_secret,
-    wire::{Phase, Wire},
+    persistence::decode_secret,
+    snapshot_admission::validate_snapshot,
 };
 use serde_json::{Value, json};
 use std::{
@@ -16,8 +17,8 @@ use std::{
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(15);
 
 impl Owner {
-    fn wire_mut(&mut self) -> Result<&mut Wire, String> {
-        self.wire.as_mut().ok_or_else(|| "连接已关闭".into())
+    fn socket_mut(&mut self) -> Result<&mut FramedSocket, String> {
+        self.socket.as_mut().ok_or_else(|| "连接已关闭".into())
     }
 
     pub(super) fn connect(&mut self) -> Result<(), String> {
@@ -47,14 +48,15 @@ impl Owner {
             let hello = self.protocol.resume(&id, &self.id, &secret)?;
             json!({"kind":"resume","value":hello})
         };
-        self.drop_wire();
+        self.drop_socket();
         self.generation += 1;
-        let mut wire = Wire::connect(address, pairing, self.generation, self.events.clone());
+        let mut socket =
+            FramedSocket::connect(address, pairing, self.generation, self.events.clone());
         if let Some(deadline) = self.pairing_deadline {
-            wire.deadline = deadline;
+            socket.deadline = deadline;
         }
-        wire.send(&intro)?;
-        self.wire = Some(wire);
+        socket.send(&intro)?;
+        self.socket = Some(socket);
         self.capabilities.clear();
         self.form_factor_reported = false;
         self.assets.reset();
@@ -70,7 +72,7 @@ impl Owner {
     }
 
     pub(super) fn received(&mut self, v: Value) -> Result<(), String> {
-        match self.wire_mut()?.phase {
+        match self.socket_mut()?.phase {
             Phase::Hello => {
                 let reply = self.protocol.hello(
                     serde_json::from_value(v).map_err(err)?,
@@ -78,7 +80,7 @@ impl Owner {
                     Instant::now(),
                 )?;
                 let deadline = self.pairing_deadline.ok_or("配对已过期")?;
-                let w = self.wire_mut()?;
+                let w = self.socket_mut()?;
                 w.phase = Phase::Confirmation;
                 w.deadline = (Instant::now() + HANDSHAKE_TIMEOUT).min(deadline);
                 w.send(&serde_json::to_value(reply).map_err(err)?)?;
@@ -88,11 +90,11 @@ impl Owner {
                 let confirmation = self
                     .protocol
                     .resume_reply(serde_json::from_value(v).map_err(err)?)?;
-                let w = self.wire_mut()?;
+                let w = self.socket_mut()?;
                 w.send(&serde_json::to_value(confirmation).map_err(err)?)?;
                 w.phase = Phase::Streaming;
                 self.send_secure(json!({"deviceId":self.id,"name":self.name,"platform":self.platform,"appVersion":self.app_version}))?;
-                let w = self.wire_mut()?;
+                let w = self.socket_mut()?;
                 w.deadline = Instant::now() + HANDSHAKE_TIMEOUT;
                 w.last_inbound = Instant::now();
                 self.update_discovery();
@@ -163,7 +165,7 @@ impl Owner {
             self.revision.load(Ordering::SeqCst),
             Instant::now(),
         )?;
-        let w = self.wire_mut()?;
+        let w = self.socket_mut()?;
         w.send(&serde_json::to_value(ack).map_err(err)?)?;
         w.paired_close = true;
         Ok(())
@@ -172,7 +174,7 @@ impl Owner {
     pub(super) fn send_secure(&mut self, v: Value) -> Result<(), String> {
         let result = (|| {
             let packet = self.protocol.seal(&serde_json::to_vec(&v).map_err(err)?)?;
-            self.wire_mut()?
+            self.socket_mut()?
                 .send(&serde_json::to_value(packet).map_err(err)?)
         })();
         // seal 已消耗序号；排队失败时必须关闭整条通道，不能带着序号缺口继续发送。
@@ -205,7 +207,7 @@ impl Owner {
         self.view["connected"] = json!(true);
         self.view["status"] = json!("已连接，正在同步");
         self.view["error"] = Value::Null;
-        self.wire_mut()?.deadline = Instant::now() + Duration::from_secs(365 * 86400);
+        self.socket_mut()?.deadline = Instant::now() + Duration::from_secs(365 * 86400);
         self.retries = 0;
         if self.keep_snapshot {
             self.write_snapshot();
@@ -229,8 +231,8 @@ impl Owner {
 
     /// 关闭当前 TCP，保留选择与信任；同一配对窗口内允许按退避重试。
     pub(super) fn failed(&mut self, message: String) {
-        let had_transport = self.wire.is_some();
-        self.drop_wire();
+        let had_transport = self.socket.is_some();
+        self.drop_socket();
         self.protocol.disconnect();
         self.clear_live();
         self.view["status"] = json!("连接中断，正在重试…");
@@ -254,14 +256,14 @@ impl Owner {
 
     /// 撤销连接、配对窗口与重试。
     pub(super) fn cancel(&mut self) {
-        self.drop_wire();
+        self.drop_socket();
         self.retry_at = None;
         self.clear_pairing();
         self.protocol.cancel();
     }
 
-    pub(super) fn drop_wire(&mut self) {
-        if self.wire.take().is_some() {
+    pub(super) fn drop_socket(&mut self) {
+        if self.socket.take().is_some() {
             self.update_discovery();
         }
         self.assets.reset();

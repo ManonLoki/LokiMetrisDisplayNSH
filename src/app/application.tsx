@@ -7,7 +7,7 @@ import { createPanelController } from "../features/hooks";
 import { SettingsPage, createSettingsController } from "../features/settings";
 import { cyberColors } from "../shared/ui/theme";
 import { emptyView, type ViewState } from "../features/connection";
-import { defaultPanel } from "../shared/logic";
+import { defaultPanel } from "../shared/contracts/panel";
 import type { PanelConfig } from "../shared/contracts/panel";
 import { navPlacement } from "./navigation-layout";
 import { createRuntime, type AppRuntime } from "./runtime";

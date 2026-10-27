@@ -18,3 +18,14 @@ fn unknown_agent_display_name_is_not_rewritten() {
     assert_eq!(agent_display_name("Claude_Code"), "Claude Code");
     assert_eq!(agent_display_name("gemini-cli"), "Gemini CLI");
 }
+
+/// The standalone Watch app checks the same fixture against its Swift table.
+#[test]
+fn display_names_match_the_shared_watch_fixture() {
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/display-names.json")).unwrap();
+    for case in fixture["agents"].as_array().unwrap() {
+        let raw = case[0].as_str().unwrap();
+        assert_eq!(agent_display_name(raw), case[1], "{raw}");
+    }
+}

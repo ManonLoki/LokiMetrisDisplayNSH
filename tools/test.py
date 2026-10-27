@@ -20,14 +20,14 @@ def commands(suite, output):
             [python, '-m', 'unittest', 'discover', '-s', 'src/tests/packaging', '-p', 'test_*.py'],
         ]
         if os.name == 'posix':
-            result.append([python, 'src/native/credentials/linux_test.py'])
+            result.append([python, 'src/native/credentials/test_linux.py'])
         result.append(['nsh', 'check'])
-        for name in ['App.test.tsx', 'MobileApp.test.tsx', 'ImagePlayback.test.ts']:
+        for name in ['app.test.tsx', 'mobile-app.test.tsx', 'image-playback.test.ts']:
             result.append(['nsh', 'test', 'src/tests/desktop/' + name, '--junit',
                            str(output / (name + '.xml'))])
         return result
     if suite == 'android':
-        return [[python, 'src/tests/android/entry_test.py']]
+        return [[python, 'src/tests/android/test_entry.py']]
     if suite == 'watch':
         return [[python, 'platform/watchos/Tests/run_tests.py', '--report', str(output / 'cache.json')]]
     if suite == 'visual':

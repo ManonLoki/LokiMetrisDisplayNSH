@@ -56,7 +56,8 @@ fn get(name: &str) -> Result<Option<Vec<u8>>, String> {
     if raw.is_null() {
         return Err("Windows 凭据管理器返回无效内容".into());
     }
-    let value = unsafe {
+    // The credential is copied out before `CredFree`; nothing borrows `raw` afterwards.
+    unsafe {
         let credential = &*raw;
         let result = if credential.size > 2560 || (credential.size > 0 && credential.blob.is_null())
         {
@@ -70,8 +71,7 @@ fn get(name: &str) -> Result<Option<Vec<u8>>, String> {
         };
         CredFree(raw.cast());
         result
-    };
-    value
+    }
 }
 fn put(name: &str, bytes: &[u8]) -> Result<(), String> {
     let mut name = wide(name);

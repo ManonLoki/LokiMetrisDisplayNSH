@@ -3,14 +3,10 @@ use crate::{
     shared::contracts::snapshot::{
         safe_unsigned, valid_agent_name, valid_amount, valid_date, valid_hash,
     },
-    shared::domain::agents::{canonical_agent_key, normalize_comparison_text},
+    shared::domain::{agents::canonical_agent_key, text::normalize_comparison_text},
 };
 use serde_json::{Value, json};
 use std::collections::BTreeSet;
-
-pub fn parse_snapshot(value: &Value, images: &Value) -> Option<Value> {
-    project_snapshot(value, images)
-}
 
 /// 同时接受原始 wire 快照和旧缓存投影；网络入口另验证资源描述、时间范围和认证。
 pub fn project_snapshot(value: &Value, images: &Value) -> Option<Value> {

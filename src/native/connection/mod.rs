@@ -1,17 +1,17 @@
 //! 展示端连接入口和单线程 owner，桌面与移动端共用。
 //! NSH submits bounded commands and reads public state; networking and storage belong to one owner thread.
+mod app_visibility;
 mod asset_cache;
 mod assets;
 mod commands;
 mod discovery;
-mod host;
+mod framed_socket;
 mod owner;
 mod pairing;
-mod projection;
+mod persistence;
+mod public_view;
 mod session;
-mod snapshot;
-mod storage;
-mod wire;
+mod snapshot_admission;
 
 #[cfg(all(test, target_os = "macos"))]
 mod companion_test;
@@ -105,6 +105,9 @@ pub(crate) struct Config {
     pub host_lifecycle: bool,
     #[serde(default = "default_platform")]
     pub platform: String,
+    /// 可信状态提交时为配对的 Apple Watch 发布公开缓存。
+    #[serde(default)]
+    pub watch_companion: bool,
     #[serde(default = "default_version")]
     pub app_version: String,
     /// `phone` 或 `tablet`；桌面不上报形态。
@@ -149,7 +152,7 @@ struct Endpoint {
 /// owner 的唯一事件入口：命令、连接线程与发现线程共享同一个队列。
 enum Event {
     Command(QueuedCommand),
-    Wire(u64, wire::WireEvent),
+    Socket(u64, framed_socket::SocketEvent),
     Discovery(discovery::Found),
 }
 
@@ -174,8 +177,8 @@ pub(crate) struct Handle {
 impl Handle {
     pub fn new(config: Config) -> Result<Self, String> {
         let root = config.root.join("loki-link-v1");
-        storage::private_dir(&root)?;
-        let (id, name) = storage::identity(&root, &config)?;
+        persistence::private_dir(&root)?;
+        let (id, name) = persistence::identity(&root, &config)?;
         if !valid_device_id(&id) || !valid_device_name(&name) {
             return Err("设备身份无效".into());
         }

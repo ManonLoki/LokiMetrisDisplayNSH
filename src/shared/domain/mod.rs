@@ -1,2 +1,2 @@
 pub(crate) mod agents;
-pub(crate) mod identity;
+pub(crate) mod text;

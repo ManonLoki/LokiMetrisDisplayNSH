@@ -8,23 +8,23 @@ Windows、macOS、Linux、Android 与 iOS/iPadOS 共用 `App.tsx` 和同一份 N
 
 1. `App.tsx` 将 `Link` 与 `UiLifecycle` 注入 `createApp`，装配展示台、设置与导航。
 2. `src/app/runtime.ts` 调用 Rust `Settings` 恢复身份和偏好，再调用 `Link.initialize` 创建连接实例。UI 定时读取前台事实与公开投影。
-3. `src/native/exports.rs` 将实例绑定到 NSH `System.locals` 和应用私有目录；VM 关闭时释放。连接 owner 串行处理发现、配对、认证、快照与资源事件。
-4. Rust 校验桌面输入并生成公开快照。TSX 根据窗口尺寸、面板偏好和导航状态渲染，纯展示规则通过 `Presentation.call` 执行。
+3. `src/native/link.rs` 将实例绑定到 NSH `System.locals` 和应用私有目录；VM 关闭时释放。连接 owner 串行处理发现、配对、认证、快照与资源事件。
+4. Rust 校验桌面输入并生成公开快照。TSX 根据窗口尺寸、面板偏好和导航状态渲染，纯展示规则通过 `Rules.call`（`src/shared/native-bridge.ts`）执行。
 
 ## 目录与职责
 
 | 位置 | 职责 |
 | --- | --- |
-| `src/app/` | 应用工厂、导航、运行时与设置用例 |
+| `src/app/` | 应用工厂、导航与运行时 |
 | `src/features/dashboard/` | 展示台布局与详情装配 |
 | `src/features/usage/` | Token、额度、排序和格式化规则 |
 | `src/features/hooks/` | Hooks 卡片、分页、状态、正文和图片详情 |
-| `src/features/connection/` | 公开连接模型、快照投影与名称校验 |
-| `src/features/settings/` | 设备与面板设置界面 |
+| `src/features/connection/` | 公开连接视图、快照投影、设备身份与名称规则 |
+| `src/features/settings/` | 设备与面板设置界面，以及身份恢复、名称确认和面板持久化用例 |
 | `src/shared/` | TS/Rust 公开契约、共用规则、调用适配与 UI |
 | `src/native/connection/` | 连接 owner、发现、认证会话与验证后的资源缓存 |
 | `src/native/credentials/` | Keychain、Credential Manager、Secret Service 与 Android 密钥保护存储 |
-| `src/native/lifecycle/`、`src/native/bootstrap/` | 系统前台事实、身份初始化、JNI 与 UIKit 接线 |
+| `src/native/lifecycle/`、`src/native/bootstrap/`（平台文件多时放入 `android/`、`ios/` 子目录） | 系统前台事实、身份初始化、JNI 与 UIKit 接线 |
 | `src/native/android/` | Android Application／Activity 与电视确认键转换 |
 | `src/native/image/` | 有界 GIF 解码、异步帧准备和 PNG 帧数据 |
 | `src/native/companion/` | iPhone 公开缓存与进程级 WatchConnectivity 投递 |
@@ -58,11 +58,11 @@ GIF 在 Rust 后台工作线程解码为完整画布 PNG 帧。TSX 播放时钟�
 | 关系 | 源码入口 |
 | --- | --- |
 | UI 与原生模块注入 | [App.tsx](../../App.tsx)、[运行时](../../src/app/runtime.ts)、[模块注册](../../src/lib.rs) |
-| VM 到连接 owner | [Link 接口](../../src/native/exports.rs)、[连接实例](../../src/native/connection/mod.rs)、[事件循环](../../src/native/connection/owner.rs) |
-| 规则与设置存储 | [Presentation](../../src/native/presentation.rs)、[Settings 模块](../../src/app/mod.rs) |
-| 移动前台与缓存差异 | [生命周期推进](../../src/native/connection/host.rs)、[Android 初始化](../../src/native/bootstrap/android.rs) |
+| VM 到连接 owner | [Link 接口](../../src/native/link.rs)、[连接实例](../../src/native/connection/mod.rs)、[事件循环](../../src/native/connection/owner.rs) |
+| 规则与设置存储 | [Rules](../../src/native/rules.rs)、[Settings 模块](../../src/features/settings/mod.rs) |
+| 移动前台与缓存差异 | [生命周期推进](../../src/native/connection/app_visibility.rs)、[Android 初始化](../../src/native/bootstrap/android/mod.rs) |
 | 资源验证与播放 | [资源接收](../../src/native/connection/assets.rs)、[图片模块](../../src/native/image/mod.rs)、[界面图片](../../src/shared/ui/image.tsx) |
-| iPhone 到 Watch | [缓存发布](../../src/native/companion/mod.rs)、[系统投递](../../src/native/companion/ios_session.rs)、[手表缓存](../../platform/watchos/Sources/SnapshotCache.swift) |
+| iPhone 到 Watch | [缓存发布](../../src/native/companion/mod.rs)、[系统投递](../../src/native/companion/ios/session.rs)、[手表缓存](../../platform/watchos/Sources/SnapshotCache.swift) |
 
 交互图由 archify 的 architecture 模式生成，[candidate.json](../../.archify/architecture-lokimetris-20261027-184140/candidate.json) 保存组件、关系与源码行号。当前源目录没有 Git 元数据；图使用本次建立的本地源码证据快照验证引用，其提交只标识该快照，不代表上游版本历史。生成命令、证据与检查结果见图目录的 [维护说明](../../.archify/architecture-lokimetris-20261027-184140/README.md)。
 

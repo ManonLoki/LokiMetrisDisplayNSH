@@ -1,5 +1,5 @@
 import { Canvas, Scroll, Text, View, computed, effect, signal, type Accessor, type Bounds, type TextStyle, fontScale } from "nsh";
-import { cardProjection, quotaColor, type DisplayRow, type QuotaProjection, type UsageSnapshot } from "./logic";
+import { cardProjection, quotaColor, type DisplayRow, type QuotaProjection, type UsageSnapshot } from "./card-projection";
 import type { UsageDetail } from "../../shared/contracts/panel";
 import { CyberArrival, CyberNumber, CyberSurfaceScan } from "../../shared/ui/effects";
 import { cyberAlpha, cyberColors as color } from "../../shared/ui/theme";

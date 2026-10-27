@@ -4,10 +4,10 @@ use super::{
     Command, Config, Endpoint, Event, HostCommand, Material, Published, QueuedCommand,
     assets::AssetState,
     discovery::Discovery,
+    framed_socket::{FramedSocket, Phase, SocketEvent},
     pairing::Protocol,
-    projection::empty_view,
-    storage,
-    wire::{Phase, Wire, WireEvent},
+    persistence,
+    public_view::empty_view,
 };
 use serde_json::{Value, json};
 use std::{
@@ -47,6 +47,7 @@ pub(super) struct Owner {
     pub id: String,
     pub name: String,
     pub platform: String,
+    pub watch_companion: bool,
     pub app_version: String,
     pub form_factor: Option<String>,
     pub keep_snapshot: bool,
@@ -61,7 +62,7 @@ pub(super) struct Owner {
     pub endpoints: BTreeMap<String, Endpoint>,
     pub selected: Option<String>,
     pub discovery: Discovery,
-    pub wire: Option<Wire>,
+    pub socket: Option<FramedSocket>,
     pub generation: u64,
     pub lifecycle: Lifecycle,
     pub pairing_offer: Option<Value>,
@@ -77,12 +78,13 @@ pub(super) struct Owner {
 impl Owner {
     pub(super) fn new(setup: &Setup) -> Result<Self, String> {
         let config = &setup.config;
-        let records = storage::load_records(super::CREDENTIAL_SERVICE, &setup.id)?;
+        let records = persistence::load_records(super::CREDENTIAL_SERVICE, &setup.id)?;
         let mut this = Self {
             root: setup.root.clone(),
             id: setup.id.clone(),
             name: setup.name.clone(),
             platform: config.platform.clone(),
+            watch_companion: config.watch_companion,
             app_version: config.app_version.clone(),
             form_factor: config.form_factor.clone(),
             keep_snapshot: config.keep_snapshot,
@@ -97,7 +99,7 @@ impl Owner {
             endpoints: BTreeMap::new(),
             selected: None,
             discovery: Discovery::default(),
-            wire: None,
+            socket: None,
             generation: 0,
             lifecycle: Lifecycle {
                 visible: !config.host_lifecycle,
@@ -146,13 +148,13 @@ impl Owner {
                         self.publish();
                     }
                 }
-                Ok(Event::Wire(generation, event)) => {
+                Ok(Event::Socket(generation, event)) => {
                     if self
-                        .wire
+                        .socket
                         .as_ref()
                         .is_some_and(|w| w.generation == generation)
                     {
-                        self.wire_event(event);
+                        self.socket_event(event);
                     }
                 }
                 Ok(Event::Discovery(found)) => self.found(found),
@@ -175,7 +177,7 @@ impl Owner {
     }
 
     fn next_deadline(&self) -> Option<Instant> {
-        let wire = self.wire.as_ref().map(|w| {
+        let socket = self.socket.as_ref().map(|w| {
             if w.phase == Phase::Streaming && !w.pausing {
                 w.deadline.min(w.last_inbound + IDLE_TIMEOUT)
             } else {
@@ -185,7 +187,7 @@ impl Owner {
         [
             self.pairing_deadline,
             self.retry_at,
-            wire,
+            socket,
             self.assets.deadline(),
             self.discovery.retry_at(),
         ]
@@ -208,16 +210,16 @@ impl Owner {
             self.discovery.clear_retry();
             self.update_discovery();
         }
-        if let Some(wire) = &self.wire {
-            if now >= wire.deadline {
-                if wire.pausing {
-                    self.drop_wire();
+        if let Some(socket) = &self.socket {
+            if now >= socket.deadline {
+                if socket.pausing {
+                    self.drop_socket();
                 } else {
                     self.failed("连接超时，正在重试…".into());
                 }
-            } else if wire.phase == Phase::Streaming
-                && !wire.pausing
-                && now.duration_since(wire.last_inbound) >= IDLE_TIMEOUT
+            } else if socket.phase == Phase::Streaming
+                && !socket.pausing
+                && now.duration_since(socket.last_inbound) >= IDLE_TIMEOUT
             {
                 self.failed("桌面暂不可达，恢复网络后重新连接。".into());
             }
@@ -230,12 +232,12 @@ impl Owner {
         }
     }
 
-    fn wire_event(&mut self, event: WireEvent) {
+    fn socket_event(&mut self, event: SocketEvent) {
         match event {
-            WireEvent::Frame(value) => {
-                if let Some(wire) = self.wire.as_mut() {
-                    wire.last_inbound = Instant::now();
-                    if wire.pausing {
+            SocketEvent::Frame(value) => {
+                if let Some(socket) = self.socket.as_mut() {
+                    socket.last_inbound = Instant::now();
+                    if socket.pausing {
                         return;
                     }
                 }
@@ -243,17 +245,17 @@ impl Owner {
                     self.failed(e);
                     return;
                 }
-                if let Some(wire) = &self.wire {
-                    wire.advance();
+                if let Some(socket) = &self.socket {
+                    socket.advance();
                 }
             }
-            WireEvent::Drained => self.drained(),
-            WireEvent::Closed(reason) => {
-                let Some(wire) = &self.wire else { return };
-                if wire.paired_close && wire.drained() {
+            SocketEvent::Drained => self.drained(),
+            SocketEvent::Closed(reason) => {
+                let Some(socket) = &self.socket else { return };
+                if socket.paired_close && socket.drained() {
                     self.pairing_completed();
-                } else if wire.pausing {
-                    self.drop_wire();
+                } else if socket.pausing {
+                    self.drop_socket();
                 } else {
                     self.failed(reason);
                 }
@@ -262,17 +264,17 @@ impl Owner {
     }
 
     fn drained(&mut self) {
-        let Some(wire) = &self.wire else { return };
-        if wire.paired_close {
+        let Some(socket) = &self.socket else { return };
+        if socket.paired_close {
             self.pairing_completed();
-        } else if wire.pausing {
-            self.drop_wire();
+        } else if socket.pausing {
+            self.drop_socket();
         }
     }
 
     /// 保存 ACK 写完即结束配对连接，稍后以新 TCP 和已存秘密认证。
     fn pairing_completed(&mut self) {
-        self.drop_wire();
+        self.drop_socket();
         self.clear_pairing();
         self.retry_at = Some(Instant::now() + Duration::from_millis(500));
         self.publish();
@@ -288,8 +290,7 @@ impl Owner {
             return;
         }
         let view = self.projection();
-        #[cfg(any(target_os = "ios", test))]
-        if self.platform == "ios" {
+        if self.watch_companion {
             let source = self
                 .selected
                 .as_deref()
@@ -326,12 +327,13 @@ impl Owner {
         service: &str,
         events: SyncSender<Event>,
     ) -> Self {
-        storage::private_dir(&root).unwrap();
+        persistence::private_dir(&root).unwrap();
         Self {
             root,
             id: id.into(),
             name: name.into(),
             platform: "ios".into(),
+            watch_companion: true,
             app_version: "1.0.0".into(),
             form_factor: None,
             keep_snapshot: true,
@@ -346,7 +348,7 @@ impl Owner {
             endpoints: BTreeMap::new(),
             selected: None,
             discovery: Discovery::disabled(),
-            wire: None,
+            socket: None,
             generation: 0,
             lifecycle: Lifecycle {
                 visible: true,

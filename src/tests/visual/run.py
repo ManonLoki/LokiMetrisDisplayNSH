@@ -14,8 +14,8 @@ HERE = Path(__file__).resolve().parent
 IMAGE_COUNTS = {'moving': 8, 'inactive': 5, 'resumed': 8, 'independent': 8, 'background': 5,
                 'foreground-resumed': 8, 'reduced': 5, 'finite-running': 8, 'finite-ended': 5}
 SUITES = {
-    'cards': ('CardAppearance', 'verify-card-frames.swift'),
-    'images': ('ImagePlayback', 'verify-image-playback.swift'),
+    'cards': ('card-appearance', 'verify-card-frames.swift'),
+    'images': ('image-playback', 'verify-image-playback.swift'),
 }
 
 
@@ -47,7 +47,7 @@ def finite_fixture(output):
 def scenario_source(suite, output):
     name, _ = SUITES[suite]
     source = (ROOT / f'src/tests/scenarios/{name}.scenario.tsx').read_text()
-    replacements = {'__APP_ENTRY__': str(ROOT / f'src/tests/desktop/{name}App.tsx'),
+    replacements = {'__APP_ENTRY__': str(ROOT / f'src/tests/desktop/{name}-app.tsx'),
                     '__OUTPUT_DIRECTORY__': str(output)}
     provenance = None
     if suite == 'images':

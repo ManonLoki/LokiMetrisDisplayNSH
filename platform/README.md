@@ -2,7 +2,7 @@
 
 `platform/<平台>/` 保存共享 NSH 应用之外的原生工程、资源和对应测试。当前仅有 [watchOS](watchos/README.md)：随 iPhone 打包的 SwiftUI 配套应用，接收公开快照及图片并维护自己的离线缓存。
 
-共享界面、业务规则和 NSH 注册模块位于 `src/`；Rust 平台 API 适配也按能力放在 `src/native/`。未来需要独立原生工程的补充实现放入对应平台子目录。
+共享界面、业务规则和 NSH 注册模块位于 `src/`；Rust 平台 API 适配也按能力放在 `src/native/`。Android 没有独立工程：`src/native/android/java/` 的 Application／Activity 由 `tools/build/build_android_bridge.py` 编入 NSH 生成的 APK，并与 `src/native/bootstrap/android/context.rs` 的 JNI 符号成对维护，因此留在 `src/native/`。未来需要独立原生工程的补充实现放入对应平台子目录。
 
 | 位置 | 内容 |
 | --- | --- |

@@ -5,28 +5,28 @@
 //! the main thread before the runner starts. A missing GUI session or
 //! inconclusive query is unknown, rather than an invented lifecycle event.
 
+/// `os` is the platform NSH reports; a simulated platform that differs from
+/// the compiled target has no system facts and stays unknown.
 pub fn foreground(os: &str) -> Option<bool> {
-    #[cfg(target_os = "ios")]
-    if os == "ios" {
-        return platform::foreground();
+    if os != std::env::consts::OS {
+        return None;
     }
     #[cfg(target_os = "android")]
-    if os == "android" {
-        return super::bootstrap::foreground();
-    }
-    #[cfg(target_os = "macos")]
-    if os == "macos" {
-        return platform::foreground();
-    }
-    #[cfg(target_os = "windows")]
-    if os == "windows" {
-        return platform::foreground();
-    }
-    #[cfg(target_os = "linux")]
-    if os == "linux" {
-        return platform::foreground();
-    }
-    let _ = os;
+    return super::bootstrap::foreground();
+    #[cfg(any(
+        target_os = "ios",
+        target_os = "macos",
+        target_os = "windows",
+        target_os = "linux"
+    ))]
+    return platform::foreground();
+    #[cfg(not(any(
+        target_os = "android",
+        target_os = "ios",
+        target_os = "macos",
+        target_os = "windows",
+        target_os = "linux"
+    )))]
     None
 }
 
@@ -47,7 +47,7 @@ mod platform;
 mod lifecycle_test;
 
 #[cfg(target_os = "ios")]
-#[path = "ios.rs"]
+#[path = "ios/mod.rs"]
 mod platform;
 
 #[cfg(target_os = "ios")]
@@ -57,7 +57,9 @@ pub(super) use platform::{install, observe};
 pub(super) use ios_observers::ActivityObserver;
 
 #[cfg(any(target_os = "ios", test))]
+#[path = "ios/observers.rs"]
 mod ios_observers;
 
 #[cfg(any(target_os = "ios", test))]
+#[path = "ios/state.rs"]
 mod ios_state;

@@ -4,7 +4,7 @@
 
 在 Windows、macOS、Linux、Android、iPhone、iPad 和 Apple Watch 上查看 AI 编程工具的 Token 用量、账户额度、Agent 活动与图片。首次使用四位码配对，之后恢复已保存的认证连接。
 
-[使用说明](docs/mobile/usage.md) · [交互架构图](.archify/architecture-lokimetris-20261027-184140/lokimetris.html) · [从源码运行](#从源码运行) · [文档目录](docs/README.md)
+[下载安装包](https://github.com/ManonLoki/LokiMetrisDisplayNSH/releases/latest) · [使用说明](docs/mobile/usage.md) · [交互架构图](.archify/architecture-lokimetris-20261027-184140/lokimetris.html) · [从源码运行](#从源码运行) · [文档目录](docs/README.md)
 
 ## 能看到什么
 
@@ -71,7 +71,7 @@ python3 tools/test.py --suite watch
 
 | 位置 | 内容 |
 | --- | --- |
-| `App.tsx`、`src/app/` | 共享入口、导航、运行时与设置用例 |
+| `App.tsx`、`src/app/` | 共享入口、导航与运行时 |
 | `src/features/`、`src/shared/` | 展示台、用量、Hooks、连接、设置与公开契约 |
 | `src/native/` | Rust 连接 owner、凭据、生命周期、图片与 iPhone 缓存同步 |
 | `platform/watchos/` | SwiftUI Watch 应用与对应测试 |

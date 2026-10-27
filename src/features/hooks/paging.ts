@@ -1,5 +1,5 @@
 import type { HookLayout } from "../../shared/contracts/panel";
-import { invoke } from "../../shared/logic";
+import { invoke } from "../../shared/native-bridge";
 
 export function hookLabel(behavior: string): string {
   return invoke("hooks.label", behavior);

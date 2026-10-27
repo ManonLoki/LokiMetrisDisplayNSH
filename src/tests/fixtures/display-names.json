@@ -1,0 +1,107 @@
+{
+  "_comment": "Shared by Rust and the standalone Watch app so both display tables stay identical.",
+  "agents": [
+    [
+      "codex",
+      "Codex"
+    ],
+    [
+      "Claude Code",
+      "Claude Code"
+    ],
+    [
+      " Claude_Code﻿",
+      "Claude Code"
+    ],
+    [
+      "claude",
+      "Claude Code"
+    ],
+    [
+      "grok",
+      "Grok"
+    ],
+    [
+      "Grok-Build",
+      "Grok"
+    ],
+    [
+      "WorkBuddy",
+      "WorkBuddy"
+    ],
+    [
+      "cursor",
+      "Cursor"
+    ],
+    [
+      "open-code",
+      "OpenCode"
+    ],
+    [
+      "Hermes",
+      "Hermes"
+    ],
+    [
+      "Open Claw",
+      "OpenClaw"
+    ],
+    [
+      "code_buddy",
+      "CodeBuddy"
+    ],
+    [
+      "qwenCode",
+      "Qwen Code"
+    ],
+    [
+      "Kimi-Code",
+      "Kimi Code"
+    ],
+    [
+      "qoder",
+      "Qoder"
+    ],
+    [
+      "gemini",
+      "Gemini CLI"
+    ],
+    [
+      "gemini-cli",
+      "Gemini CLI"
+    ],
+    [
+      "gitHubCopilot",
+      "GitHub Copilot"
+    ],
+    [
+      "GitHub Copilot_CLI",
+      "GitHub Copilot"
+    ],
+    [
+      "my unknown agent",
+      "my unknown agent"
+    ]
+  ],
+  "behaviors": [
+    [
+      "idle",
+      "空闲"
+    ],
+    [
+      "running",
+      "运行"
+    ],
+    [
+      "asking",
+      "询问"
+    ],
+    [
+      "error",
+      "出错"
+    ],
+    [
+      "unknown",
+      "出错"
+    ]
+  ]
+}

@@ -8,10 +8,10 @@ NSH 提供 TSX 组件、布局、渐变、动效、原生模块注册与生成 r
 
 | 位置 | 应用职责 |
 | --- | --- |
-| `src/lib.rs`、`src/native/exports.rs` | 注册本项目模块，连接 TSX 与 Rust |
+| `src/lib.rs`、`src/native/link.rs` | 注册本项目模块，连接 TSX 与 Rust |
 | `src/native/lifecycle/` | 平台可见状态、iOS 启动与 scene 通知 |
 | `src/native/companion/` | Watch 公开缓存与 WatchConnectivity 投递 |
-| `src/native/bootstrap/android_context.rs` | 接收应用自己的 JavaVM/application context |
+| `src/native/bootstrap/android/context.rs` | 接收应用自己的 JavaVM/application context |
 | `src/native/android/java/` | 自有 Application/Activity、电视确认键与官方 NshView 接线 |
 | `src/native/image/` | 有界 GIF/LZW 解码、画布合成与异步 PNG 帧准备 |
 | `src/shared/ui/image*.ts*` | 标准 Image 显示帧，各控件独立管理播放时钟 |

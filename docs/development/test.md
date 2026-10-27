@@ -21,19 +21,19 @@ Rust 测试负责格式化、快照校验、配对认证、缓存、GIF 解码�
 | --- | --- |
 | `src/**/**_test.rs` | 同模块生产实现的 Rust 回归 |
 | `src/tests/packaging/` | 构建与签名工具的输入、输出和失败行为 |
-| `src/tests/desktop/App.test.tsx` | 导航、配对阶段、设置持久化、缓存、翻页和详情 |
-| `src/tests/desktop/MobileApp.test.tsx` | 移动身份与偏好迁移、安全区和遥控输入 |
-| `src/tests/desktop/ImagePlayback.test.ts` | 播放时钟、暂停恢复、有限循环和独立播放头 |
+| `src/tests/desktop/app.test.tsx` | 导航、配对阶段、设置持久化、缓存、翻页和详情 |
+| `src/tests/desktop/mobile-app.test.tsx` | 移动身份与偏好迁移、安全区和遥控输入 |
+| `src/tests/desktop/image-playback.test.ts` | 播放时钟、暂停恢复、有限循环和独立播放头 |
 
 可直接运行某组测试：
 
 ```sh
 cargo test --all-targets --locked
 python3 -m unittest discover -s src/tests/packaging -p 'test_*.py'
-python3 src/native/credentials/linux_test.py
-nsh test src/tests/desktop/App.test.tsx
-nsh test src/tests/desktop/MobileApp.test.tsx
-nsh test src/tests/desktop/ImagePlayback.test.ts
+python3 src/native/credentials/test_linux.py
+nsh test src/tests/desktop/app.test.tsx
+nsh test src/tests/desktop/mobile-app.test.tsx
+nsh test src/tests/desktop/image-playback.test.ts
 ```
 
 ## 平台与像素回归
@@ -62,8 +62,8 @@ python3 platform/watchos/Tests/run_tests.py --interop <夹具目录> --report ou
 Linux 与 Windows 的原生 NSH 界面测试需在对应系统运行：
 
 ```sh
-nsh test src/tests/desktop/App.test.tsx --target linux
-nsh test src/tests/desktop/App.test.tsx --target windows
+nsh test src/tests/desktop/app.test.tsx --target linux
+nsh test src/tests/desktop/app.test.tsx --target windows
 ```
 
 ## 设备验收

@@ -1,8 +1,4 @@
-import { invoke } from "../logic";
-
-export function normalizeComparisonText(value: string): string {
-  return invoke("shared.normalizeComparisonText", value);
-}
+import { invoke } from "../native-bridge";
 
 export function canonicalAgentKey(raw: string): string {
   return invoke("shared.canonicalAgentKey", raw);

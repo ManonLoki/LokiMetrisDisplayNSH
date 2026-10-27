@@ -33,13 +33,14 @@ struct PresentationTests {
               "partial estimates retain both qualifiers")
         check(amountQuality(amount("1", completeness: "unknown", confidence: "suspected")) == "范围未知·待核对",
               "unknown range and suspected data retain both qualifiers")
-        check(agentTitle(" Claude_Code\u{feff}") == "Claude Code", "historical Claude alias")
-        check(agentTitle("Grok-Build") == "Grok", "historical Grok alias")
-        check(agentTitle("gemini-cli") == "Gemini CLI", "Gemini CLI name")
-        check(agentTitle("GitHub\u{00a0}Copilot_CLI") == "GitHub Copilot", "ECMAScript whitespace alias")
-        check(agentTitle("my unknown agent") == "my unknown agent", "unknown names remain intact")
-        for (behavior, expected) in [("idle", "空闲"), ("running", "运行"), ("asking", "询问"), ("error", "出错")] {
-            check(behaviorTitle(behavior) == expected, "original \(behavior) status label")
+        // Rust tests read the same fixture, so the two display tables cannot drift apart.
+        let fixture = try JSONSerialization.jsonObject(
+            with: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1]))) as! [String: Any]
+        for pair in fixture["agents"] as! [[String]] {
+            check(agentTitle(pair[0]) == pair[1], "agent display name for \(pair[0])")
+        }
+        for pair in fixture["behaviors"] as! [[String]] {
+            check(behaviorTitle(pair[0]) == pair[1], "status label for \(pair[0])")
         }
         print("Watch presentation: \(passed) checks passed")
     }
