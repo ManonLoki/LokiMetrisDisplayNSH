@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "846c3e6d-cd7b-4db1-8bd6-456fec687827",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261027-212950/candidate.json",
+  "output": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261027-212950/lokimetris.html",
+  "specification": {
+    "sha256": "6ac5b13f1ac75a441e2ea7ddae6ec727294d1bf67711b00dd5ae233ef17fc23a",
+    "bytes": 11594
+  },
+  "artifact": {
+    "sha256": "b4c1125605c0f50410459c5247d2e3ae69e6d7abb7af7cabc446e667a247e40a",
+    "bytes": 845590
+  }
+}

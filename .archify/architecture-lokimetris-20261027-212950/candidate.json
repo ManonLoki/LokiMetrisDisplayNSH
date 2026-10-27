@@ -1,0 +1,509 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "诡秘神谕 · 应用、小组件与 Watch 架构",
+    "locale": "zh-CN",
+    "output": ".archify/architecture-lokimetris-20261027-212950/lokimetris.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/ManonLoki/LokiMetrisDisplayNSH.git",
+      "revision": "ef845dc0d37c35bb302affffcf65b3270d662e4e"
+    }
+  },
+  "components": [
+    {
+      "id": "system-lifecycle",
+      "type": "external",
+      "label": "系统生命周期",
+      "sublabel": "UIKit / Android JNI / 桌面窗口",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "移动应用仅在前台连接",
+      "sources": [
+        {
+          "path": "src/native/lifecycle/mod.rs",
+          "line": 1,
+          "end_line": 65
+        },
+        {
+          "path": "src/native/lifecycle/ios/observers.rs",
+          "line": 1,
+          "end_line": 30
+        },
+        {
+          "path": "src/native/bootstrap/android/mod.rs",
+          "line": 146,
+          "end_line": 172
+        }
+      ]
+    },
+    {
+      "id": "credentials",
+      "type": "security",
+      "label": "系统安全存储",
+      "sublabel": "配对材料仅由 Rust 访问",
+      "pos": [
+        480,
+        40
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "Keychain / Keystore / 系统凭据",
+      "sources": [
+        {
+          "path": "src/native/credentials/mod.rs",
+          "line": 1,
+          "end_line": 59
+        },
+        {
+          "path": "src/native/connection/persistence.rs",
+          "line": 1,
+          "end_line": 110
+        }
+      ]
+    },
+    {
+      "id": "verified-images",
+      "type": "backend",
+      "label": "图片缓存与帧准备",
+      "sublabel": "资源校验 / GIF → PNG 静态帧",
+      "pos": [
+        920,
+        20
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "后台解码 / NSH Image 显示",
+      "sources": [
+        {
+          "path": "src/native/connection/assets.rs",
+          "line": 1,
+          "end_line": 60
+        },
+        {
+          "path": "src/native/image/mod.rs",
+          "line": 1,
+          "end_line": 93
+        },
+        {
+          "path": "src/shared/ui/image.tsx",
+          "line": 1,
+          "end_line": 60
+        }
+      ]
+    },
+    {
+      "id": "collector",
+      "type": "external",
+      "label": "LokiMetris 桌面端",
+      "sublabel": "局域网发现 / 四位码配对",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "TCP 会话 + 只读摘要端点",
+      "sources": [
+        {
+          "path": "src/native/connection/pairing.rs",
+          "line": 1,
+          "end_line": 60
+        },
+        {
+          "path": "src/native/connection/session.rs",
+          "line": 24,
+          "end_line": 73
+        },
+        {
+          "path": "crates/widget-core/src/widget_http.rs",
+          "line": 1,
+          "end_line": 53
+        }
+      ]
+    },
+    {
+      "id": "link-owner",
+      "type": "backend",
+      "label": "Rust 连接 owner",
+      "sublabel": "发现 / 认证 / 快照 / 资源",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "NSH VM 持有 / 串行事件",
+      "sources": [
+        {
+          "path": "src/native/connection/mod.rs",
+          "line": 175,
+          "end_line": 250
+        },
+        {
+          "path": "src/native/connection/owner.rs",
+          "line": 1,
+          "end_line": 130
+        },
+        {
+          "path": "src/native/connection/session.rs",
+          "line": 188,
+          "end_line": 222
+        }
+      ]
+    },
+    {
+      "id": "shared-ui",
+      "type": "frontend",
+      "label": "五端共享 NSH 界面",
+      "sublabel": "展示台 / 详情 / 设置 / 导航",
+      "pos": [
+        920,
+        250
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "Windows / macOS / Linux / Android / iOS",
+      "sources": [
+        {
+          "path": "App.tsx",
+          "line": 1,
+          "end_line": 5
+        },
+        {
+          "path": "src/app/application.tsx",
+          "line": 18,
+          "end_line": 40
+        },
+        {
+          "path": "src/app/runtime.ts",
+          "line": 47,
+          "end_line": 70
+        }
+      ]
+    },
+    {
+      "id": "widget-ext",
+      "type": "frontend",
+      "label": "iOS 小组件 · WidgetKit",
+      "sublabel": "主屏 / 锁屏 / 待机显示",
+      "pos": [
+        40,
+        610
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "Swift 只做网络与绘制",
+      "sources": [
+        {
+          "path": "platform/ios/widgets/LokiMetrisWidgets.swift",
+          "line": 1,
+          "end_line": 45
+        },
+        {
+          "path": "platform/ios/shared/WidgetRefresh.swift",
+          "line": 1,
+          "end_line": 60
+        },
+        {
+          "path": "crates/widget-core/src/ffi.rs",
+          "line": 1,
+          "end_line": 75
+        }
+      ]
+    },
+    {
+      "id": "widget-store",
+      "type": "database",
+      "label": "App Group 共享摘要",
+      "sublabel": "最近摘要 / 只读凭据 / 租约",
+      "pos": [
+        480,
+        610
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "widget-core · 跨进程文件锁",
+      "sources": [
+        {
+          "path": "crates/widget-core/src/store.rs",
+          "line": 1,
+          "end_line": 110
+        },
+        {
+          "path": "src/native/connection/widget.rs",
+          "line": 1,
+          "end_line": 110
+        }
+      ]
+    },
+    {
+      "id": "rules-settings",
+      "type": "backend",
+      "label": "Rust 展示规则与设置",
+      "sublabel": "Rules / Settings",
+      "pos": [
+        920,
+        610
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "普通偏好 → NSH Storage",
+      "sources": [
+        {
+          "path": "src/native/rules.rs",
+          "line": 1,
+          "end_line": 32
+        },
+        {
+          "path": "src/features/settings/mod.rs",
+          "line": 1,
+          "end_line": 43
+        },
+        {
+          "path": "src/app/runtime.ts",
+          "line": 46,
+          "end_line": 60
+        }
+      ]
+    },
+    {
+      "id": "ios-scheduler",
+      "type": "external",
+      "label": "iOS 系统调度",
+      "sublabel": "WidgetKit 时间线 / BGAppRefresh",
+      "pos": [
+        40,
+        900
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "申请约 15 分钟，系统决定唤醒",
+      "sources": [
+        {
+          "path": "platform/ios/bridge/WidgetHostBridge.swift",
+          "line": 78,
+          "end_line": 143
+        },
+        {
+          "path": "platform/ios/shared/WidgetContainer.swift",
+          "line": 1,
+          "end_line": 10
+        },
+        {
+          "path": "crates/widget-core/src/ffi.rs",
+          "line": 76,
+          "end_line": 76
+        }
+      ]
+    },
+    {
+      "id": "watch-app",
+      "type": "frontend",
+      "label": "Apple Watch · SwiftUI",
+      "sublabel": "本地校验 / 缓存 / 三页展示",
+      "pos": [
+        480,
+        900
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "无桌面连接 / 无配对密钥",
+      "sources": [
+        {
+          "path": "platform/watchos/Sources/WatchRuntime.swift",
+          "line": 1,
+          "end_line": 71
+        },
+        {
+          "path": "platform/watchos/Sources/WatchSession.swift",
+          "line": 1,
+          "end_line": 80
+        },
+        {
+          "path": "platform/watchos/Sources/SnapshotCache.swift",
+          "line": 1,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "iphone-publisher",
+      "type": "messagebus",
+      "label": "iPhone 公开缓存与投递",
+      "sublabel": "manifest.json / 图片副本",
+      "pos": [
+        920,
+        900
+      ],
+      "size": [
+        240,
+        100
+      ],
+      "tag": "仅 iOS / WatchConnectivity",
+      "sources": [
+        {
+          "path": "src/native/connection/owner.rs",
+          "line": 287,
+          "end_line": 325
+        },
+        {
+          "path": "src/native/companion/mod.rs",
+          "line": 1,
+          "end_line": 47
+        },
+        {
+          "path": "src/native/companion/ios/mod.rs",
+          "line": 1,
+          "end_line": 110
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "encrypted-session",
+      "from": "collector",
+      "to": "link-owner",
+      "label": "认证加密 TCP",
+      "variant": "security"
+    },
+    {
+      "id": "public-projection",
+      "from": "link-owner",
+      "to": "shared-ui",
+      "label": "Link.poll 公开投影",
+      "variant": "emphasis"
+    },
+    {
+      "id": "secure-records",
+      "from": "link-owner",
+      "to": "credentials",
+      "label": "安全读取 / 持久化",
+      "variant": "security"
+    },
+    {
+      "id": "foreground-fact",
+      "from": "system-lifecycle",
+      "to": "link-owner",
+      "label": "移动端前台事实",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "verified-asset",
+      "from": "link-owner",
+      "to": "verified-images",
+      "label": "校验后的资源",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "frame-uri",
+      "from": "verified-images",
+      "to": "shared-ui",
+      "label": "本地图片 / 帧 URI"
+    },
+    {
+      "id": "native-usecases",
+      "from": "shared-ui",
+      "to": "rules-settings",
+      "label": "规则调用 / 设置保存"
+    },
+    {
+      "id": "widget-publish",
+      "from": "link-owner",
+      "to": "widget-store",
+      "label": "发布摘要 / 授权 / 续租"
+    },
+    {
+      "id": "widget-read",
+      "from": "widget-ext",
+      "to": "widget-store",
+      "label": "读取 / 写回摘要"
+    },
+    {
+      "id": "widget-http",
+      "from": "widget-ext",
+      "to": "collector",
+      "label": "加密只读 HTTP",
+      "variant": "dashed"
+    },
+    {
+      "id": "widget-wake",
+      "from": "ios-scheduler",
+      "to": "widget-ext",
+      "label": "时间线 / 后台唤醒",
+      "variant": "dashed"
+    },
+    {
+      "id": "publish-trusted-state",
+      "from": "link-owner",
+      "to": "iphone-publisher",
+      "label": "iOS 可信状态提交",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "watch-copy",
+      "from": "iphone-publisher",
+      "to": "watch-app",
+      "label": "快照 / 图片副本",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "界面与连接",
+      "items": [
+        "TSX 负责布局、交互与播放时钟；Rust 负责规则与连接。",
+        "Link.initialize / command / poll 是公开边界，秘密不进入 UI。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "信任与生命周期",
+      "items": [
+        "SPAKE2 建立信任；会话为应用层认证加密 TCP。",
+        "移动端退到后台暂停连接；持久化成功后才发送保存 ACK。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "小组件与 Watch",
+      "items": [
+        "小组件只用独立只读凭据拉取摘要；45 秒租约内跳过请求，切换或忘记来源即撤销。",
+        "Watch 仅接收 iPhone 缓存副本，revision 防止旧状态覆盖。"
+      ]
+    }
+  ]
+}

@@ -15,7 +15,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [应用架构](architecture/overview.md) | 模块职责、调用边界、状态归属与源码索引 |
-| [交互架构图](../.archify/architecture-lokimetris-20261027-184140/lokimetris.html) | archify 生成的组件与连接关系，可切换主题并导出 |
+| [交互架构图](../.archify/architecture-lokimetris-20261027-212950/lokimetris.html) | archify 生成的主应用、小组件与 Watch 组件关系，可切换主题并导出 |
 | [局域网协议](architecture/protocol.md) | 发现、配对、认证会话、凭据和资源校验 |
 | [Watch 配套架构](architecture/watch-companion.md) | 缓存契约、跨设备同步、乱序处理与配套打包 |
 | [平台源码](../platform/README.md) | 原生补充工程的放置规则 |

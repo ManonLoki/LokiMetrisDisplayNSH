@@ -44,7 +44,7 @@ def android_signing(directory=None):
 
 def apple_identity():
     path = ROOT / 'signing/apple/identity.json'
-    return json.loads(path.read_text()) if path.is_file() else {'bundleId': APPLE_ID, 'version': '1.0.10', 'build': 19}
+    return json.loads(path.read_text()) if path.is_file() else {'bundleId': APPLE_ID, 'version': '1.0.11', 'build': 20}
 
 
 def widget_group(application_id):

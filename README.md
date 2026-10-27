@@ -4,7 +4,7 @@
 
 在 Windows、macOS、Linux、Android、iPhone、iPad 和 Apple Watch 上查看 AI 编程工具的 Token 用量、账户额度、Agent 活动与图片。首次使用四位码配对，之后恢复已保存的认证连接。
 
-[下载安装包](https://github.com/ManonLoki/LokiMetrisDisplayNSH/releases/latest) · [使用说明](docs/mobile/usage.md) · [交互架构图](.archify/architecture-lokimetris-20261027-184140/lokimetris.html) · [从源码运行](#从源码运行) · [文档目录](docs/README.md)
+[下载安装包](https://github.com/ManonLoki/LokiMetrisDisplayNSH/releases/latest) · [使用说明](docs/mobile/usage.md) · [交互架构图](.archify/architecture-lokimetris-20261027-212950/lokimetris.html) · [从源码运行](#从源码运行) · [文档目录](docs/README.md)
 
 ## 能看到什么
 
@@ -15,7 +15,7 @@
 - **Apple Watch**：读取 iPhone 同步的用量、额度、活动与图片，保留本地缓存和真实同步时间。
 - **iPhone 小组件与待机显示**：主屏幕小／中组件、三种锁屏组件与待机显示共用旧版 WidgetKit 标识，显示最近摘要和真实同步时间。
 
-展示端读取电脑提供的快照，不独立采集 AI 会话或重新计算总量。普通应用在前台连接电脑；iOS 小组件由系统调度，使用桌面授予的独立只读权限短时拉取摘要，刷新间隔由系统决定。Watch 可由系统继续接收 iPhone 已排队的缓存。Android 系统小组件、悬浮窗和后台常驻同步尚未包含。
+展示端读取电脑提供的快照，不独立采集 AI 会话或重新计算总量。普通应用在前台连接电脑；iOS 小组件由系统调度，使用桌面授予的独立只读权限短时拉取摘要；每次申请约 15 分钟后刷新，实际唤醒由系统决定。Watch 可由系统继续接收 iPhone 已排队的缓存。Android 系统小组件、悬浮窗和后台常驻同步尚未包含。
 
 ## 支持的设备
 

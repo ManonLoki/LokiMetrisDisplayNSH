@@ -2,9 +2,9 @@
 
 Windows、macOS、Linux、Android 与 iOS/iPadOS 共用 `App.tsx` 和同一份 NSH TSX/Rust 实现。Apple Watch 是独立 SwiftUI 配套应用，接收 iPhone 已生成的公开缓存。
 
-iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`crates/widget-core/` 复用当前快照与展示规则，执行共享摘要、租约和独立只读 HTTP 协议；`platform/ios/` 执行系统容器、网络传输、时间线刷新与绘制。下方交互图覆盖主应用与 Watch；新增 Widget 通道以本页说明为准。
+iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`crates/widget-core/` 复用当前快照与展示规则，执行共享摘要、租约和独立只读 HTTP 协议；`platform/ios/` 执行系统容器、网络传输、时间线刷新与绘制。下方交互图覆盖主应用、小组件与 Watch 三条通道。
 
-[打开交互架构图](../../.archify/architecture-lokimetris-20261027-184140/lokimetris.html) · [连接协议](protocol.md) · [Watch 数据契约](watch-companion.md)
+[打开交互架构图](../../.archify/architecture-lokimetris-20261027-212950/lokimetris.html) · [连接协议](protocol.md) · [Watch 数据契约](watch-companion.md)
 
 ## 从入口到展示台
 
@@ -54,7 +54,7 @@ Android 配置 `keep_snapshot = false`，重启后等待新快照；iOS 默认�
 
 GIF 在 Rust 后台工作线程解码为完整画布 PNG 帧。TSX 播放时钟选择帧，官方 NSH `Image` 显示静态图；后台、离开当前页或减少动态效果时暂停。独立 Watch 使用自己的缓存与播放实现。
 
-小组件通过 App Group 读取最近摘要。认证会话收到 `widgetHttpV1` 与只读端点后，只在原生私有路径记录权限，以实际已认证 TCP 对端为主机地址；端点和密钥不进入 TSX 或 Watch 公共投影。收到认证快照时发布、心跳时续租，断线停止续租并保留摘要；切换或忘记来源撤销相应配置。跨进程锁和请求代次避免旧 HTTP 响应覆盖新来源。WidgetKit 时间线及 BGAppRefreshTask 的实际执行时机由 iOS 决定。
+小组件通过 App Group 读取最近摘要。认证会话收到 `widgetHttpV1` 与只读端点后，只在原生私有路径记录权限，以实际已认证 TCP 对端为主机地址；端点和密钥不进入 TSX 或 Watch 公共投影。收到认证快照时发布、心跳时续租，断线停止续租并保留摘要；切换或忘记来源撤销相应配置。跨进程锁和请求代次避免旧 HTTP 响应覆盖新来源。WidgetKit 时间线与 BGAppRefreshTask 都申请约 15 分钟后再次刷新，实际执行时机由 iOS 决定。Swift 只经 `loki_core_call` 调用 `store.load`、`view.describe`、`widget.begin/finish` 等少量操作；主应用连接 owner 直接使用 widget-core 的 Rust API。
 
 ## 构建与源码证据
 
@@ -67,8 +67,9 @@ GIF 在 Rust 后台工作线程解码为完整画布 PNG 帧。TSX 播放时钟�
 | 规则与设置存储 | [Rules](../../src/native/rules.rs)、[Settings 模块](../../src/features/settings/mod.rs) |
 | 移动前台与缓存差异 | [生命周期推进](../../src/native/connection/app_visibility.rs)、[Android 初始化](../../src/native/bootstrap/android/mod.rs) |
 | 资源验证与播放 | [资源接收](../../src/native/connection/assets.rs)、[图片模块](../../src/native/image/mod.rs)、[界面图片](../../src/shared/ui/image.tsx) |
+| 小组件通道 | [摘要发布与撤销](../../src/native/connection/widget.rs)、[共享存储](../../crates/widget-core/src/store.rs)、[Swift 入口](../../crates/widget-core/src/ffi.rs)、[系统调度](../../platform/ios/bridge/WidgetHostBridge.swift) |
 | iPhone 到 Watch | [缓存发布](../../src/native/companion/mod.rs)、[系统投递](../../src/native/companion/ios/session.rs)、[手表缓存](../../platform/watchos/Sources/SnapshotCache.swift) |
 
-交互图由 archify 的 architecture 模式生成，[candidate.json](../../.archify/architecture-lokimetris-20261027-184140/candidate.json) 保存生成当时的组件、关系与源码行号。图使用独立的本地源码证据快照，其提交标识该快照；新增 Widget 通道见本页说明。生成命令、证据与检查结果见图目录的 [维护说明](../../.archify/architecture-lokimetris-20261027-184140/README.md)。
+交互图由 archify 的 architecture 模式生成，[candidate.json](../../.archify/architecture-lokimetris-20261027-212950/candidate.json) 保存组件、关系与源码行号，证据固定在本仓库的一次提交。生成命令与检查结果见图目录的 [维护说明](../../.archify/architecture-lokimetris-20261027-212950/README.md)。
 
 开发命令见 [构建说明](../development/build.md)，自动测试与设备验收边界见 [测试说明](../development/test.md)。
