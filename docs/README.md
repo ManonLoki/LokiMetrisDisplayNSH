@@ -1,6 +1,6 @@
 # 文档目录
 
-文档描述当前 NSH TSX/Rust 应用与 SwiftUI Watch 配套工程。先从 [项目 README](../README.md) 了解功能，再按使用或开发目的选择入口。
+文档描述当前 NSH TSX/Rust 应用、iOS WidgetKit 扩展与 SwiftUI Watch 配套工程。先从 [项目 README](../README.md) 了解功能，再按使用或开发目的选择入口。
 
 ## 使用与安装
 

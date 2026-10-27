@@ -10,6 +10,7 @@ mod lifecycle;
 mod link;
 mod rules;
 mod ui_lifecycle;
+pub(crate) mod widgets;
 
 pub use link::Link;
 pub use rules::Rules;

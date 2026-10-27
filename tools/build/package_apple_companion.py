@@ -13,6 +13,7 @@ from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parents[2]
 WATCH_PROJECT = ROOT / 'platform/watchos/LokiMetrisWatch.xcodeproj'
+WIDGET_PROJECT = ROOT / 'platform/ios/widgets/LokiMetrisWidgets.xcodeproj'
 
 
 def run(command, *, log=None):
@@ -35,16 +36,24 @@ def project_value(value):
     return json.dumps(str(value), ensure_ascii=False)
 
 
-def watch_target(project):
+def native_target(project, name):
     data = subprocess.check_output(['plutil', '-convert', 'json', '-o', '-', str(project / 'project.pbxproj')])
     contents = json.loads(data)
     targets = [(key, value) for key, value in contents['objects'].items()
-               if value.get('isa') == 'PBXNativeTarget' and value.get('name') == 'LokiMetrisWatch']
+               if value.get('isa') == 'PBXNativeTarget' and value.get('name') == name]
     if len(targets) != 1:
-        raise RuntimeError('Expected one independent LokiMetrisWatch native target')
+        raise RuntimeError('Expected one independent ' + name + ' native target')
     target_id, target = targets[0]
     product_id = target['productReference']
     return target_id, product_id, contents['objects'][product_id]['path']
+
+
+def watch_target(project):
+    return native_target(project, 'LokiMetrisWatch')
+
+
+def widget_target(project):
+    return native_target(project, 'LokiMetrisWidgets')
 
 
 def deployment_target(simulator, supplied):
@@ -56,16 +65,18 @@ def deployment_target(simulator, supplied):
     return max([minimum, supplied], key=version)
 
 
-def generate_project(directory, app, watch_project, *, simulator, team):
-    """The iPhone target has no source or linker phase; Xcode owns embed/sign."""
+def generate_project(directory, app, watch_project=WATCH_PROJECT, *, simulator, team,
+                     widget_project=WIDGET_PROJECT, with_watch=True, with_widgets=True):
+    """The iPhone target stays prelinked; Xcode builds and embeds native children."""
     directory.mkdir(parents=True, exist_ok=True)
     project = directory / 'NSHCompanion.xcodeproj'
     project.mkdir()
     info = plistlib.loads((app / 'Info.plist').read_bytes())
-    target_id, product_id, watch_product = watch_target(watch_project)
     info.pop('UIDeviceFamily', None)
     minimum = deployment_target(simulator, info.get('MinimumOSVersion', '15.0'))
     info['MinimumOSVersion'] = minimum
+    if with_widgets:
+        info.setdefault('LokiWidgetAppGroup', 'group.' + info['CFBundleIdentifier'])
     (directory / 'Info.plist').write_bytes(plistlib.dumps(info))
     objects = {}
 
@@ -77,27 +88,43 @@ def generate_project(directory, app, watch_project, *, simulator, team):
     product = add('hostProduct', 'PBXFileReference', explicitFileType='wrapper.application',
                   includeInIndex=0, path=app.name, sourceTree='BUILT_PRODUCTS_DIR')
     products = add('hostProducts', 'PBXGroup', children=[product], name='Products', sourceTree='<group>')
-    external = add('watchProject', 'PBXFileReference', lastKnownFileType='wrapper.pb-project',
-                   path=str(watch_project), sourceTree='<absolute>')
-    target_proxy = add('watchTargetProxy', 'PBXContainerItemProxy', containerPortal=external,
-                       proxyType=1, remoteGlobalIDString=target_id, remoteInfo='LokiMetrisWatch')
-    product_proxy = add('watchProductProxy', 'PBXContainerItemProxy', containerPortal=external,
-                        proxyType=2, remoteGlobalIDString=product_id, remoteInfo=watch_product)
-    reference = add('watchReference', 'PBXReferenceProxy', fileType='wrapper.application',
-                    path=watch_product, remoteRef=product_proxy, sourceTree='BUILT_PRODUCTS_DIR')
-    watch_products = add('watchProducts', 'PBXGroup', children=[reference], name='Watch Products', sourceTree='<group>')
-    group = add('mainGroup', 'PBXGroup', children=[products, external], sourceTree='<group>')
-    dependency = add('watchDependency', 'PBXTargetDependency', name='LokiMetrisWatch', targetProxy=target_proxy)
-    embedded = add('watchBuildFile', 'PBXBuildFile', fileRef=reference,
-                   settings={'ATTRIBUTES': ['RemoveHeadersOnCopy']})
-    embed = add('watchEmbed', 'PBXCopyFilesBuildPhase', buildActionMask=2147483647,
-                dstPath='$(CONTENTS_FOLDER_PATH)/Watch', dstSubfolderSpec=16, files=[embedded],
-                name='Embed Watch Content', runOnlyForDeploymentPostprocessing=0)
     stage = add('stageNSH', 'PBXShellScriptBuildPhase', buildActionMask=2147483647, files=[],
                 inputPaths=[str(app / info['CFBundleExecutable'])],
                 outputPaths=['$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)'], runOnlyForDeploymentPostprocessing=0,
                 shellPath='/bin/sh', name='Stage prelinked NSH application',
                 shellScript='set -eu\n/usr/bin/ditto --norsrc --noqtn "$NSH_PRELINKED_APP" "$TARGET_BUILD_DIR/$WRAPPER_NAME"\n')
+    children = [products]; dependencies = []; embeds = []; references = []
+
+    def embed_target(label, external_project, target_name, target, *, extension):
+        target_id, product_id, product_name = target
+        external = add(label + 'Project', 'PBXFileReference', lastKnownFileType='wrapper.pb-project',
+                       path=str(external_project), sourceTree='<absolute>')
+        target_proxy = add(label + 'TargetProxy', 'PBXContainerItemProxy', containerPortal=external,
+                           proxyType=1, remoteGlobalIDString=target_id, remoteInfo=target_name)
+        product_proxy = add(label + 'ProductProxy', 'PBXContainerItemProxy', containerPortal=external,
+                            proxyType=2, remoteGlobalIDString=product_id, remoteInfo=product_name)
+        reference = add(label + 'Reference', 'PBXReferenceProxy',
+                        fileType='wrapper.app-extension' if extension else 'wrapper.application',
+                        path=product_name, remoteRef=product_proxy, sourceTree='BUILT_PRODUCTS_DIR')
+        external_products = add(label + 'Products', 'PBXGroup', children=[reference],
+                                name=target_name + ' Products', sourceTree='<group>')
+        dependencies.append(add(label + 'Dependency', 'PBXTargetDependency', name=target_name,
+                                targetProxy=target_proxy))
+        attributes = ['RemoveHeadersOnCopy'] + (['CodeSignOnCopy'] if extension else [])
+        embedded = add(label + 'BuildFile', 'PBXBuildFile', fileRef=reference, settings={'ATTRIBUTES': attributes})
+        embeds.append(add(label + 'Embed', 'PBXCopyFilesBuildPhase', buildActionMask=2147483647,
+                          dstPath='' if extension else '$(CONTENTS_FOLDER_PATH)/Watch',
+                          dstSubfolderSpec=13 if extension else 16, files=[embedded],
+                          name='Embed App Extensions' if extension else 'Embed Watch Content',
+                          runOnlyForDeploymentPostprocessing=0))
+        children.append(external)
+        references.append({'ProductGroup': external_products, 'ProjectRef': external})
+
+    if with_watch:
+        embed_target('watch', watch_project, 'LokiMetrisWatch', watch_target(watch_project), extension=False)
+    if with_widgets:
+        embed_target('widget', widget_project, 'LokiMetrisWidgets', widget_target(widget_project), extension=True)
+    group = add('mainGroup', 'PBXGroup', children=children, sourceTree='<group>')
     settings = {
         'PRODUCT_BUNDLE_IDENTIFIER': info['CFBundleIdentifier'], 'PRODUCT_NAME': app.stem,
         'EXECUTABLE_NAME': info['CFBundleExecutable'], 'INFOPLIST_FILE': str(directory / 'Info.plist'),
@@ -116,14 +143,13 @@ def generate_project(directory, app, watch_project, *, simulator, team):
                        defaultConfigurationIsVisible=0, defaultConfigurationName='Release')
     pconfigs = add('projectConfigurations', 'XCConfigurationList', buildConfigurations=project_configs,
                    defaultConfigurationIsVisible=0, defaultConfigurationName='Release')
-    host = add('host', 'PBXNativeTarget', buildConfigurationList=host_configs, buildPhases=[stage, embed],
-               buildRules=[], dependencies=[dependency], name='NSHCompanion', productName=app.stem,
+    host = add('host', 'PBXNativeTarget', buildConfigurationList=host_configs, buildPhases=[stage] + embeds,
+               buildRules=[], dependencies=dependencies, name='NSHCompanion', productName=app.stem,
                productReference=product, productType='com.apple.product-type.application')
     root = add('project', 'PBXProject', attributes={'LastUpgradeCheck': '2710'}, buildConfigurationList=pconfigs,
                compatibilityVersion='Xcode 14.0', developmentRegion='en', hasScannedForEncodings=0,
                knownRegions=['en', 'Base'], mainGroup=group, productRefGroup=products,
-               projectReferences=[{'ProductGroup': watch_products, 'ProjectRef': external}],
-               projectDirPath='', projectRoot='', targets=[host])
+               projectReferences=references, projectDirPath='', projectRoot='', targets=[host])
     (project / 'project.pbxproj').write_text('// !$*UTF8*$!\n' + project_value({
         'archiveVersion': 1, 'classes': {}, 'objectVersion': 56, 'objects': objects, 'rootObject': root}) + '\n')
     schemes = project / 'xcshareddata/xcschemes'; schemes.mkdir(parents=True)
@@ -229,9 +255,14 @@ def prepare_app(app, prepared, companion_id):
         metadata = plistlib.loads((child / 'Info.plist').read_bytes())
         if metadata.get('WKCompanionAppBundleIdentifier') == companion_id:
             shutil.rmtree(child)
+    for child in list(prepared.rglob('*.appex')):
+        metadata = plistlib.loads((child / 'Info.plist').read_bytes())
+        if metadata.get('CFBundleIdentifier') == companion_id + '.widgets':
+            shutil.rmtree(child)
 
 
-def assemble(app, archive, *, simulator=True, log=None, watch_project=WATCH_PROJECT):
+def assemble(app, archive, *, simulator=True, log=None, watch_project=WATCH_PROJECT,
+             widget_project=WIDGET_PROJECT, widget_library=None, with_watch=True, with_widgets=True):
     app = app.resolve(strict=True); archive = archive.resolve()
     if archive.exists():
         raise RuntimeError('Refusing to replace an existing companion archive')
@@ -240,14 +271,19 @@ def assemble(app, archive, *, simulator=True, log=None, watch_project=WATCH_PROJ
     if phone_platforms != {7 if simulator else 2}:
         raise RuntimeError('The prelinked NSH executable does not match the requested iOS platform')
     bundle_hash = nsh_bundle_hash(app)
-    source_hashes = watch_source_hashes(watch_project)
+    source_hashes = watch_source_hashes(watch_project) if with_watch else None
+    widget_hashes = watch_source_hashes(widget_project) if with_widgets else None
+    if with_widgets and (widget_library is None or not Path(widget_library).is_file()):
+        raise RuntimeError('Widget assembly requires the matching Rust static library')
     identity = json.loads((ROOT / 'signing/apple/identity.json').read_text())
     build_root = ROOT / 'output/build/ios-companion'
     build_root.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix='assembly-', dir=build_root))
     prepared = work / 'Prelinked' / app.name
     prepare_app(app, prepared, info['CFBundleIdentifier'])
-    project = generate_project(work, prepared, watch_project.resolve(), simulator=simulator, team=identity.get('teamId', ''))
+    project = generate_project(work, prepared, watch_project.resolve(), simulator=simulator,
+                               team=identity.get('teamId', ''), widget_project=widget_project.resolve(),
+                               with_watch=with_watch, with_widgets=with_widgets)
     destination = 'generic/platform=iOS Simulator' if simulator else 'generic/platform=iOS'
     command = ['xcodebuild', '-project', project, '-scheme', 'NSHCompanion', '-configuration', 'Release',
                '-destination', destination, '-archivePath', archive, '-derivedDataPath', work / 'DerivedData',
@@ -255,11 +291,18 @@ def assemble(app, archive, *, simulator=True, log=None, watch_project=WATCH_PROJ
                'CURRENT_PROJECT_VERSION=' + str(info['CFBundleVersion']),
                'MARKETING_VERSION=' + info['CFBundleShortVersionString'],
                'DEVELOPMENT_TEAM=' + identity.get('teamId', ''), 'archive']
+    if with_widgets:
+        command[-1:-1] = ['LOKI_WIDGET_CORE_LIBRARY=' + str(Path(widget_library).resolve()),
+                          'LOKI_WIDGET_APP_GROUP=' + info['LokiWidgetAppGroup']]
     if not simulator:
         command.insert(-1, 'CODE_SIGNING_ALLOWED=NO')
+    else:
+        command[-1:-1] = ['ARCHS=arm64', 'ONLY_ACTIVE_ARCH=YES']
     run(command, log=log)
-    if watch_source_hashes(watch_project) != source_hashes:
+    if with_watch and watch_source_hashes(watch_project) != source_hashes:
         raise RuntimeError('Watch sources changed during compilation; rebuild after they are frozen')
+    if with_widgets and watch_source_hashes(widget_project) != widget_hashes:
+        raise RuntimeError('Widget sources changed during compilation; rebuild after they are frozen')
     result = archived_application(archive)
     result_info = plistlib.loads((result / 'Info.plist').read_bytes())
     if result_info['CFBundleIdentifier'] != info['CFBundleIdentifier']:
@@ -275,29 +318,57 @@ def assemble(app, archive, *, simulator=True, log=None, watch_project=WATCH_PROJ
         metadata = plistlib.loads((candidate / 'Info.plist').read_bytes())
         if metadata.get('WKCompanionAppBundleIdentifier') == info['CFBundleIdentifier']:
             watches.append((candidate, metadata))
-    if len(watches) != 1:
-        raise RuntimeError('Expected one Xcode-embedded companion Watch application')
-    watch, watch_info = watches[0]
-    watch_platforms = macho_platforms(watch / watch_info['CFBundleExecutable'])
-    if watch_platforms != {9 if simulator else 4}:
-        raise RuntimeError('The embedded Watch executable does not match the requested watchOS platform')
-    if str(watch_info['CFBundleVersion']) != str(info['CFBundleVersion']):
-        raise RuntimeError('Phone and Watch build versions differ')
-    if watch_info['CFBundleShortVersionString'] != info['CFBundleShortVersionString']:
-        raise RuntimeError('Phone and Watch marketing versions differ')
-    if simulator:
-        run(['codesign', '--verify', '--deep', '--strict', result], log=log)
+    if len(watches) != (1 if with_watch else 0):
+        raise RuntimeError('Embedded Watch application count differs from the requested build')
     report = {'archive': archive.name, 'applicationPath': str(result.relative_to(archive)),
-              'watchPath': str(watch.relative_to(result)), 'watchBundleId': watch_info['CFBundleIdentifier'],
               'companionBundleId': info['CFBundleIdentifier'], 'machineCodePreserved': True,
               'machineCodeSha256': after, 'nshBundlePreserved': True, 'nshBundleSha256': bundle_hash,
-              'watchSourceHashes': source_hashes,
-              'watchExecutableSha256': hashlib.sha256((watch / watch_info['CFBundleExecutable']).read_bytes()).hexdigest(),
               'phoneBuildPlatforms': sorted(phone_platforms),
-              'watchBuildPlatforms': sorted(watch_platforms), 'simulatorOnly': simulator, 'signatureVerified': simulator,
+              'simulatorOnly': simulator, 'signatureVerified': simulator,
               'deviceSigningRequired': not simulator, 'runtimeVerified': False}
+    if watches:
+        watch, watch_info = watches[0]
+        watch_platforms = macho_platforms(watch / watch_info['CFBundleExecutable'])
+        if watch_platforms != {9 if simulator else 4}:
+            raise RuntimeError('The embedded Watch executable does not match the requested watchOS platform')
+        verify_versions(info, watch_info)
+        report.update({'watchPath': str(watch.relative_to(result)), 'watchBundleId': watch_info['CFBundleIdentifier'],
+                       'watchSourceHashes': source_hashes,
+                       'watchExecutableSha256': hashlib.sha256((watch / watch_info['CFBundleExecutable']).read_bytes()).hexdigest(),
+                       'watchBuildPlatforms': sorted(watch_platforms)})
+    extensions = list(result.rglob('*.appex'))
+    if len(extensions) != (1 if with_widgets else 0):
+        raise RuntimeError('Embedded WidgetKit extension count differs from the requested build')
+    if extensions:
+        widget = extensions[0]
+        widget_info = plistlib.loads((widget / 'Info.plist').read_bytes())
+        expected_group = info['LokiWidgetAppGroup']
+        if widget.parent != result / 'PlugIns' or widget_info.get('CFBundleIdentifier') != info['CFBundleIdentifier'] + '.widgets':
+            raise RuntimeError('The WidgetKit extension has an unexpected identifier or embedding path')
+        if widget_info.get('NSExtension', {}).get('NSExtensionPointIdentifier') != 'com.apple.widgetkit-extension':
+            raise RuntimeError('The embedded extension is not a WidgetKit extension')
+        if result_info.get('LokiWidgetAppGroup') != expected_group or widget_info.get('LokiWidgetAppGroup') != expected_group:
+            raise RuntimeError('Phone and Widget App Group declarations differ')
+        widget_platforms = macho_platforms(widget / widget_info['CFBundleExecutable'])
+        if widget_platforms != {7 if simulator else 2}:
+            raise RuntimeError('The embedded Widget executable does not match the requested iOS platform')
+        verify_versions(info, widget_info)
+        report.update({'widgetPath': str(widget.relative_to(result)), 'widgetBundleId': widget_info['CFBundleIdentifier'],
+                       'widgetAppGroup': expected_group, 'widgetSourceHashes': widget_hashes,
+                       'widgetExecutableSha256': hashlib.sha256((widget / widget_info['CFBundleExecutable']).read_bytes()).hexdigest(),
+                       'widgetCoreSha256': hashlib.sha256(Path(widget_library).read_bytes()).hexdigest(),
+                       'widgetBuildPlatforms': sorted(widget_platforms)})
+    if simulator:
+        run(['codesign', '--verify', '--deep', '--strict', result], log=log)
     (archive.parent / 'companion-archive.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     return result, report
+
+
+def verify_versions(phone, child):
+    if str(child['CFBundleVersion']) != str(phone['CFBundleVersion']):
+        raise RuntimeError('Phone and embedded application build versions differ')
+    if child['CFBundleShortVersionString'] != phone['CFBundleShortVersionString']:
+        raise RuntimeError('Phone and embedded application marketing versions differ')
 
 
 def main():
@@ -305,8 +376,11 @@ def main():
     parser.add_argument('--app', required=True, type=Path)
     parser.add_argument('--archive', required=True, type=Path)
     parser.add_argument('--device', action='store_true', help='Archive unsigned device binaries; no device installation or distribution')
+    parser.add_argument('--without-watch', action='store_true', help='Embed Widgets without a Watch companion')
+    parser.add_argument('--widget-core-library', required=True, type=Path)
     args = parser.parse_args()
-    app, _ = assemble(args.app, args.archive, simulator=not args.device)
+    app, _ = assemble(args.app, args.archive, simulator=not args.device,
+                      with_watch=not args.without_watch, widget_library=args.widget_core_library)
     print(app)
 
 

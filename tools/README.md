@@ -7,8 +7,8 @@
 | `build/package_app.py` | 五平台统一打包；移动标识和 Watch 配套选项 |
 | `build/package_desktop.py` | 对应桌面系统上的原生包与可执行格式核验 |
 | `build/package_windows_cross.py` | macOS 上的 Windows x86-64 MSVC 包与 ZIP |
-| `build/package_apple_companion.py` | 用预链接 iPhone `.app` 装配 Watch 组合归档 |
-| `build/sign_apple_device.py` | 以已有开发证书和 profiles 生成签名计划或副本 |
+| `build/package_apple_companion.py` | 用预链接 iPhone `.app` 装配 Widget 与可选 Watch 归档 |
+| `build/sign_apple_device.py` | 验证手机／Widget 共享组与各自 profiles，生成签名计划或副本 |
 | `build/build_android_bridge.py` | 对照官方 NSH API 编译应用 Java 接线 |
 | `build/android_manifest.py` | Android 二进制清单、应用入口和局域网权限 |
 | `build/package_android.py` | APK Java/D8 组装、JNI 核验、对齐和签名 |

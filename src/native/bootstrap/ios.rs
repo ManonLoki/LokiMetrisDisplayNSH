@@ -34,7 +34,7 @@ pub(super) fn configure(
         "root": root, "deviceId": device_id, "name": name,
         "hostIdentity": true, "hostLifecycle": true, "platform": "ios", "watchCompanion": true,
         "appVersion": bundle_string("CFBundleShortVersionString").unwrap_or_else(|| "1.0".into()),
-        "legacyPanel": legacy_panel,
+        "legacyPanel": legacy_panel, "widgetDir": crate::native::widgets::directory(),
     }))
     .map_err(|error| format!("iOS连接配置无效: {error}"))
 }

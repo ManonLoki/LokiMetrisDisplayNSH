@@ -80,6 +80,8 @@ impl Owner {
             Command::Forget { client_id } => {
                 let mut records = self.records.clone();
                 records.remove(&client_id);
+                // Revoke extension grants before committing a successful forget.
+                self.forget_widget_source(&client_id)?;
                 self.save_records(&records)?;
                 self.records = records;
                 if self.selected.as_deref() == Some(&client_id)
@@ -129,6 +131,10 @@ impl Owner {
             return Err("桌面当前不可达，请重新发现。".into());
         }
         let switched = self.selected.as_deref() != Some(&client_id);
+        if switched {
+            // A failed shared-store revoke must not silently switch the app alone.
+            self.select_widget_source(&client_id)?;
+        }
         self.cancel();
         self.selected = Some(client_id.clone());
         self.view["selectedId"] = json!(client_id);

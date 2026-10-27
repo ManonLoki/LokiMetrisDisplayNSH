@@ -13,8 +13,9 @@
 - **Agent 活动**：展示空闲、运行、询问与出错状态，支持 Hooks 正文、静态图片和 GIF 详情。
 - **自定义展示台**：独立开关用量与 Hooks，选择 1×1／2×2 卡片布局，适配窄窗口、横屏与宽屏侧栏。
 - **Apple Watch**：读取 iPhone 同步的用量、额度、活动与图片，保留本地缓存和真实同步时间。
+- **iPhone 小组件与待机显示**：主屏幕小／中组件、三种锁屏组件与待机显示共用旧版 WidgetKit 标识，显示最近摘要和真实同步时间。
 
-展示端读取电脑提供的快照，不独立采集 AI 会话或重新计算总量。普通应用在前台连接电脑；当前功能不包含系统小组件、Android 悬浮窗或后台常驻同步。Watch 可由系统继续接收 iPhone 已排队的缓存。
+展示端读取电脑提供的快照，不独立采集 AI 会话或重新计算总量。普通应用在前台连接电脑；iOS 小组件由系统调度，使用桌面授予的独立只读权限短时拉取摘要，刷新间隔由系统决定。Watch 可由系统继续接收 iPhone 已排队的缓存。Android 系统小组件、悬浮窗和后台常驻同步尚未包含。
 
 ## 支持的设备
 
@@ -24,7 +25,7 @@
 | macOS | NSH 共享界面；使用 macOS 与 Apple 开发工具 |
 | Linux | NSH 共享界面；需要 GTK 4.14+、会话 D-Bus 与 Secret Service |
 | Android 手机、平板、电视 | NSH 共享界面与应用 Java 接线；电视支持方向键导航 |
-| iPhone / iPad | NSH 共享界面与 UIKit 生命周期、Bonjour、Keychain 适配 |
+| iPhone / iPad | NSH 共享界面；WidgetKit 小组件、待机显示及系统共享容器 |
 | Apple Watch | 独立 SwiftUI 配套应用，需与运行本应用的 iPhone 配对 |
 
 平台支持表示源码提供对应实现；构建通过、模拟器运行与真机验收分别记录。具体工具、系统与签名条件见 [构建说明](docs/development/build.md)。
@@ -55,7 +56,7 @@ python3 tools/build/package_app.py --target android --out output/packages/new-bu
 python3 tools/build/package_app.py --target ios --with-watch --out output/packages/new-build
 ```
 
-同一输出根目录可放不同目标，已有目标包不会被覆盖。iOS 默认生成模拟器应用；`--ios-device` 构建待签名真机应用，`--with-watch` 构建 iPhone／Watch 配套归档。签名和安装步骤见 [移动使用说明](docs/mobile/usage.md)。
+同一输出根目录可放不同目标，已有目标包不会被覆盖。iOS 默认包含 WidgetKit 扩展并生成模拟器应用；`--ios-device` 构建待签名真机应用，`--with-watch` 再包含 Watch。签名和安装步骤见 [移动使用说明](docs/mobile/usage.md)。
 
 ## 测试
 
@@ -75,6 +76,7 @@ python3 tools/test.py --suite watch
 | `src/features/`、`src/shared/` | 展示台、用量、Hooks、连接、设置与公开契约 |
 | `src/native/` | Rust 连接 owner、凭据、生命周期、图片与 iPhone 缓存同步 |
 | `platform/watchos/` | SwiftUI Watch 应用与对应测试 |
+| `platform/ios/`、`crates/widget-core/` | WidgetKit 界面、系统刷新接线与纯 Rust 摘要／HTTP 核心 |
 | `src/tests/` | 界面、打包、Android 入口、像素测试与协议夹具 |
 | `tools/` | 构建脚本与统一测试入口 |
 | `signing/` | 移动身份配置和本机签名材料 |

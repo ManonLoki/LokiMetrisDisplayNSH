@@ -44,7 +44,133 @@ def android_signing(directory=None):
 
 def apple_identity():
     path = ROOT / 'signing/apple/identity.json'
-    return json.loads(path.read_text()) if path.is_file() else {'bundleId': APPLE_ID, 'version': '1.0.8', 'build': 16}
+    return json.loads(path.read_text()) if path.is_file() else {'bundleId': APPLE_ID, 'version': '1.0.9', 'build': 18}
+
+
+def widget_group(application_id):
+    identity = apple_identity()
+    group = identity.get('widgetAppGroup') if application_id == identity['bundleId'] else None
+    return group or 'group.' + application_id
+
+
+def widget_linker(directory, response_file, *, sdk, runner_manifest, linker=None):
+    """Apply the host shim only to the NSH executable, never dependency dylibs."""
+    configuration = {'response': str(response_file),
+                     'responseSha256': hashlib.sha256(response_file.read_bytes()).hexdigest(),
+                     'runnerManifest': str(runner_manifest),
+                     'linker': linker or ['xcrun', '--sdk', sdk, 'clang']}
+    script = '#!' + sys.executable + '\n' + '''import json
+import os
+from pathlib import Path
+import re
+import shlex
+import sys
+import tomllib
+
+CONFIGURATION = ''' + repr(configuration) + '''
+
+def expanded(arguments, depth=0):
+    if depth > 4:
+        raise RuntimeError('Linker response files are nested too deeply')
+    result = []
+    for argument in arguments:
+        if argument.startswith('@') and Path(argument[1:]).is_file():
+            result.extend(expanded(shlex.split(Path(argument[1:]).read_text()), depth + 1))
+        else:
+            result.append(argument)
+    return result
+
+def final_runner(arguments):
+    values = expanded(arguments)
+    if any(flag in values for flag in ['-dynamiclib', '-shared', '-bundle']):
+        return False
+    outputs = [values[index + 1] for index, value in enumerate(values[:-1]) if value == '-o']
+    if not outputs:
+        return False
+    manifest = tomllib.loads(Path(CONFIGURATION['runnerManifest']).read_text())
+    names = [entry['name'] for entry in manifest.get('bin', [])]
+    if len(names) != 1:
+        raise RuntimeError('Expected the generated NSH iPhone runner to declare one executable')
+    name = names[0]
+    output = Path(outputs[-1]).name
+    normalized = name.replace('-', '_')
+    return output in {name, normalized} or re.fullmatch(re.escape(normalized) + '-[0-9a-f]{8,64}', output) is not None
+
+if __name__ == '__main__':
+    arguments = sys.argv[1:]
+    applies = final_runner(arguments)
+    if applies:
+        arguments.append('@' + CONFIGURATION['response'])
+        entitlements = os.environ.get('LOKI_WIDGET_SIMULATOR_ENTITLEMENTS')
+        if entitlements:
+            arguments.append('-Wl,-sectcreate,__TEXT,__entitlements,' + entitlements)
+    audit = Path(__file__).with_name('link-events.jsonl')
+    values = expanded(sys.argv[1:])
+    outputs = [values[index + 1] for index, value in enumerate(values[:-1]) if value == '-o']
+    with audit.open('a') as output:
+        output.write(json.dumps({'output': outputs[-1] if outputs else None, 'hostShimAdded': applies}) + '\\n')
+    command = CONFIGURATION['linker'] + arguments
+    os.execvp(command[0], command)
+'''
+    path = directory / ('WidgetHostLinker-' + hashlib.sha256(script.encode()).hexdigest() + '.py')
+    if not path.exists() or path.read_text() != script:
+        path.write_text(script)
+    path.chmod(0o755)
+    return path
+
+
+def build_widget_support(env, *, simulator, sdk_path, developer, deployment, log=None):
+    """Compile the extension core and link a small native host shim into the NSH runner."""
+    target = 'aarch64-apple-ios-sim' if simulator else 'aarch64-apple-ios'
+    sdk = 'iphonesimulator' if simulator else 'iphoneos'
+    shared = ROOT / 'platform/ios/shared'
+    sources = [shared / (name + '.swift') for name in
+               ['LokiCore', 'PlatformRules', 'SharedSupport', 'WidgetContainer', 'WidgetRefresh', 'WidgetRefreshCommitGate']]
+    sources.append(ROOT / 'platform/ios/bridge/WidgetHostBridge.swift')
+    bootstrap = ROOT / 'platform/ios/bridge/WidgetHostBootstrap.c'
+    digest = hashlib.sha256()
+    for source in sources + [bootstrap]:
+        digest.update(str(source.relative_to(ROOT)).encode()); digest.update(source.read_bytes())
+    digest.update((str(sdk_path) + deployment).encode())
+    output = ROOT / '.nsh/widget-support' / target / digest.hexdigest()
+    output.mkdir(parents=True, exist_ok=True)
+    rust_output = ROOT / 'target/widget-core'
+    run(['cargo', 'build', '--manifest-path', ROOT / 'Cargo.toml', '-p', 'loki_widget_core',
+         '--release', '--locked', '--target', target, '--target-dir', rust_output], env=env, log=log)
+    library = rust_output / target / 'release/libloki_widget_core.a'
+    if not library.is_file():
+        raise RuntimeError('Widget core build did not produce its static library')
+    swift_object = output / 'WidgetHostBridge.o'
+    bootstrap_object = output / 'WidgetHostBootstrap.o'
+    triple = 'arm64-apple-ios' + deployment + ('-simulator' if simulator else '')
+    if not swift_object.is_file():
+        run(['xcrun', '--sdk', sdk, 'swiftc', '-swift-version', '5', '-parse-as-library', '-whole-module-optimization',
+             '-emit-object', '-O', '-module-name', 'LokiWidgetHost', '-target', triple,
+             '-sdk', sdk_path, *sources, '-o', swift_object], env=env, log=log)
+    if not bootstrap_object.is_file():
+        run(['xcrun', '--sdk', sdk, 'clang', '-target', triple, '-isysroot', sdk_path,
+             '-c', bootstrap, '-o', bootstrap_object], env=env, log=log)
+    toolchain = Path(developer) / 'Toolchains/XcodeDefault.xctoolchain/usr/lib/swift' / sdk
+    arguments = [str(swift_object), str(bootstrap_object), '-L', str(toolchain),
+                 '-L', str(Path(sdk_path) / 'usr/lib/swift'), '-Wl,-rpath,/usr/lib/swift']
+    for framework in ['Foundation', 'UIKit', 'SwiftUI', 'WidgetKit', 'BackgroundTasks']:
+        arguments.extend(['-framework', framework])
+    # Cargo links some dependencies as dylibs. A target linker wrapper adds the
+    # Swift host objects only when linking the generated NSH application binary.
+    response = ''.join(shlex.quote(value) + '\n' for value in arguments)
+    response_file = output / ('WidgetHostLink-' + hashlib.sha256(response.encode()).hexdigest() + '.rsp')
+    if response_file.exists() and response_file.read_text() != response:
+        raise RuntimeError('Widget link response path contains unexpected data')
+    response_file.write_text(response)
+    wrapper = widget_linker(output, response_file, sdk=sdk,
+                            runner_manifest=ROOT / '.nsh/rust/ios-app/Cargo.toml')
+    key = 'CARGO_TARGET_' + target.upper().replace('-', '_') + '_LINKER'
+    env[key] = str(wrapper)
+    return library, {'target': target, 'hostSourceSha256': digest.hexdigest(),
+                     'hostObjectSha256': hashlib.sha256(swift_object.read_bytes()).hexdigest(),
+                     'bootstrapObjectSha256': hashlib.sha256(bootstrap_object.read_bytes()).hexdigest(),
+                     'hostLinker': str(wrapper), 'hostLinkResponse': str(response_file),
+                     'widgetCoreSha256': hashlib.sha256(library.read_bytes()).hexdigest()}
 
 
 def mobile_command(cli, target, stage, *, ios_device=False, application_id=None):
@@ -113,16 +239,14 @@ def simulator_link_permissions(env, application_id):
     identifier = apple_identity().get('applicationIdentifier')
     if not identifier or not identifier.endswith('.' + application_id):
         raise RuntimeError('Restore the matching applicationIdentifier in signing/apple/identity.json')
-    data = plistlib.dumps({'application-identifier': identifier})
+    data = plistlib.dumps({'application-identifier': identifier,
+                          'com.apple.security.application-groups': [widget_group(application_id)]})
     directory = ROOT / '.nsh/signing'
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / (hashlib.sha256(data).hexdigest() + '.plist')
     if not path.exists():
         path.write_bytes(data)
-    key = 'CARGO_TARGET_AARCH64_APPLE_IOS_SIM_RUSTFLAGS'
-    # Stable content-addressed paths keep dependency fingerprints stable.
-    argument = '-Wl,-sectcreate,__TEXT,__entitlements,' + str(path)
-    env[key] = (env.get(key, '') + ' -C link-arg=' + argument).strip()
+    env['LOKI_WIDGET_SIMULATOR_ENTITLEMENTS'] = str(path)
 
 
 def embedded_apple_identifier(executable):
@@ -160,6 +284,10 @@ def configure_apple(app, *, simulator, application_id, minimum_os=None):
         value['MinimumOSVersion'] = minimum_os
     value['NSLocalNetworkUsageDescription'] = '连接同一局域网内已配对的电脑，接收 Token 用量、账户额度与 Agent 活动。'
     value['NSBonjourServices'] = ['_loki-host._tcp']
+    value['LokiWidgetAppGroup'] = widget_group(application_id)
+    value['BGTaskSchedulerPermittedIdentifiers'] = ['com.manonloki.lokimetrisdisplay.widget-refresh']
+    value['UIBackgroundModes'] = sorted(set(value.get('UIBackgroundModes', []) + ['fetch']))
+    value['NSAppTransportSecurity'] = dict(value.get('NSAppTransportSecurity', {}), NSAllowsLocalNetworking=True)
     info.write_bytes(plistlib.dumps(value, fmt=plistlib.FMT_BINARY))
     if simulator:
         expected = apple_identity().get('applicationIdentifier')
@@ -190,6 +318,7 @@ def package_mobile(target, output, *, ios_device=False, application_id=None, wit
         stage = Path(temporary)
         command = mobile_command(cli, target, stage, ios_device=ios_device, application_id=application_id)
         env = None
+        widget_library = None; widget_support = None
         if target == 'ios':
             from package_apple_companion import deployment_target
             env = os.environ.copy()
@@ -203,8 +332,6 @@ def package_mobile(target, output, *, ios_device=False, application_id=None, wit
             if not list(Path(env.get('LIBCLANG_PATH', '')).glob('libclang*.dylib')):
                 env['LIBCLANG_PATH'] = str(Path(developer) / 'Toolchains/XcodeDefault.xctoolchain/usr/lib')
             env['BINDGEN_EXTRA_CLANG_ARGS'] = env.get('BINDGEN_EXTRA_CLANG_ARGS', '') + ' -isysroot ' + shlex.quote(sdk_path)
-            if not ios_device:
-                simulator_link_permissions(env, command[command.index('--id') + 1])
         if target == 'android':
             signing, env = android_signing()
             if platform.system() == 'Darwin' and not list(Path(env.get('LIBCLANG_PATH', '')).glob('libclang*.dylib')):
@@ -213,6 +340,11 @@ def package_mobile(target, output, *, ios_device=False, application_id=None, wit
             command.extend(signing)
             android_runtime_seed(cli, stage, env)
         with (log_dir / 'package.log').open('wb') as log:
+            if target == 'ios':
+                widget_library, widget_support = build_widget_support(env, simulator=not ios_device,
+                    sdk_path=sdk_path, developer=developer, deployment=env['IPHONEOS_DEPLOYMENT_TARGET'], log=log)
+                if not ios_device:
+                    simulator_link_permissions(env, command[command.index('--id') + 1])
             run(command, env=env, log=log)
             verify_runner(target)
             if target == 'android':
@@ -234,12 +366,15 @@ def package_mobile(target, output, *, ios_device=False, application_id=None, wit
                 metadata = configure_apple(packages[0], simulator=not ios_device,
                                            application_id=command[command.index('--id') + 1],
                                            minimum_os=env['IPHONEOS_DEPLOYMENT_TARGET'])
+                from package_apple_companion import assemble
+                archived, companion = assemble(packages[0], stage / 'NSHCompanion.xcarchive',
+                                                simulator=not ios_device, log=log,
+                                                with_watch=with_watch, widget_library=widget_library)
+                shutil.rmtree(packages[0])
+                shutil.copytree(archived, packages[0], symlinks=True)
+                metadata['appleCompanions'] = companion
+                metadata['widgetSupport'] = widget_support
                 if with_watch:
-                    from package_apple_companion import assemble
-                    archived, companion = assemble(packages[0], stage / 'NSHCompanion.xcarchive',
-                                                    simulator=not ios_device, log=log)
-                    shutil.rmtree(packages[0])
-                    shutil.copytree(archived, packages[0], symlinks=True)
                     metadata['watchCompanion'] = companion
         metadata.update({'target': target, 'applicationId': command[command.index('--id') + 1],
                          'package': packages[0].name, 'runnerIncludesLocalRust': True, 'runtimeVerified': False,
@@ -257,7 +392,7 @@ def main():
     parser.add_argument('--out', type=Path, default=ROOT / 'output/packages')
     parser.add_argument('--id', help='Explicit mobile application identifier; defaults preserve this project\'s existing identities')
     parser.add_argument('--ios-device', action='store_true', help='Build an unsigned physical-device .app; iOS otherwise targets the simulator')
-    parser.add_argument('--with-watch', action='store_true', help='Archive the NSH iPhone app with its independent Watch companion using Xcode')
+    parser.add_argument('--with-watch', action='store_true', help='Include the independent Watch companion; iOS always includes Widgets')
     args = parser.parse_args()
     if args.ios_device and args.target != 'ios':
         parser.error('--ios-device requires --target ios')

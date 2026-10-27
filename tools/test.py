@@ -15,12 +15,14 @@ def commands(suite, output):
     if suite == 'unit':
         result = [
             ['cargo', 'fmt', '--all', '--check'],
-            ['cargo', 'clippy', '--all-targets', '--all-features', '--locked', '--', '-D', 'warnings'],
-            ['cargo', 'test', '--all-targets', '--locked'],
+            ['cargo', 'clippy', '--workspace', '--all-targets', '--all-features', '--locked', '--', '-D', 'warnings'],
+            ['cargo', 'test', '--workspace', '--all-targets', '--locked'],
             [python, '-m', 'unittest', 'discover', '-s', 'src/tests/packaging', '-p', 'test_*.py'],
         ]
         if os.name == 'posix':
             result.append([python, 'src/native/credentials/test_linux.py'])
+        if sys.platform == 'darwin':
+            result.append([python, 'platform/ios/Tests/run_tests.py', '--output', str(output / 'widget-host')])
         result.append(['nsh', 'check'])
         for name in ['app.test.tsx', 'mobile-app.test.tsx', 'image-playback.test.ts']:
             result.append(['nsh', 'test', 'src/tests/desktop/' + name, '--junit',
@@ -30,6 +32,8 @@ def commands(suite, output):
         return [[python, 'src/tests/android/test_entry.py']]
     if suite == 'watch':
         return [[python, 'platform/watchos/Tests/run_tests.py', '--report', str(output / 'cache.json')]]
+    if suite == 'ios':
+        return [[python, 'platform/ios/Tests/run_tests.py', '--output', str(output)]]
     if suite == 'visual':
         return [[python, 'src/tests/visual/run.py', '--suite', 'all', '--output', str(output)]]
     return [[python, 'src/tests/integration/run.py', '--output', str(output)]]
@@ -37,10 +41,10 @@ def commands(suite, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--suite', choices=['unit', 'android', 'watch', 'visual', 'integration'], default='unit')
+    parser.add_argument('--suite', choices=['unit', 'android', 'ios', 'watch', 'visual', 'integration'], default='unit')
     parser.add_argument('--output', type=Path, default=ROOT / 'output/tests', help='Results root, grouped by suite')
     args = parser.parse_args()
-    if args.suite in {'watch', 'visual', 'integration'} and sys.platform != 'darwin':
+    if args.suite in {'ios', 'watch', 'visual', 'integration'} and sys.platform != 'darwin':
         parser.error('This suite requires the existing macOS/Xcode tools')
     output = args.output.expanduser().resolve() / args.suite
     output.mkdir(parents=True, exist_ok=True)

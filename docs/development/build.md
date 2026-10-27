@@ -1,6 +1,6 @@
 # 构建与打包
 
-主应用使用 NSH 0.3.0、共享 TSX 与 Rust，支持 macOS、Windows、Linux、Android 和 iOS/iPadOS。Apple Watch 使用独立 SwiftUI 工程，随 iPhone 配套打包。
+主应用使用 NSH 0.3.0、共享 TSX 与 Rust，支持 macOS、Windows、Linux、Android 和 iOS/iPadOS。iOS 默认包含独立 WidgetKit 扩展，Apple Watch 通过选项配套打包。小组件的纯 Rust 核心只复用项目已锁定的依赖，无需 KMP。
 
 所有命令在项目根目录执行。先准备已安装的 `nsh`、Rust/Cargo、Python 3.11+ 与目标平台工具链。脚本复用现有工具，Rust 依赖由 `Cargo.toml` 和 `Cargo.lock` 管理。
 
@@ -47,9 +47,11 @@ adb -s <设备序列号> install -r <生成的APK路径>
 
 移动标识可用 `--id` 覆盖。已有安装须沿用原标识与证书，才能覆盖升级并保留身份及配对。移动包使用项目入口完成组装。
 
-## iOS / iPadOS 与 Watch
+## iOS / iPadOS、小组件与 Watch
 
-默认构建模拟器 `.app`。`--with-watch` 增加 Watch 应用，由 Xcode 装配、嵌入和归档。
+默认构建包含 WidgetKit 扩展的模拟器 `.app`。包装器先构建纯 Rust 小组件静态库和 Swift 系统接线，再生成 NSH 主应用；`--with-watch` 增加 Watch 应用，由 Xcode 装配、嵌入和归档。
+
+Widget 扩展沿用旧版 iOS 18.2 最低版本；主应用的部署版本由 SDK 和包装器配置确定。
 
 ```sh
 python3 tools/build/package_app.py --target ios --with-watch --out output/packages/build-ios-001
@@ -57,13 +59,13 @@ xcrun simctl install <模拟器UDID> <生成的.app路径>
 xcrun simctl launch <模拟器UDID> <包元数据中的applicationId>
 ```
 
-包装器加入本地网络用途及 `_loki-host._tcp` Bonjour 声明。模拟器 runner 在 `__TEXT,__entitlements` 中携带匹配的 application-identifier，再进行 ad-hoc 签名。身份值来自 [Apple 身份配置](../../signing/apple/README.md)，自定义 `--id` 时也必须有匹配配置。
+包装器加入本地网络用途、`_loki-host._tcp` Bonjour 声明及后台刷新任务声明。手机与 Widget 共用 `LokiWidgetAppGroup`；模拟器 runner 的 `__TEXT,__entitlements` 携带匹配的 application-identifier 和共享组。身份值来自 [Apple 身份配置](../../signing/apple/README.md)，自定义 `--id` 时也必须有匹配配置。
 
 ```sh
 python3 tools/build/package_app.py --target ios --ios-device --with-watch --out output/packages/build-device-001
 ```
 
-真机模式生成待开发签名的设备 `.app`。最低系统版本由所选 SDK 和部署配置共同确定。带 Watch 的结果包含组合 `.app`、`NSHCompanion.xcarchive` 和 `companion-archive.json`；包装器核对 NSH 代码段、bundle、Watch 源码摘要、版本和 Mach-O 平台。
+真机模式生成待开发签名的设备 `.app`。最低系统版本由所选 SDK 和部署配置共同确定。归档包含组合 `.app`、`NSHCompanion.xcarchive` 和元数据；包装器核对 NSH 代码段、bundle、Widget／Watch 源码摘要、版本和 Mach-O 平台。真机签名时须提供 Widget profile 与手机、扩展共同获授权的原 App Group；已有组件升级还须保留 `.widgets` 扩展标识和 `LokiMetrisDisplay.Summary` kind。
 
 签名工具默认写计划，加 `--execute` 后用已有证书及 profiles 创建签名副本。完整参数、安装命令和兼容规则见 [Apple 签名说明](../../signing/apple/README.md)。Watch 单独构建和缓存验证见 [Watch 工程](../../platform/watchos/README.md)。
 

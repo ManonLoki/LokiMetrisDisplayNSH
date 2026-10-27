@@ -108,6 +108,7 @@ impl Owner {
                     Some("ping") => {
                         let nonce = message["nonce"].as_u64().ok_or("无效心跳编号")?;
                         self.send_secure(json!({"type":"pong","nonce":nonce}))?;
+                        self.renew_widget_lease();
                         self.publish();
                     }
                     Some("snapshot") => self.snapshot(message)?,
@@ -200,6 +201,7 @@ impl Owner {
             images.retain(|hash, _| self.assets.contains(hash));
         }
         let received = now_ms();
+        self.share_widget_snapshot(&message, received);
         self.view["snapshot"] = snapshot.clone();
         self.view["receivedAtMs"] = json!(received);
         self.view["cacheSourceId"] = json!(self.selected);
@@ -290,6 +292,7 @@ impl Owner {
     pub(super) fn clear_live(&mut self) {
         self.view["connected"] = json!(false);
         self.view["live"] = json!(false);
+        self.pause_widget_lease();
         if !self.keep_snapshot {
             self.clear_display();
         }

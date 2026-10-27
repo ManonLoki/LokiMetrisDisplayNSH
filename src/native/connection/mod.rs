@@ -12,6 +12,7 @@ mod persistence;
 mod public_view;
 mod session;
 mod snapshot_admission;
+mod widget;
 
 #[cfg(all(test, target_os = "macos"))]
 mod companion_test;
@@ -108,6 +109,9 @@ pub(crate) struct Config {
     /// 可信状态提交时为配对的 Apple Watch 发布公开缓存。
     #[serde(default)]
     pub watch_companion: bool,
+    /// System-granted WidgetKit App Group; never supplied by JavaScript.
+    #[serde(default)]
+    pub widget_dir: Option<PathBuf>,
     #[serde(default = "default_version")]
     pub app_version: String,
     /// `phone` 或 `tablet`；桌面不上报形态。

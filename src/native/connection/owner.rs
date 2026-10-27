@@ -48,6 +48,7 @@ pub(super) struct Owner {
     pub name: String,
     pub platform: String,
     pub watch_companion: bool,
+    pub widget: super::widget::WidgetShare,
     pub app_version: String,
     pub form_factor: Option<String>,
     pub keep_snapshot: bool,
@@ -85,6 +86,7 @@ impl Owner {
             name: setup.name.clone(),
             platform: config.platform.clone(),
             watch_companion: config.watch_companion,
+            widget: super::widget::WidgetShare::new(config.widget_dir.clone()),
             app_version: config.app_version.clone(),
             form_factor: config.form_factor.clone(),
             keep_snapshot: config.keep_snapshot,
@@ -114,6 +116,7 @@ impl Owner {
             credential_service: super::CREDENTIAL_SERVICE.into(),
             form_factor_reported: false,
         };
+        this.reconcile_widget_authorization();
         this.restore_cache();
         this.update_discovery();
         Ok(this)
@@ -334,6 +337,7 @@ impl Owner {
             name: name.into(),
             platform: "ios".into(),
             watch_companion: true,
+            widget: super::widget::WidgetShare::default(),
             app_version: "1.0.0".into(),
             form_factor: None,
             keep_snapshot: true,

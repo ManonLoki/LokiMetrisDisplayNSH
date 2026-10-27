@@ -9,6 +9,7 @@ autoexamples = false
 crate-type = ["rlib"]
 
 [dependencies]
+loki_widget_core = { path = "crates/widget-core" }
 nsh-core = "0.3.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -42,3 +43,6 @@ path = "src/tests/fixtures/protocol_host.rs"
 
 [dev-dependencies]
 chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+
+[workspace]
+members = ["crates/widget-core"]

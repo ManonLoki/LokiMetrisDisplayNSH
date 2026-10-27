@@ -28,11 +28,15 @@ class CompanionPackaging(unittest.TestCase):
             old = app / 'Custom Embed/Old.app'; old.mkdir(parents=True)
             (old / 'Info.plist').write_bytes(plistlib.dumps({'WKCompanionAppBundleIdentifier': 'org.example.phone'}))
             (old / 'old-resource').write_bytes(b'stale Watch resource')
+            widget = app / 'PlugIns/Old.appex'; widget.mkdir(parents=True)
+            (widget / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': 'org.example.phone.widgets'}))
             prepared = root / 'Prelinked/Phone.app'
             companion.prepare_app(app, prepared, 'org.example.phone')
             self.assertEqual((prepared / 'App').read_bytes(), (app / 'App').read_bytes())
             self.assertTrue(old.is_dir())
             self.assertFalse((prepared / old.relative_to(app)).exists())
+            self.assertFalse((prepared / widget.relative_to(app)).exists())
+            self.assertTrue(widget.is_dir())
 
     def test_watch_source_snapshot_tracks_code_but_ignores_xcode_user_state(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -78,7 +82,8 @@ class CompanionPackaging(unittest.TestCase):
             with patch.object(companion, 'watch_target', return_value=('WATCH_TARGET', 'WATCH_PRODUCT', 'Watch.app')), \
                  patch.object(companion, 'deployment_target', return_value='15.0'), \
                  patch.object(companion, 'project_value', side_effect=json.dumps):
-                project = companion.generate_project(root / 'assembly', app, watch, simulator=True, team='TEAM')
+                project = companion.generate_project(root / 'assembly', app, watch, simulator=True,
+                                                       team='TEAM', with_widgets=False)
             objects = json.loads((project / 'project.pbxproj').read_text().split('\n', 1)[1])['objects']
             host = next(value for value in objects.values() if value['isa'] == 'PBXNativeTarget')
             phases = [objects[key] for key in host['buildPhases']]
@@ -92,6 +97,44 @@ class CompanionPackaging(unittest.TestCase):
             product = objects[objects[phases[1]['files'][0]]['fileRef']]
             self.assertEqual(objects[product['remoteRef']]['remoteGlobalIDString'], 'WATCH_PRODUCT')
             self.assertEqual(objects[proxy['containerPortal']]['path'], str(watch))
+
+    def test_widgets_embed_by_default_and_watch_can_be_omitted(self):
+        for with_watch in [False, True]:
+            with self.subTest(with_watch=with_watch), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory); app = root / 'App.app'; app.mkdir()
+                (app / 'Info.plist').write_bytes(plistlib.dumps({
+                    'CFBundleIdentifier': 'org.example.app', 'CFBundleExecutable': 'App',
+                    'LokiWidgetAppGroup': 'group.org.example.shared'}))
+                with patch.object(companion, 'watch_target', return_value=('WATCH_TARGET', 'WATCH_PRODUCT', 'Watch.app')), \
+                     patch.object(companion, 'widget_target', return_value=('WIDGET_TARGET', 'WIDGET_PRODUCT', 'Widgets.appex')), \
+                     patch.object(companion, 'deployment_target', return_value='15.0'), \
+                     patch.object(companion, 'project_value', side_effect=json.dumps):
+                    project = companion.generate_project(root / 'assembly', app, simulator=True,
+                                                         team='TEAM', with_watch=with_watch)
+                objects = json.loads((project / 'project.pbxproj').read_text().split('\n', 1)[1])['objects']
+                host = next(value for value in objects.values() if value['isa'] == 'PBXNativeTarget')
+                phases = [objects[key] for key in host['buildPhases']]
+                self.assertFalse(any(value['isa'] in {'PBXSourcesBuildPhase', 'PBXFrameworksBuildPhase'}
+                                     for value in phases))
+                self.assertIn('\n', phases[0]['shellScript'])
+                widget = next(value for value in phases if value.get('name') == 'Embed App Extensions')
+                self.assertEqual(widget['dstSubfolderSpec'], 13)
+                reference = objects[objects[widget['files'][0]]['fileRef']]
+                self.assertEqual(objects[reference['remoteRef']]['remoteGlobalIDString'], 'WIDGET_PRODUCT')
+                dependencies = [objects[objects[key]['targetProxy']]['remoteGlobalIDString']
+                                for key in host['dependencies']]
+                self.assertIn('WIDGET_TARGET', dependencies)
+                self.assertEqual('WATCH_TARGET' in dependencies, with_watch)
+                self.assertEqual(plistlib.loads((project.parent / 'Info.plist').read_bytes())['LokiWidgetAppGroup'],
+                                 'group.org.example.shared')
+
+    def test_embedded_versions_must_match_phone(self):
+        phone = {'CFBundleVersion': '17', 'CFBundleShortVersionString': '1.0.9'}
+        companion.verify_versions(phone, dict(phone))
+        for key, invalid in [('CFBundleVersion', '16'), ('CFBundleShortVersionString', '1.0.8')]:
+            child = dict(phone); child[key] = invalid
+            with self.subTest(key=key), self.assertRaisesRegex(RuntimeError, 'versions differ'):
+                companion.verify_versions(phone, child)
 
     def test_archive_application_uses_xcode_metadata_and_rejects_escape(self):
         with tempfile.TemporaryDirectory() as directory:

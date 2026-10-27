@@ -9,6 +9,7 @@ use nsh_core::prelude::*;
 #[native_module("loki-metris-mobile-display/native")]
 fn register_bindings(registry: &mut Registry) {
     native::companion::install();
+    native::widgets::install();
     registry.module::<Link>();
     registry.module::<UiLifecycle>();
     registry.module::<Rules>();

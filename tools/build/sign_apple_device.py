@@ -47,8 +47,8 @@ def certificate(fingerprint):
     raise RuntimeError('Cannot establish the Apple Development certificate team from its public certificate')
 
 
-def development_entitlements(value, bundle_id, team, fingerprint, *, device=None):
-    """Validate the development grant and request only the default private Keychain group."""
+def development_entitlements(value, bundle_id, team, fingerprint, *, device=None, app_groups=()):
+    """Validate the development grant and explicitly requested shared containers."""
     expires = value.get('ExpirationDate')
     if not isinstance(expires, datetime):
         raise RuntimeError('Provisioning profile has no expiry')
@@ -71,8 +71,16 @@ def development_entitlements(value, bundle_id, team, fingerprint, *, device=None
         raise RuntimeError('Provisioning profile does not permit the requested application identifier')
     if not any(permits(pattern, requested_id) for pattern in entitlements.get('keychain-access-groups', [])):
         raise RuntimeError('Provisioning profile does not permit the private Keychain access group')
-    return {'application-identifier': requested_id, 'com.apple.developer.team-identifier': team,
-            'get-task-allow': True, 'keychain-access-groups': [requested_id]}
+    request = {'application-identifier': requested_id, 'com.apple.developer.team-identifier': team,
+               'get-task-allow': True, 'keychain-access-groups': [requested_id]}
+    groups = list(dict.fromkeys(app_groups))
+    if any(not re.fullmatch(r'group\.[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+', group) for group in groups):
+        raise RuntimeError('Invalid requested App Group identifier')
+    if not set(groups).issubset(entitlements.get('com.apple.security.application-groups', [])):
+        raise RuntimeError('Provisioning profile does not permit the requested App Group')
+    if groups:
+        request['com.apple.security.application-groups'] = groups
+    return request
 
 
 def executable(app, info):
@@ -137,7 +145,8 @@ def profile_summary(value, entitlements, device):
             'specifiedDeviceCovered': device in value.get('ProvisionedDevices', []) if device else None}
 
 
-def plan(app, bundle_id, team, fingerprint, phone_profile, watch_profile, phone_device, watch_device=None):
+def plan(app, bundle_id, team, fingerprint, phone_profile, watch_profile, phone_device, watch_device=None,
+         widget_profile=None, app_group=None):
     app = app.resolve(strict=True)
     if certificate(fingerprint) != team:
         raise RuntimeError('Selected development certificate belongs to another team')
@@ -145,28 +154,66 @@ def plan(app, bundle_id, team, fingerprint, phone_profile, watch_profile, phone_
     if macho_platforms(executable(app, info)) != {2}:
         raise RuntimeError('Signing requires an iOS device executable, not a simulator')
     children = [(path, plistlib.loads((path / 'Info.plist').read_bytes())) for path in app.rglob('*.app')]
-    if len(children) != 1 or children[0][1].get('WKCompanionAppBundleIdentifier') != info['CFBundleIdentifier']:
-        raise RuntimeError('Expected exactly one matching embedded Watch application')
-    if list(app.rglob('*.appex')) or list(app.rglob('*.framework')) or list(app.rglob('*.dylib')):
-        raise RuntimeError('This signer requires the reviewed static two-application NSH archive')
-    watch, watch_info = children[0]
-    if macho_platforms(executable(watch, watch_info)) != {4}:
-        raise RuntimeError('Embedded Watch executable is not a watchOS device build')
-    if watch_info['CFBundleVersion'] != info['CFBundleVersion'] or watch_info['CFBundleShortVersionString'] != info['CFBundleShortVersionString']:
-        raise RuntimeError('Phone and Watch versions must match')
-    phone, child = profile(phone_profile), profile(watch_profile)
+    if len(children) > 1 or any(child.get('WKCompanionAppBundleIdentifier') != info['CFBundleIdentifier']
+                                for _, child in children):
+        raise RuntimeError('Expected at most one matching embedded Watch application')
+    extensions = [(path, plistlib.loads((path / 'Info.plist').read_bytes())) for path in app.rglob('*.appex')]
+    if len(extensions) > 1 or any(path.parent != app / 'PlugIns'
+            or value.get('CFBundleIdentifier') != info['CFBundleIdentifier'] + '.widgets'
+            or value.get('NSExtension', {}).get('NSExtensionPointIdentifier') != 'com.apple.widgetkit-extension'
+            for path, value in extensions):
+        raise RuntimeError('Expected only the matching WidgetKit extension in PlugIns')
+    if list(app.rglob('*.framework')) or list(app.rglob('*.dylib')):
+        raise RuntimeError('This signer requires static NSH and Widget application binaries')
+    if extensions and widget_profile is None:
+        raise RuntimeError('The WidgetKit extension requires its own development profile')
+    if not extensions and widget_profile is not None:
+        raise RuntimeError('A Widget profile was supplied without a WidgetKit extension')
+    if children and watch_profile is None:
+        raise RuntimeError('The embedded Watch application requires its own development profile')
+    if not children and watch_profile is not None:
+        raise RuntimeError('A Watch profile was supplied without a Watch application')
+    for child, child_info in children + extensions:
+        platform = {4} if child.suffix == '.app' else {2}
+        if macho_platforms(executable(child, child_info)) != platform:
+            raise RuntimeError('Embedded application does not match its device platform')
+        if child_info['CFBundleVersion'] != info['CFBundleVersion'] or child_info['CFBundleShortVersionString'] != info['CFBundleShortVersionString']:
+            raise RuntimeError('Phone and embedded application versions must match')
+    phone = profile(phone_profile)
     watch_id = bundle_id + '.watchkitapp'
-    phone_entitlements = development_entitlements(phone, bundle_id, team, fingerprint, device=phone_device)
-    watch_entitlements = development_entitlements(child, watch_id, team, fingerprint, device=watch_device)
-    return {'sourceApplication': str(app), 'sourceBundleId': info['CFBundleIdentifier'],
+    group = app_group or 'group.' + bundle_id
+    if extensions:
+        source_group = info.get('LokiWidgetAppGroup')
+        if not source_group or extensions[0][1].get('LokiWidgetAppGroup') != source_group:
+            raise RuntimeError('Phone and Widget must declare the same explicit App Group')
+    elif app_group:
+        raise RuntimeError('An App Group was requested without a WidgetKit extension')
+    phone_entitlements = development_entitlements(phone, bundle_id, team, fingerprint, device=phone_device,
+                                                  app_groups=[group] if extensions else [])
+    report = {'sourceApplication': str(app), 'sourceBundleId': info['CFBundleIdentifier'],
             'bundleId': bundle_id, 'watchBundleId': watch_id, 'team': team, 'certificateSha1': fingerprint,
             'phoneDeviceUdid': phone_device, 'watchDeviceUdid': watch_device,
             'phoneProfile': profile_summary(phone, phone_entitlements, phone_device),
-            'watchProfile': profile_summary(child, watch_entitlements, watch_device),
-            'watchRelativePath': str(watch.relative_to(app)),
             'phoneInstructions': instructions(executable(app, info)),
-            'watchInstructions': instructions(executable(watch, watch_info)),
             'nshBundleSha256': nsh_bundle_hash(app), 'installsApplication': False}
+    if children:
+        watch, watch_info = children[0]
+        child = profile(watch_profile)
+        watch_entitlements = development_entitlements(child, watch_id, team, fingerprint, device=watch_device)
+        report.update({'watchRelativePath': str(watch.relative_to(app)),
+                       'watchProfile': profile_summary(child, watch_entitlements, watch_device),
+                       'watchInstructions': instructions(executable(watch, watch_info))})
+    if extensions:
+        widget, widget_info = extensions[0]
+        widget_id = bundle_id + '.widgets'
+        child = profile(widget_profile)
+        widget_entitlements = development_entitlements(child, widget_id, team, fingerprint,
+                                                       device=phone_device, app_groups=[group])
+        report.update({'widgetRelativePath': str(widget.relative_to(app)), 'widgetBundleId': widget_id,
+                       'widgetAppGroup': group,
+                       'widgetProfile': profile_summary(child, widget_entitlements, phone_device),
+                       'widgetInstructions': instructions(executable(widget, widget_info))})
+    return report
 
 
 def validate_output(app, output):
@@ -174,21 +221,27 @@ def validate_output(app, output):
         raise RuntimeError('Output must be a new application outside the source bundle')
 
 
-def sign_copy(app, output, report, phone_profile, watch_profile):
+def sign_copy(app, output, report, phone_profile, watch_profile=None, widget_profile=None):
     validate_output(app, output)
     output.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(app, output, symlinks=True)
-    watch = output / report['watchRelativePath']
-    for target, bundle_id, provision, entitlements in [
-            (watch, report['watchBundleId'], watch_profile, report['watchProfile']['entitlements']),
-            (output, report['bundleId'], phone_profile, report['phoneProfile']['entitlements'])]:
+    targets = []
+    if report.get('widgetRelativePath'):
+        targets.append(('widget', output / report['widgetRelativePath'], report['widgetBundleId'],
+                        widget_profile, report['widgetProfile']['entitlements']))
+    if report.get('watchRelativePath'):
+        targets.append(('watch', output / report['watchRelativePath'], report['watchBundleId'],
+                        watch_profile, report['watchProfile']['entitlements']))
+    targets.append(('phone', output, report['bundleId'], phone_profile, report['phoneProfile']['entitlements']))
+    for name, target, bundle_id, provision, entitlements in targets:
         info = plistlib.loads((target / 'Info.plist').read_bytes())
         info['CFBundleIdentifier'] = bundle_id
-        if target == watch:
+        if name == 'watch':
             info['WKCompanionAppBundleIdentifier'] = report['bundleId']
+        elif report.get('widgetAppGroup'):
+            info['LokiWidgetAppGroup'] = report['widgetAppGroup']
         (target / 'Info.plist').write_bytes(plistlib.dumps(info))
         shutil.copy2(provision, target / 'embedded.mobileprovision')
-        name = 'watch' if target == watch else 'phone'
         entitlement_file = output.parent / f'{name}-entitlements.plist'
         entitlement_file.write_bytes(plistlib.dumps(entitlements))
         command(['codesign', '--force', '--sign', report['certificateSha1'], '--identifier', bundle_id,
@@ -198,15 +251,17 @@ def sign_copy(app, output, report, phone_profile, watch_profile):
             raise RuntimeError('Signed entitlements differ from the reviewed development request')
     command(['codesign', '--verify', '--deep', '--strict', output])
     phone_info = plistlib.loads((output / 'Info.plist').read_bytes())
-    watch_info = plistlib.loads((watch / 'Info.plist').read_bytes())
     if instructions(executable(output, phone_info)) != report['phoneInstructions']:
         raise RuntimeError('Signing changed the prelinked phone instructions')
-    if instructions(executable(watch, watch_info)) != report['watchInstructions']:
-        raise RuntimeError('Signing changed the prelinked Watch instructions')
+    for name, target, _, _, _ in targets[:-1]:
+        child_info = plistlib.loads((target / 'Info.plist').read_bytes())
+        if instructions(executable(target, child_info)) != report[name + 'Instructions']:
+            raise RuntimeError('Signing changed the prelinked embedded instructions')
+        report[name + 'InstructionsPreserved'] = True
     if nsh_bundle_hash(output) != report['nshBundleSha256']:
         raise RuntimeError('Signing changed the NSH bundle')
     report.update({'signedApplication': str(output.resolve()), 'signatureVerified': True,
-                   'phoneInstructionsPreserved': True, 'watchInstructionsPreserved': True,
+                   'phoneInstructionsPreserved': True,
                    'nshBundlePreserved': True})
     (output.parent / 'signed-application.json').write_text(json.dumps(report, indent=2) + '\n')
 
@@ -219,7 +274,9 @@ def main():
     parser.add_argument('--team', required=True)
     parser.add_argument('--identity', required=True, help='Exact SHA-1 of the existing development signing identity')
     parser.add_argument('--phone-profile', required=True, type=Path)
-    parser.add_argument('--watch-profile', required=True, type=Path)
+    parser.add_argument('--watch-profile', type=Path, help='Required when the archive contains its Watch companion')
+    parser.add_argument('--widget-profile', type=Path, help='Required when the archive contains its WidgetKit extension')
+    parser.add_argument('--app-group', help='Explicit shared group; defaults to group.<signed phone bundle ID>')
     parser.add_argument('--device', required=True, help='Phone UDID already included in the development profile')
     parser.add_argument('--watch-device', help='Optional known Watch UDID; its absence does not block iPhone signing')
     parser.add_argument('--execute', action='store_true', help='Create and development-sign a copy; still never installs')
@@ -231,11 +288,11 @@ def main():
         parser.error('Specify a bundle identifier and a new .app output path')
     validate_output(args.app, args.output)
     report = plan(args.app, args.bundle_id, args.team, fingerprint, args.phone_profile,
-                  args.watch_profile, args.device, args.watch_device)
+                  args.watch_profile, args.device, args.watch_device, args.widget_profile, args.app_group)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     (args.output.parent / 'signing-plan.json').write_text(json.dumps(report, indent=2) + '\n')
     if args.execute:
-        sign_copy(args.app.resolve(), args.output, report, args.phone_profile, args.watch_profile)
+        sign_copy(args.app.resolve(), args.output, report, args.phone_profile, args.watch_profile, args.widget_profile)
     print(json.dumps(report, indent=2))
 
 

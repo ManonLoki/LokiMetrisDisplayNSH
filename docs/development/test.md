@@ -13,9 +13,10 @@ python3 tools/test.py
 1. `cargo fmt --all --check`、Clippy 和当前宿主的 Rust 全目标测试。
 2. Python 打包回归，检查 Android Manifest、官方 Java 字节码合并、移动身份、Apple 签名、Watch 嵌入和桌面包格式。
 3. POSIX 上的 Linux 凭据适配回归，使用隔离的 `secret-tool` 替身验证大凭据、回滚和进程超时。
-4. `nsh check` 及三个 NSH 用例文件，检查应用交互、移动偏好迁移、安全区、电视遥控和图片播放时钟。
+4. macOS 上编译并执行 Widget 后台执行器与取消／提交竞态的 Swift 回归。
+5. `nsh check` 及三个 NSH 用例文件，检查应用交互、移动偏好迁移、安全区、电视遥控和图片播放时钟。
 
-Rust 测试负责格式化、快照校验、配对认证、缓存、GIF 解码、生命周期和设置状态机的边界条件。NSH 测试负责页面和交互，避免重复穷举 Rust 已覆盖的纯业务规则。
+Rust workspace 测试同时覆盖主应用和 `crates/widget-core/`，负责格式化、快照校验、配对认证、缓存、GIF 解码、生命周期和设置状态机；小组件另覆盖租约、读取凭据、加密 HTTP、来源撤销及旧响应竞态。NSH 测试负责页面和交互，避免重复穷举 Rust 已覆盖的纯业务规则。
 
 | 测试位置 | 验证内容 |
 | --- | --- |
@@ -28,7 +29,7 @@ Rust 测试负责格式化、快照校验、配对认证、缓存、GIF 解码�
 可直接运行某组测试：
 
 ```sh
-cargo test --all-targets --locked
+cargo test --workspace --all-targets --locked
 python3 -m unittest discover -s src/tests/packaging -p 'test_*.py'
 python3 src/native/credentials/test_linux.py
 nsh test src/tests/desktop/app.test.tsx
@@ -41,6 +42,7 @@ nsh test src/tests/desktop/image-playback.test.ts
 | 套件 | 命令 | 环境与范围 |
 | --- | --- | --- |
 | Android | `python3 tools/test.py --suite android` | JDK；在 JVM 中执行生产 Activity，Android／NSH API 使用替身 |
+| iOS 小组件后台执行器 | `python3 tools/test.py --suite ios` | macOS、Swift；取消早于启动、等待取消清理、只完成一次；默认 unit 亦包含 |
 | Watch | `python3 tools/test.py --suite watch` | macOS、Swift/Xcode；编译实际缓存、展示和图片实现 |
 | 原生像素 | `python3 tools/test.py --suite visual` | macOS 原生 NSH 宿主、Swift；验证卡片动效门控和 GIF 显示帧 |
 | 协议联调 | `python3 tools/test.py --suite integration` | macOS；启动隔离协议夹具，配对、传输 GIF 并检查原生显示帧 |
