@@ -129,7 +129,7 @@ fn dispatch(request: &Value) -> Result<Value, String> {
             Ok(json!({ "saved": saved, "newerCache": newer,
                 "outcome": if saved { "success" } else if newer { "newerCache" } else { "superseded" } }))
         }
-        "platform.refresh.limits" => Ok(json!({"interval":300,"backgroundBudget":12})),
+        "platform.refresh.limits" => Ok(json!({"interval":900,"backgroundBudget":12})),
         "platform.refresh.diagnosticOrigin" => {
             let value = request["value"].as_str().unwrap_or_default();
             Ok(json!(if (1..=48).contains(&value.len())

@@ -4,9 +4,9 @@ import Foundation
 /// 摘要、读取凭据与刷新规则都在 Rust 共享存储；这里只定位目录并执行一次网络请求。
 enum WidgetContainer {
     static let kind = "LokiMetrisDisplay.Summary"
-    /// BGAppRefresh 与 Timeline 统一申请 5 分钟目标间隔；实际唤醒仍由系统调度。
+    /// BGAppRefresh 与 Timeline 统一申请 15 分钟目标间隔；实际唤醒仍由系统调度。
     static let refreshInterval: TimeInterval =
-        (PlatformRules.dictionary("refresh.limits")?["interval"] as? NSNumber)?.doubleValue ?? 300
+        (PlatformRules.dictionary("refresh.limits")?["interval"] as? NSNumber)?.doubleValue ?? 900
 
     /// 最近一次合法摘要及其展示投影；过期仍返回，并带真实同步时间。
     struct Entry: Decodable {
