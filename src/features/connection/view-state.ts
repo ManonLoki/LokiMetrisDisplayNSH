@@ -1,6 +1,6 @@
 /** 原生连接公开投影；展示层不会接触真实配对密钥。 */
-// 引入原生桥接调用函数
-import { invoke } from "../../shared/native-bridge";
+// 引入原生规则模块
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入面板配置类型
 import type { PanelConfig } from "../../shared/contracts/panel";
 // 引入快照类型
@@ -52,11 +52,11 @@ export type ViewState = {
 // 构造指定设备的空视图
 export function emptyView(deviceId: string, deviceName: string): ViewState {
   // 空状态由原生侧生成，保证与 Rust 模型一致
-  return invoke("connection.emptyView", deviceId, deviceName);
+  return Rules.connectionEmptyView(deviceId, deviceName) as ViewState;
 }
 
 // 把原生端口返回的 JSON 文本解析为视图
 export function nativeView(raw: string): ViewState {
   // 解析交给原生侧
-  return invoke("connection.nativeView", raw);
+  return Rules.connectionNativeView(raw) as ViewState;
 }

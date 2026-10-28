@@ -1,12 +1,12 @@
 // 引入布局类型
 import type { HookLayout } from "../../shared/contracts/panel";
-// 引入原生桥接调用
-import { invoke } from "../../shared/native-bridge";
+// 引入原生规则模块
+import { Rules } from "loki-metris-mobile-display/native";
 
 // 行为状态对应的展示文案，由原生侧提供
 export function hookLabel(behavior: string): string {
   // 调用规则：Hook 标签
-  return invoke("hooks.label", behavior);
+  return Rules.hooksLabel(behavior);
 }
 
 // 每页容量：1x1 为一个，其余为四个

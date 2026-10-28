@@ -7,9 +7,7 @@ fn status_labels_match_the_shared_watch_fixture() {
         serde_json::from_str(include_str!("../../tests/fixtures/display-names.json")).unwrap();
     // 逐个状态核对文案
     for case in fixture["behaviors"].as_array().unwrap() {
-        let label = super::dispatch("hooks.label", std::slice::from_ref(&case[0]))
-            .unwrap()
-            .unwrap();
+        let label = super::label(case[0].as_str().unwrap());
         assert_eq!(label, case[1], "{}", case[0]);
     }
 }

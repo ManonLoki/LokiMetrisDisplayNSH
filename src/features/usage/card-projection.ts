@@ -1,6 +1,6 @@
 /** 类型化的 UI 适配器;用量规则和整数运算都在 Rust 中执行。 */
-// 引入原生桥接调用
-import { invoke } from "../../shared/native-bridge";
+// 引入原生规则模块
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入快照类型
 import type { Snapshot } from "../../shared/contracts/snapshot";
 
@@ -50,7 +50,7 @@ export type UsageCardProjection = {
 };
 
 // 把快照投影成卡片所需数据，由 Rust 计算
-export function cardProjection(snapshot: UsageSnapshot | null): UsageCardProjection { return invoke("usage.cardProjection", snapshot); }
+export function cardProjection(snapshot: UsageSnapshot | null): UsageCardProjection { return Rules.usageCardProjection(snapshot) as UsageCardProjection; }
 
 /** 业务投影决定等级;组件自己持有配色。 */
 // 业务层只给出等级，颜色由组件决定

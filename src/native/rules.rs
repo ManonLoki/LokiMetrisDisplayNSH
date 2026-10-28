@@ -1,51 +1,71 @@
-//! JS 与业务模块之间的序列化端口；不拥有第二份规则或协议状态。
-// 引入 nsh 模块宏
-use nsh_core::prelude::*;
-// 引入反序列化
-use serde::Deserialize;
-// 引入 JSON 值
-use serde_json::Value;
+//! TSX 调用 Rust 业务规则的类型化入口：每条规则都是 `Rules` 模块上的一个方法。
+// 引入 nsh 模块宏与 JsonValue
+use nsh_core::{JsonValue, prelude::*};
 
-#[derive(Deserialize)]
-// 规则请求
-struct Request {
-    // 操作名
-    op: String,
-    #[serde(default)]
-    // 参数列表，缺省为空
-    args: Vec<Value>,
-}
+use crate::features::{connection, hooks, usage};
+use crate::shared::{contracts::panel, domain::agents};
 
-// 声明 nsh 原生模块
+// 声明 nsh 原生模块；TS 里是 `import { Rules } from "loki-metris-mobile-display/native"`
 #[module]
 /// 在每个 NSH 宿主上于 Rust 中执行的业务规则;TS 只负责传参。
 // 规则模块：所有 NSH 宿主共用的业务规则
 pub struct Rules;
 
-// 模块方法
+// 模块方法：snake_case 的函数名在 TS 中自动变为 camelCase
 #[module]
 impl Rules {
-    /// 参数和返回值均为公开投影；具体规则按业务所属模块分派。
-    // 唯一入口：参数与返回值都是公开投影，按业务所属模块分派
-    pub fn call(request: String) -> Result<String, String> {
-        // 请求不得超过 16 MiB
-        if request.len() > 16 * 1024 * 1024 {
-            // 展示调用过大
-            return Err("展示调用过大".into());
-        }
-        // 解析请求
-        let request: Request = serde_json::from_str(&request).map_err(|_| "展示调用格式无效")?;
-        // 依次尝试各模块，没有人处理则报错
-        let value = crate::shared::dispatch(&request.op, &request.args)
-            // 先试连接分支
-            .or_else(|| crate::features::connection::dispatch(&request.op, &request.args))
-            // 再试 Hook 分支
-            .or_else(|| crate::features::hooks::dispatch(&request.op, &request.args))
-            // 再试用量分支
-            .or_else(|| crate::features::usage::dispatch(&request.op, &request.args))
-            // 都不支持则报错
-            .ok_or("不支持的展示调用")??;
-        // 序列化结果
-        serde_json::to_string(&value).map_err(|_| "展示结果编码失败".into())
+    /// 默认面板配置。
+    pub fn default_panel() -> JsonValue {
+        panel::default_panel()
+    }
+
+    /// 从持久化文本恢复面板配置,非法时回落默认值。
+    pub fn restore_panel(raw: Option<String>) -> JsonValue {
+        panel::restore_panel(raw.as_deref())
+    }
+
+    /// 把原始智能体名归一为规范键。
+    pub fn canonical_agent_key(raw: String) -> String {
+        agents::canonical_agent_key(&raw)
+    }
+
+    /// 智能体的展示名称。
+    pub fn agent_display_name(raw: String) -> String {
+        agents::agent_display_name(&raw)
+    }
+
+    /// 指定设备的空视图。
+    pub fn connection_empty_view(device_id: String, device_name: String) -> JsonValue {
+        connection::view_state::empty_view(&device_id, &device_name)
+    }
+
+    /// 把原生端口返回的 JSON 文本解析为公开视图。
+    pub fn connection_native_view(raw: String) -> Result<JsonValue, String> {
+        connection::view_state::native_view(&raw)
+    }
+
+    /// 解析桌面发来的快照;非法数据返回 null。
+    pub fn connection_parse_snapshot(value: JsonValue, images: JsonValue) -> JsonValue {
+        connection::snapshot::project_snapshot(&value, &images).unwrap_or(JsonValue::Null)
+    }
+
+    /// 校验设备名称,返回错误文案;合法时返回 null。
+    pub fn connection_name_error(name: String) -> Option<String> {
+        connection::identity::name_error(&name).map(str::to_owned)
+    }
+
+    /// 设备 ID 是否为规范格式。
+    pub fn connection_valid_device_id(id: String) -> bool {
+        connection::identity::valid_device_id(&id)
+    }
+
+    /// 把用量快照投影成卡片所需数据。
+    pub fn usage_card_projection(snapshot: JsonValue) -> JsonValue {
+        usage::rows::card_projection(&snapshot)
+    }
+
+    /// Hook 行为状态对应的展示文案。
+    pub fn hooks_label(behavior: String) -> String {
+        hooks::label(&behavior).to_owned()
     }
 }

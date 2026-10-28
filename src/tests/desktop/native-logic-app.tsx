@@ -14,6 +14,9 @@ type Reply = Query & { value?: unknown; error?: string };
 
 // 原生目标的套件 VM 由 CLI 持有；只有这个显式测试宿主链接真实应用 Rust。
 // 输入仅是规则查询，结果来自 Rules，不接入网络或生产入口。
+// 测试查询名 "feature.name" 对应 Rules 的方法：shared 为 name，其余为 featureName
+const ruleMethod = (op: string) => op.startsWith("shared.") ? op.slice(7) : op.replace(/\.(.)/, (_, c: string) => c.toUpperCase());
+
 // 读取查询、逐条执行并写回结果
 void (async () => {
   // 读取查询批次
@@ -34,7 +37,7 @@ void (async () => {
       // 页码分格属于现有 UI 布局；直接调用原组件 helper，规则查询仍走 Rust。
       // 分页走 UI helper，其余走 Rust 规则
       const value = query.op === "ui.hookPages" ? hookPages(args[0] as unknown[], args[1] as HookLayout)
-        : JSON.parse(Rules.call(JSON.stringify({ op: query.op, args })));
+        : (Rules as unknown as Record<string, (...rest: unknown[]) => unknown>)[ruleMethod(query.op)](...args);
       // 记录成功结果
       replies.push({ op: query.op, args, value });
     }
