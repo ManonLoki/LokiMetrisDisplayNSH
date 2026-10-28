@@ -6,13 +6,15 @@
 
 ## 运行时边界
 
-`App.tsx` 注入真实 `Link` 端口，`src/app/runtime.ts` 负责初始化、提交命令和读取公开状态。Rust 注册的接口为：
+`src/app/runtime.ts` 只保留 250ms 的 UI 时钟和信号赋值；启动、轮询、保存名称/面板和命令转发都由 Rust 的 `Shell` 模块（`src/native/shell.rs`）完成，它在内部驱动真实连接。`Shell` 注册的接口为：
 
 | 接口 | 职责 |
 | --- | --- |
-| `Link.initialize(deviceId, name)` | 根据平台初始化身份、私有目录和当前 VM 的连接 owner |
-| `Link.command(json)` | 将用户意图加入有界队列 |
-| `Link.poll()` | 读取最近提交的公开连接状态与已验证图片 URI |
+| `Shell.start()` | 恢复身份和偏好，按平台初始化私有目录和当前 VM 的连接 owner，返回首个公开状态 |
+| `Shell.tick(draft, nowMs)` | 轮询最近提交的公开连接状态与已验证图片 URI，并推进名称确认的时钟 |
+| `Shell.command(command, …)` | 将用户意图（选择、遗忘、刷新等）加入有界队列并立即轮询 |
+| `Shell.editName` / `saveName` / `savePanel` | 编辑名称草稿、保存名称与面板偏好；需要连接执行的命令由 `Shell` 自己下发 |
+| `Shell.dispose()` | 结束设置会话并告知连接界面不再活动 |
 
 owner 串行管理发现结果、选中来源、配对、认证恢复、会话序号、心跳、快照和图片接收。TCP 读写与发现线程只提交事件，不能另建一套协议状态。`System.locals` 持有连接实例，VM 关闭时释放。
 
@@ -25,7 +27,7 @@ owner 串行管理发现结果、选中来源、配对、认证恢复、会话�
 | `active` | `value` | 提交界面活动状态；移动端忽略此命令，改用系统观察结果 |
 | `refresh` | 无 | 已连接且桌面支持时请求快照，否则重试连接 |
 
-移动端的生命周期和网络事实走原生宿主接口，不能由 JavaScript 伪造。面板偏好由 Rust `Settings` 经 NSH Storage 保存；配对秘密留在 Rust 与系统安全存储，公开投影不包含秘密或读取凭据的能力。
+移动端的生命周期和网络事实走原生宿主接口，不能由 JavaScript 伪造。面板偏好由 Rust 设置用例（`src/features/settings`）经 NSH Storage 保存；配对秘密留在 Rust 与系统安全存储，公开投影不包含秘密或读取凭据的能力。
 
 ## 发现与配对
 

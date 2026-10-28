@@ -24,11 +24,17 @@ mod ui_lifecycle;
 pub(crate) mod widgets;
 
 // 对外导出三个模块
-pub use link::Link;
+// 真实连接的操作，由 Shell 调用
+pub(crate) use link::Link;
 // 导出规则
 pub use rules::Rules;
+// 导出外壳
+pub use shell::Shell;
 // 调试构建专用的测试夹具规则
 #[cfg(debug_assertions)]
 pub use rules::FixtureRules;
 // 导出界面生命周期
 pub use ui_lifecycle::UiLifecycle;
+
+// 应用外壳控制器
+mod shell;

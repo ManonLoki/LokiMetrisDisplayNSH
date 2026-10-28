@@ -8,10 +8,10 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 
 ## 从入口到展示台
 
-1. `App.tsx` 将 `Link` 与 `UiLifecycle` 注入 `createApp`，装配展示台、设置与导航。
-2. `src/app/runtime.ts` 调用 Rust `Settings` 恢复身份和偏好，再调用 `Link.initialize` 创建连接实例。UI 定时读取前台事实与公开投影。
+1. `App.tsx` 将 `UiLifecycle` 注入 `createApp`（连接由 Rust 的 `Shell` 驱动），装配展示台、设置与导航。
+2. `src/app/runtime.ts` 调用 Rust `Shell.start` 恢复身份和偏好并创建连接实例，之后每 250ms 调用 `Shell.tick` 读取公开投影；TS 只做 UI 时钟和信号赋值。
 3. `src/native/link.rs` 将实例绑定到 NSH `System.locals` 和应用私有目录；VM 关闭时释放。连接 owner 串行处理发现、配对、认证、快照与资源事件。
-4. Rust 校验桌面输入并生成公开快照。TSX 根据窗口尺寸、面板偏好和导航状态渲染，纯展示规则通过 `#[module]` 类型化的 `Rules` 方法（`src/native/rules.rs`）直接调用。`Link`、`Settings`、`ImageFrames` 同样是类型化的 `#[module]`，收发的面板、视图、快照、卡片投影等结构定义在 `src/shared/contracts/models.rs`（`#[derive(JsObject)]`），TS 类型由 `nsh check` 据此生成到 `.nsh/types`，TSX 不再手写这些类型，也不拼装或解析 JSON。
+4. Rust 校验桌面输入并生成公开快照。TSX 根据窗口尺寸、面板偏好和导航状态渲染，纯展示规则通过 `#[module]` 类型化的 `Rules` 方法（`src/native/rules.rs`）直接调用。`Shell`、`ImageFrames` 同样是类型化的 `#[module]`，收发的面板、视图、快照、卡片投影等结构定义在 `src/shared/contracts/models.rs`（`#[derive(JsObject)]`），TS 类型由 `nsh check` 据此生成到 `.nsh/types`，TSX 不再手写这些类型，也不拼装或解析 JSON。
 
 ## 目录与职责
 
@@ -39,7 +39,7 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 | 状态 | 维护者 | 边界 |
 | --- | --- | --- |
 | 页码、草稿、窗口尺寸、导航、详情和动画时钟 | TSX | 界面局部状态 |
-| 身份恢复、名称保存、面板保存和失败处理 | Rust `Settings` | 普通偏好通过 NSH Storage 保存 |
+| 身份恢复、名称保存、面板保存和失败处理 | Rust `Shell` 与设置用例 | 普通偏好通过 NSH Storage 保存 |
 | 配对、会话序号、心跳、可信快照和资源接收 | Rust 连接 owner | 同一事件循环串行修改 |
 | 配对秘密与身份安全记录 | Rust 与系统安全存储 | 秘密不进入 TSX 或普通 Storage；设备 UUID 和名称可公开 |
 | Watch 快照、revision、退役 stream 与图片 | iPhone 发布器／Watch 缓存各自维护 | 跨设备传副本，不共享目录 |
@@ -63,8 +63,8 @@ GIF 在 Rust 后台工作线程解码为完整画布 PNG 帧。TSX 播放时钟�
 | 关系 | 源码入口 |
 | --- | --- |
 | UI 与原生模块注入 | [App.tsx](../../App.tsx)、[运行时](../../src/app/runtime.ts)、[模块注册](../../src/lib.rs) |
-| VM 到连接 owner | [Link 接口](../../src/native/link.rs)、[连接实例](../../src/native/connection/mod.rs)、[事件循环](../../src/native/connection/owner.rs) |
-| 规则与设置存储 | [Rules](../../src/native/rules.rs)、[Settings 模块](../../src/features/settings/mod.rs) |
+| VM 到连接 owner | [Link 操作](../../src/native/link.rs)、[连接实例](../../src/native/connection/mod.rs)、[事件循环](../../src/native/connection/owner.rs) |
+| 规则与设置存储 | [Rules](../../src/native/rules.rs)、[Shell](../../src/native/shell.rs)、[设置用例](../../src/features/settings/mod.rs) |
 | 移动前台与缓存差异 | [生命周期推进](../../src/native/connection/app_visibility.rs)、[Android 初始化](../../src/native/bootstrap/android/mod.rs) |
 | 资源验证与播放 | [资源接收](../../src/native/connection/assets.rs)、[图片模块](../../src/native/image/mod.rs)、[界面图片](../../src/shared/ui/image.tsx) |
 | 小组件通道 | [摘要发布与撤销](../../src/native/connection/widget.rs)、[共享存储](../../crates/widget-core/src/store.rs)、[Swift 入口](../../crates/widget-core/src/ffi.rs)、[系统调度](../../platform/ios/bridge/WidgetHostBridge.swift) |

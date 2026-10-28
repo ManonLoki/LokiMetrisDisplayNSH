@@ -7,7 +7,7 @@ mod native;
 mod shared;
 
 // 对外导出三个原生模块入口
-pub use native::{Link, Rules, UiLifecycle};
+pub use native::{Rules, Shell, UiLifecycle};
 // 引入 nsh 原生模块宏与注册表
 use nsh_core::prelude::*;
 
@@ -20,7 +20,7 @@ fn register_bindings(registry: &mut Registry) {
     // 安装小组件通道
     native::widgets::install();
     // 注册连接模块
-    registry.module::<Link>();
+    registry.module::<Shell>();
     // 注册界面生命周期模块
     registry.module::<UiLifecycle>();
     // 注册规则查询模块
@@ -30,6 +30,4 @@ fn register_bindings(registry: &mut Registry) {
     registry.module::<native::FixtureRules>();
     // 注册图片帧解码模块
     registry.module::<native::image::ImageFrames>();
-    // 注册设置模块
-    registry.module::<features::settings::Settings>();
 }

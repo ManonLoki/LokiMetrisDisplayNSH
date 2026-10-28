@@ -74,17 +74,14 @@ fn initial_view(sys: &System) -> Result<JsonValue, String> {
 }
 
 /// 已认证的局域网连接。配对机密留在 Rust 和系统凭据存储中。
-// 声明 nsh 原生模块
-#[module]
 // 经认证的局域网连接；配对秘密只留在 Rust 与系统凭据库
-pub struct Link;
+pub(crate) struct Link;
 
-// 模块方法
-#[module]
+// 真实连接的操作；Shell 在产品里调用它们
 impl Link {
     /// 创建 VM 的连接所有者,恢复现有的设备身份和私有缓存。
     // 创建本 VM 的连接 owner，恢复设备身份与私有缓存
-    pub fn initialize(device_id: String, name: String, sys: System) -> Result<ViewState, String> {
+    pub(crate) fn initialize(device_id: &str, name: &str, sys: &System) -> Result<ViewState, String> {
         // 取连接运行时
         let runtime = sys.locals.get::<LinkRuntime>();
         // 只初始化一次
@@ -110,7 +107,7 @@ impl Link {
                 None => root,
             };
             // 生成各平台的连接配置
-            let config = bootstrap::configure(&root, &device_id, &name)?;
+            let config = bootstrap::configure(&root, device_id, name)?;
             // 读取旧版面板文件，没有则用配置里带的
             let legacy_panel = std::fs::read(config.root.join("panel-v1.json"))
                 // 读取成功
@@ -134,21 +131,21 @@ impl Link {
             });
         }
         // 返回首次视图
-        typed(initial_view(&sys)?)
+        typed(initial_view(sys)?)
     }
 
     /// 在同一个所有者中,为发现、选择、遗忘、重命名或刷新入队。
     // 把发现、选择、忘记、重命名或刷新命令排入 owner 队列
-    pub fn command(command: LinkCommand, sys: System) -> Result<(), String> {
+    pub(crate) fn command(command: &LinkCommand, sys: &System) -> Result<(), String> {
         // 序列化为连接所有者读取的文本
-        let text = serde_json::to_string(&command).map_err(|_| "无效连接操作")?;
+        let text = serde_json::to_string(command).map_err(|_| "无效连接操作")?;
         // 把命令交给句柄
-        with_handle(&sys, |handle| handle.command(&text))?
+        with_handle(sys, |handle| handle.command(&text))?
     }
 
     /// 返回已验证的公开连接视图;自上次返回以来没有变化时返回 null。
     // 只在投影变化时校验并返回新视图
-    pub fn poll(sys: System) -> Result<Option<ViewState>, String> {
+    pub(crate) fn poll(sys: &System) -> Result<Option<ViewState>, String> {
         // 取连接运行时
         let runtime = sys.locals.get::<LinkRuntime>();
         // 借用已挂载的连接

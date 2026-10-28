@@ -42,10 +42,8 @@ impl engine::Store for AppStorage {
 /// 设置用例。存储与原生确认共享 UI VM 的生命周期。
 /// 每个方法对应引擎的一种请求,返回公开 UI 状态与待下发给 Link 端口的命令。
 /// 方法是异步任务:核心任务提供 Storage 上下文,TS 的同步调用不会进入该上下文。
-// 声明 nsh 原生模块
-#[module]
-// 设置用例模块
-pub struct Settings;
+// 设置用例；由 Shell 在异步任务（有 Storage 上下文）中调用
+pub(crate) struct Settings;
 
 // 把类型化的调用交给本 VM 的设置引擎，并返回公开状态
 fn apply(request: engine::Request, sys: &System) -> Result<SettingsResult, String> {
@@ -62,69 +60,67 @@ fn json<T: serde::Serialize>(value: &T) -> Result<JsonValue, String> {
     serde_json::to_value(value).map_err(|error| error.to_string())
 }
 
-// 模块方法：函数名在 TS 中为 camelCase
-#[module]
 impl Settings {
     /// 启动:恢复设备身份和面板偏好,开启新会话。
-    pub async fn boot(sys: System) -> Result<SettingsResult, String> {
-        apply(engine::Request::Boot, &sys)
+    pub(crate) fn boot(sys: &System) -> Result<SettingsResult, String> {
+        apply(engine::Request::Boot, sys)
     }
 
     /// 原生连接初始化完成,并带上首个公开视图。
-    pub async fn initialized(session: u64, view: ViewState, sys: System) -> Result<SettingsResult, String> {
-        apply(engine::Request::Initialized { session, view: json(&view)? }, &sys)
+    pub(crate) fn initialized(session: u64, view: &ViewState, sys: &System) -> Result<SettingsResult, String> {
+        apply(engine::Request::Initialized { session, view: json(view)? }, sys)
     }
 
     /// 保存面板偏好。
-    pub async fn save_panel(session: u64, panel: PanelConfig, sys: System) -> Result<SettingsResult, String> {
-        apply(engine::Request::SavePanel { session, panel: json(&panel)? }, &sys)
+    pub(crate) fn save_panel(session: u64, panel: &PanelConfig, sys: &System) -> Result<SettingsResult, String> {
+        apply(engine::Request::SavePanel { session, panel: json(panel)? }, sys)
     }
 
     /// 编辑设备名称草稿。
-    pub async fn edit_name(session: u64, draft: String, sys: System) -> Result<SettingsResult, String> {
-        apply(engine::Request::EditName { session, draft }, &sys)
+    pub(crate) fn edit_name(session: u64, draft: String, sys: &System) -> Result<SettingsResult, String> {
+        apply(engine::Request::EditName { session, draft }, sys)
     }
 
     /// 开始保存设备名称,返回需要下发的命令。
-    pub async fn begin_name_save(
+    pub(crate) fn begin_name_save(
         session: u64,
         draft: String,
-        view: ViewState,
+        view: &ViewState,
         now_ms: u64,
-        sys: System,
+        sys: &System,
     ) -> Result<SettingsResult, String> {
-        apply(engine::Request::BeginNameSave { session, draft, view: json(&view)?, now_ms }, &sys)
+        apply(engine::Request::BeginNameSave { session, draft, view: json(view)?, now_ms }, sys)
     }
 
     /// 观察原生视图,推进名称保存的确认与超时。
-    pub async fn observe_name(
+    pub(crate) fn observe_name(
         session: u64,
         draft: String,
-        view: ViewState,
+        view: &ViewState,
         now_ms: u64,
-        sys: System,
+        sys: &System,
     ) -> Result<SettingsResult, String> {
-        apply(engine::Request::ObserveName { session, draft, view: json(&view)?, now_ms }, &sys)
+        apply(engine::Request::ObserveName { session, draft, view: json(view)?, now_ms }, sys)
     }
 
     /// 名称命令投递失败,回滚保存。
-    pub async fn name_dispatch_failed(session: u64, sys: System) -> Result<SettingsResult, String> {
-        apply(engine::Request::NameDispatchFailed { session }, &sys)
+    pub(crate) fn name_dispatch_failed(session: u64, sys: &System) -> Result<SettingsResult, String> {
+        apply(engine::Request::NameDispatchFailed { session }, sys)
     }
 
     /// 端口调用失败的上报。
-    pub async fn port_failure(
+    pub(crate) fn port_failure(
         session: u64,
-        view: ViewState,
+        view: &ViewState,
         stage: String,
         error: String,
-        sys: System,
+        sys: &System,
     ) -> Result<SettingsResult, String> {
-        apply(engine::Request::PortFailure { session, view: json(&view)?, stage, error }, &sys)
+        apply(engine::Request::PortFailure { session, view: json(view)?, stage, error }, sys)
     }
 
     /// 释放会话。
-    pub async fn dispose(session: u64, sys: System) -> Result<SettingsResult, String> {
-        apply(engine::Request::Dispose { session }, &sys)
+    pub(crate) fn dispose(session: u64, sys: &System) -> Result<SettingsResult, String> {
+        apply(engine::Request::Dispose { session }, sys)
     }
 }
