@@ -13,6 +13,18 @@ export function CyberImage(props: ImageProps & MotionProps) {
   const allowed = useCyberMotion(props);
   // 实际交给原生 Image 的地址
   const source = signal<ImageProps["src"]>(undefined);
+  // 双缓冲：新帧先在隐藏层加载完成再显示，避免换帧时旧帧先消失导致闪烁
+  const slots = [signal<ImageProps["src"]>(undefined), signal<ImageProps["src"]>(undefined)];
+  // 当前显示的层
+  const shown = signal(0);
+  // 等待显示的层与兜底定时器
+  let target = -1;
+  let swapTimer: ReturnType<typeof setTimeout> | undefined;
+  // 隐藏层加载完成（或超时）后切换显示
+  const reveal = (slot: number) => {
+    if (slot !== target) return;
+    clearTimeout(swapTimer); target = -1; shown.set(slot);
+  };
   // 当前动图播放器
   const player = signal<ImagePlayback | null>(null);
   // 容器实测尺寸
@@ -74,12 +86,26 @@ export function CyberImage(props: ImageProps & MotionProps) {
     // 清理：标记失效并销毁播放器
     return () => { disposed = true; untracked(player)?.dispose(); };
   });
+  // 地址变化时写入隐藏层，等待其加载完成后再显示
+  effect(() => {
+    const next = source();
+    untracked(() => {
+      clearTimeout(swapTimer);
+      if (next === undefined) { target = -1; slots[0].set(undefined); slots[1].set(undefined); shown.set(0); return; }
+      const hidden = 1 - shown();
+      target = hidden; slots[hidden].set(next);
+      // onLoad 未触发（如缓存命中）时的兜底
+      swapTimer = setTimeout(() => reveal(hidden), 120);
+    });
+  });
   // 随动效许可开始或暂停播放
   effect(() => { player()?.setPlaying(allowed()); });
   // 组件销毁时使旧结果失效并销毁播放器
-  cleanup(() => { generation += 1; untracked(player)?.dispose(); });
+  cleanup(() => { clearTimeout(swapTimer); generation += 1; untracked(player)?.dispose(); });
   // 首次加载成功时上报一次
-  const onLoad = (size: Size) => {
+  const onLoad = (size: Size, slot: number) => {
+    // 隐藏层加载完成，立即切换
+    reveal(slot);
     // 首次加载成功时上报尺寸并结束加载
     if (!loaded && !settled) { loaded = true; settled = true; props.onLoad?.(size); props.onLoadEnd?.(); }
   };
@@ -96,13 +122,18 @@ export function CyberImage(props: ImageProps & MotionProps) {
       frame.set({ width: next.width, height: next.height });
     }
   }}>
-    {/* 以尺寸为 key，尺寸变化时重建 Image */}
+    {/* 以尺寸为 key，尺寸变化时重建 Image；两层叠放，只显示加载完成的一层 */}
     <Each of={frame() ? [frame()!] : []} key={(size) => `${size.width}x${size.height}`}>{(size) =>
-      <Image {...nativeProps} src={source()} style={{ width: size().width, height: size().height }}
-        // 动图不做淡入
-        fadeDuration={animated ? 0 : props.fadeDuration}
-        // 加载开始、成功与出错回调
-        onLoadStart={() => { if (!loaded && !settled) props.onLoadStart?.(); }} onLoad={onLoad} onError={onError} />}
+      <View style={{ width: size().width, height: size().height }}>
+        <Each of={[0, 1]} key="index">{(slot) =>
+          <Image {...nativeProps} src={slots[slot()]()}
+            style={{ position: "absolute", top: 0, left: 0, width: size().width, height: size().height, opacity: shown() === slot() ? 1 : 0 }}
+            // 动图不做淡入
+            fadeDuration={animated ? 0 : props.fadeDuration}
+            // 加载开始、成功与出错回调
+            onLoadStart={() => { if (!loaded && !settled) props.onLoadStart?.(); }} onLoad={(loadedSize) => onLoad(loadedSize, slot())} onError={onError} />}
+        </Each>
+      </View>}
     </Each>
   </View>;
 }
