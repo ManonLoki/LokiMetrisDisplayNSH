@@ -48,15 +48,3 @@ export type ViewState = {
   // 已配对记录，以客户端 ID 为键
   paired: Record<string, PairingRecord>;
 };
-
-// 构造指定设备的空视图
-export function emptyView(deviceId: string, deviceName: string): ViewState {
-  // 空状态由原生侧生成，保证与 Rust 模型一致
-  return Rules.connectionEmptyView(deviceId, deviceName) as ViewState;
-}
-
-// 把原生端口返回的 JSON 文本解析为视图
-export function nativeView(raw: string): ViewState {
-  // 解析交给原生侧
-  return Rules.connectionNativeView(raw) as ViewState;
-}

@@ -5,7 +5,7 @@ import { AlertDialog } from "nsh/base";
 // 引入主机与视图状态类型
 import type { Host, ViewState } from "./view-state";
 // 引入设备 ID 校验
-import { validDeviceId } from "./identity";
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入连接指示点与可按压容器
 import { CyberConnectionDot, CyberPressable } from "../../shared/ui/effects";
 // 引入设置页通用组件与样式
@@ -70,7 +70,7 @@ export function ConnectionSettings(props: ConnectionSettingsProps) {
     {/* 有错误时显示错误文案与重试按钮；设备 ID 非法时禁用重试 */}
     {error() ? <>
       <Text style={{ color: color.error, fontSize: 12, lineHeight: 16 }}>{error()}</Text>
-      <CyberPressable testID="devices-retry" disabled={!validDeviceId(props.state().deviceId)} onPress={props.onRetry}
+      <CyberPressable testID="devices-retry" disabled={!Rules.connectionValidDeviceId(props.state().deviceId)} onPress={props.onRetry}
         // 按钮样式：描边并靠左
         style={{ ...outlineButton, alignSelf: "flex-start" }} disabledStyle={{ opacity: 0.38 }}>
         <Text style={{ color: color.cyan, fontSize: 14, lineHeight: 20, fontWeight: 500 }}>重试连接</Text>

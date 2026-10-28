@@ -3,7 +3,7 @@ import { Text, View, computed, signal, type Accessor, type Size } from "nsh";
 // 引入 Hook 条目类型
 import type { HookItem } from "../../shared/contracts/snapshot";
 // 引入代理显示名
-import { agentDisplayName } from "../../shared/domain/agents";
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入图片组件
 import { CyberImage } from "../../shared/ui/image";
 // 引入色板
@@ -32,7 +32,7 @@ export function HookImageViewport(props: { hook: Accessor<HookItem>; connected: 
       // 图片来源与样式
       src={source()!} resizeMode="contain" style={{ width: "100%", height: "100%" }}
       // 读屏标签
-      accessibilityLabel={`${agentDisplayName(props.hook().agent)} 的 Hook 图片`}
+      accessibilityLabel={`${Rules.agentDisplayName(props.hook().agent)} 的 Hook 图片`}
       // 加载成功回调
       onLoad={(size) => props.onImageLoad?.(props.hook().image ?? source()!, size)}
       // 加载失败回调

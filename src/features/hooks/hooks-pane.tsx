@@ -7,7 +7,7 @@ import type { HookSnapshot } from "./model";
 // 引入面板控制器类型
 import type { PanelController } from "./controller";
 // 引入分页函数
-import { hookPages } from "./paging";
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入遥控器是否活跃
 import { remoteActive } from "../../shared/ui/remote-focus";
 // 引入卡片与占位背景
@@ -49,7 +49,8 @@ export function HooksPane(props: HooksPaneProps) {
   // 不可用时视为空列表（agent 过滤只作用于用量，不作用于 Hooks）
   const hooks = computed(() => props.snapshot()?.hooksAvailable ? props.snapshot()!.hooks : []);
   // 按布局分页
-  const pages = computed(() => hookPages(hooks(), props.layout()));
+  const pages = computed(() => Rules.hookPages(hooks().length, props.layout())
+    .map((cells) => cells.map((index) => index == null ? null : hooks()[index])));
   // 当前页码，保存在控制器中以便切换页面后保留
   const currentPage = props.controller.hookPage;
   // 页数

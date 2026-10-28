@@ -3,14 +3,14 @@ import { expect, test } from "nsh/test";
 // 引入播放器与时钟类型
 import { ImagePlayback, type PlaybackClock } from "../../shared/ui/image-playback";
 // 引入图片预处理
-import { prepareImage } from "../../shared/ui/image-frames";
+import { ImageFrames } from "loki-metris-mobile-display/native";
 
 // 静态 PNG 与 JPEG 不走动图路径
 test("static PNG and JPEG data URIs stay with the standard Image decoder", async () => {
   // 逐个检查
   for (const source of ["data:image/png;base64,iVBORw0KGgo=", "data:image/jpeg;base64,/9j/4AAQSkZJRg=="]) {
     // 应判定为非动图
-    expect((await prepareImage(source)).animated).toBe(false);
+    expect(((await ImageFrames.prepare(source)) as { animated: boolean }).animated).toBe(false);
   }
 });
 

@@ -1,9 +1,9 @@
 // 引入响应式原语：清理钩子、副作用、非追踪读取，以及边界/信号/尺寸类型
 import { cleanup, effect, untracked, type Bounds, type Signal, type Size } from "nsh";
 // 引入原生设置模块，Rust 侧负责设置的恢复、保存与确认
-import { Settings } from "loki-metris-mobile-display/native";
+import { Rules, Settings } from "loki-metris-mobile-display/native";
 // 引入连接视图的空状态构造与原生状态解析
-import { emptyView, nativeView, type ViewState } from "../features/connection";
+import type { ViewState } from "../features/connection";
 // 引入面板配置类型
 import type { PanelConfig } from "../shared/contracts/panel";
 
@@ -95,12 +95,6 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
   let lastNativeState = "";
 
   // 调用 Rust 设置模块，并自动携带会话序号
-  async function request(value: Record<string, unknown>): Promise<SettingsResult> {
-    // 调用设置引擎并解析返回的 JSON
-    return JSON.parse(await Settings.call(JSON.stringify({ session, ...value }))) as SettingsResult;
-  }
-
-  // 把设置结果应用到界面信号
   function accept(result: SettingsResult, draftAtRequest?: string) {
     // 已销毁则忽略
     if (disposed) return;
@@ -126,11 +120,11 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
   }
 
   // 发起请求并应用结果，返回原始结果供调用方继续处理
-  async function update(value: Record<string, unknown>) {
+  async function update(call: () => Promise<unknown>) {
     // 记录请求发出时的草稿
     const draft = state.nameDraft();
     // 向引擎发送请求
-    const result = await request(value);
+    const result = (await call()) as SettingsResult;
     // 接受响应并更新界面状态
     accept(result, draft);
     // 返回响应
@@ -142,7 +136,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     // 已销毁则不再处理
     if (disposed) return;
     // 上报端口失败
-    try { await update({ op: "portFailure", view: state.view(), stage, error: String(error) }); }
+    try { await update(() => Settings.portFailure(session, state.view(), stage, String(error))); }
     // 已关闭或被取代的会话不再改变界面
     catch { /* 已关闭或被新界面替代的会话不能再改变其 UI。 */ }
   }
@@ -154,7 +148,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     // 读取原始状态
     const raw = runtime.link.poll();
     // 状态未变时复用旧视图，避免重复解析
-    const next = raw === lastNativeState ? state.view() : nativeView(raw);
+    const next = raw === lastNativeState ? state.view() : (Rules.connectionNativeView(raw) as ViewState);
     // 状态变化：记录、通知外部并更新信号
     if (raw !== lastNativeState) {
       // 记下最近一次原生状态
@@ -165,7 +159,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
       state.view.set(next);
     }
     // 即使连接投影未变，也让 Rust 观察时钟，名称确认才能按时结束。
-    await update({ op: "observeName", view: next, draft: state.nameDraft(), nowMs: Date.now() });
+    await update(() => Settings.observeName(session, state.nameDraft(), next, Date.now()));
   }
 
   // 向端口下发命令并立即轮询以获取结果
@@ -197,13 +191,13 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
         // 尝试读取设置
         try {
           // 请求 Rust 恢复启动数据
-          const restored = await update({ op: "boot" });
+          const restored = await update(() => Settings.boot());
           // 已销毁则返回
           if (disposed) return;
           // 设备身份必然存在
           const device = restored.device!;
           // 先显示空视图
-          state.view.set(emptyView(device.id, device.name));
+          state.view.set(Rules.connectionEmptyView(device.id, device.name) as ViewState);
           // 尝试初始化原生链接
           try {
             // 取得用于原生端口初始化的身份
@@ -213,13 +207,13 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
             // 标记端口已启动，之后才允许下发命令
             nativeStarted = true;
             // 解析为视图
-            const next = nativeView(raw);
+            const next = (Rules.connectionNativeView(raw) as ViewState);
             // 更新视图状态
             state.view.set(next);
             // 记下原生状态
             lastNativeState = raw;
             // 通知 Rust 初始化完成
-            await update({ op: "initialized", view: next });
+            await update(() => Settings.initialized(session, next));
             // 已销毁则返回
             if (disposed) return;
             // 之后的 tick 才开始轮询
@@ -261,7 +255,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
         // 标记为后台
         state.foreground.set(false);
         // 通知 Rust 释放会话
-        void request({ op: "dispose" }).catch(() => { /* VM 可能已开始关闭。 */ });
+        void Settings.dispose(session).catch(() => { /* VM 可能已开始关闭。 */ });
         // 告知原生端口界面已不再活跃
         if (nativeStarted) {
           // 通知原生端停用
@@ -278,7 +272,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     // 更新名称草稿
     state.nameDraft.set(draft);
     // 请求引擎编辑名称，失败则上报
-    try { await update({ op: "editName", draft }); } catch (error) { await fail("settings", error); }
+    try { await update(() => Settings.editName(session, draft)); } catch (error) { await fail("settings", error); }
   }
 
   // 保存名称：由 Rust 给出命令，运行时只负责投递
@@ -286,7 +280,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     // 已销毁则返回
     if (disposed) return;
     // 请求 Rust 开始保存并取得需要下发的命令
-    const result = await update({ op: "beginNameSave", draft: state.nameDraft(), view: state.view(), nowMs: Date.now() });
+    const result = await update(() => Settings.beginNameSave(session, state.nameDraft(), state.view(), Date.now()));
     // 已销毁则返回
     if (disposed) return;
     // 依次投递命令，失败则通知 Rust 回滚
@@ -296,7 +290,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     // 派发失败
     } catch {
       // 通知引擎名称派发失败
-      await update({ op: "nameDispatchFailed" });
+      await update(() => Settings.nameDispatchFailed(session));
       // 然后返回
       return;
     }
@@ -312,7 +306,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     // 已销毁则返回
     if (disposed) return;
     // 请求引擎保存面板
-    const result = await update({ op: "savePanel", panel });
+    const result = await update(() => Settings.savePanel(session, panel));
     // 逐个执行引擎返回的命令
     for (const value of result.commands) await command(value);
   }

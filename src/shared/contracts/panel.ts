@@ -1,6 +1,3 @@
-// 引入原生规则模块
-import { Rules } from "loki-metris-mobile-display/native";
-
 /** 持久化偏好与移动宿主投影共用的校验契约，不依赖任何页面。 */
 // 用量卡片详细程度：精简或详细
 export type UsageDetail = "compact" | "detailed";
@@ -18,15 +15,3 @@ export type PanelConfig = {
   // Hooks 布局
   hookLayout: HookLayout;
 };
-
-// 默认面板配置，由 Rust 提供
-export function defaultPanel(): PanelConfig {
-  // 调用规则：默认面板
-  return Rules.defaultPanel() as PanelConfig;
-}
-
-// 从持久化文本恢复配置，非法时回落默认值
-export function restorePanel(raw: string | null): PanelConfig {
-  // 调用规则：恢复面板
-  return Rules.restorePanel(raw) as PanelConfig;
-}

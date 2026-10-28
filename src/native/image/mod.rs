@@ -15,7 +15,7 @@ mod fixtures;
 // 引入 base64
 use base64::{Engine, engine::general_purpose::STANDARD};
 // 引入 nsh 模块宏
-use nsh_core::prelude::*;
+use nsh_core::{JsonValue, prelude::*};
 // 引入序列化
 use serde::Serialize;
 // 引入队列与同步原语
@@ -238,17 +238,18 @@ fn prepare(source: &str) -> Result<String, String> {
 pub struct ImageFrames;
 
 #[module]
-// 图片帧的方法
 impl ImageFrames {
-    /// 返回全画布帧清单;格式错误的 GIF 会明确失败。
-    // 返回全画布帧清单；格式损坏的 GIF 明确报错
-    pub async fn prepare(source: String) -> Result<String, String> {
-        // 异步准备图片
-        worker::prepare(source).await
+    /// 准备动图帧:只有内联 GIF 和本地文件会被解码,其余来源(静态 PNG/JPEG 等)
+    /// 返回非动图的空结果,由标准 Image 渲染。
+    pub async fn prepare(source: String) -> Result<JsonValue, String> {
+        if !source.starts_with("file:///") && !source.starts_with("data:image/gif;base64,") {
+            return Ok(serde_json::json!({ "animated": false, "width": 0, "height": 0, "plays": 1, "frames": [] }));
+        }
+        let json = worker::prepare(source).await?;
+        serde_json::from_str(&json).map_err(|_| "图片帧结果无效".to_owned())
     }
 }
 
-// 测试模块
 #[cfg(test)]
 #[path = "image_test.rs"]
 mod image_test;

@@ -3,9 +3,14 @@ import { Storage } from "nsh";
 // 引入端口接口
 import type { LinkPort } from "../../../app/application";
 // 引入空视图与配对记录类型
-import { emptyView, type PairingRecord } from "../../../features/connection";
-// 引入快照解析与 ID 校验
-import { parseSnapshot, validDeviceId } from "../../../features/connection";
+import type { PairingRecord, ViewState } from "../../../features/connection";
+// 引入真实原生规则：测试替身也复用 Rust 的校验与投影
+import { Rules } from "loki-metris-mobile-display/native";
+
+// 测试替身用的规则别名
+const emptyView = (id: string, name: string) => Rules.connectionEmptyView(id, name) as ViewState;
+const validDeviceId = (id: string) => Rules.connectionValidDeviceId(id);
+const parseSnapshot = (value: unknown, images: Record<string, string> = {}) => Rules.connectionParseSnapshot(value, images) as Snapshot | null;
 // 引入快照类型
 import type { Snapshot } from "../../../shared/contracts/snapshot";
 // 引入视图变换辅助函数

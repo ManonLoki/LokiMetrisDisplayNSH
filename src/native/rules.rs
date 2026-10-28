@@ -19,16 +19,6 @@ impl Rules {
         panel::default_panel()
     }
 
-    /// 从持久化文本恢复面板配置,非法时回落默认值。
-    pub fn restore_panel(raw: Option<String>) -> JsonValue {
-        panel::restore_panel(raw.as_deref())
-    }
-
-    /// 把原始智能体名归一为规范键。
-    pub fn canonical_agent_key(raw: String) -> String {
-        agents::canonical_agent_key(&raw)
-    }
-
     /// 智能体的展示名称。
     pub fn agent_display_name(raw: String) -> String {
         agents::agent_display_name(&raw)
@@ -67,5 +57,10 @@ impl Rules {
     /// Hook 行为状态对应的展示文案。
     pub fn hooks_label(behavior: String) -> String {
         hooks::label(&behavior).to_owned()
+    }
+
+    /// 把 count 个 Hook 按布局("1x1" 或 "2x2")排成页;每格是 Hook 序号,空位为 null。
+    pub fn hook_pages(count: u32, layout: String) -> Vec<Vec<Option<u32>>> {
+        hooks::pages(count as usize, &layout)
     }
 }

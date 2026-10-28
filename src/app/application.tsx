@@ -15,9 +15,9 @@ import { SettingsPage, createSettingsController } from "../features/settings";
 // 引入主题色板
 import { cyberColors } from "../shared/ui/theme";
 // 引入连接视图的空状态与类型
-import { emptyView, type ViewState } from "../features/connection";
+import type { ViewState } from "../features/connection";
 // 引入默认面板配置
-import { defaultPanel } from "../shared/contracts/panel";
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入面板配置类型
 import type { PanelConfig } from "../shared/contracts/panel";
 // 引入导航位置策略
@@ -44,9 +44,9 @@ export function createApp(runtime: AppRuntime): () => JSX.Element {
   // 内容区高度的初始值
   const contentHeight = signal(776);
   // 面板配置
-  const panel = signal<PanelConfig>(defaultPanel());
+  const panel = signal<PanelConfig>(Rules.defaultPanel() as PanelConfig);
   // 连接视图
-  const view = signal<ViewState>(emptyView("", ""));
+  const view = signal<ViewState>(Rules.connectionEmptyView("", "") as ViewState);
   // 设备名称草稿
   const nameDraft = signal("");
   // 名称保存反馈

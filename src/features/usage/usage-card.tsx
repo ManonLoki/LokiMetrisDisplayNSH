@@ -1,7 +1,8 @@
 // 引入画布、滚动、文本、视图、响应式原语与字体缩放
 import { Canvas, Scroll, Text, View, computed, effect, signal, type Accessor, type Bounds, type TextStyle, fontScale } from "nsh";
 // 引入投影函数、颜色函数与类型
-import { cardProjection, quotaColor, type DisplayRow, type QuotaProjection, type UsageSnapshot } from "./card-projection";
+import { Rules } from "loki-metris-mobile-display/native";
+import { quotaColor, type DisplayRow, type QuotaProjection, type UsageSnapshot, type UsageCardProjection } from "./card-projection";
 // 引入用量详细程度类型
 import type { UsageDetail } from "../../shared/contracts/panel";
 // 引入入场动效、数字动画与扫描光效
@@ -53,7 +54,7 @@ export function UsageCard(props: UsageCardProps) {
   // 内容区高度
   const contentHeight = () => Math.max(0, props.height() - padding() * 2);
   // 由快照计算出的投影
-  const projection = computed(() => cardProjection(props.snapshot()));
+  const projection = computed(() => Rules.usageCardProjection(props.snapshot()) as UsageCardProjection);
   // 是否有 Token 数据
   const hasTokens = computed(() => projection().hasTokens);
   // 是否有精确值

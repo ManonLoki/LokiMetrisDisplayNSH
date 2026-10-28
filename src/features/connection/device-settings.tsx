@@ -3,7 +3,7 @@ import { Text, View, computed, signal, type Accessor, type Signal } from "nsh";
 // 引入文本输入框
 import { Input } from "nsh/base";
 // 引入名称与 ID 校验
-import { nameError, validDeviceId } from "./identity";
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入可按压容器
 import { CyberPressable } from "../../shared/ui/effects";
 // 引入设置页通用组件
@@ -39,7 +39,7 @@ function DeviceNameInput(props: Pick<DeviceSettingsProps, "name" | "nameIssue" |
   // 组件构造函数中不读取 name()/state():输入属性绑定
   // 会原地更新,包括输入法组合或光标处于活动状态时。
   // 优先使用 Rust 给出的问题，否则按当前输入即时校验
-  const issue = () => props.nameIssue() ?? nameError(props.name());
+  const issue = () => props.nameIssue() ?? Rules.connectionNameError(props.name());
   // 输入框有问题时边框变为错误色
   return <View style={{ width: "100%", gap: 4 }}><Input testID="settings-device-name" accessibilityLabel="设备名称" value={props.name()}
     // 输入框属性：不自动大写和更正
@@ -66,11 +66,11 @@ export function DeviceSettings(props: DeviceSettingsProps) {
   // 展开状态：未注入时使用内部信号
   const expanded = props.expanded ?? signal(false);
   // 当前名称问题
-  const issue = () => props.nameIssue() ?? nameError(props.name());
+  const issue = () => props.nameIssue() ?? Rules.connectionNameError(props.name());
   // 草稿是否与已保存名称不同
   const dirty = computed(() => props.name() !== props.deviceName());
   // 设备 ID 是否规范
-  const canonical = computed(() => validDeviceId(props.deviceId()));
+  const canonical = computed(() => Rules.connectionValidDeviceId(props.deviceId()));
   // 有问题、ID 非法或保存中时禁用保存
   const disabled = () => issue() != null || !canonical() || props.savingName();
   // 卡片主体

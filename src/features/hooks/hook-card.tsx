@@ -3,7 +3,7 @@ import { Canvas, Text, View, type Accessor, type Bounds, type Size } from "nsh";
 // 引入 Hook 条目类型
 import type { HookItem } from "../../shared/contracts/snapshot";
 // 引入代理显示名
-import { agentDisplayName } from "../../shared/domain/agents";
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入入场动效与可按压容器
 import { CyberArrival, CyberPressable } from "../../shared/ui/effects";
 // 引入透明度函数与色板
@@ -35,7 +35,7 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
       // 远程焦点回调
       onRemoteFocus={props.onRemoteFocus}
       // 读屏标签：查看代理详情
-      accessibilityLabel={`查看 ${agentDisplayName(props.hook().agent)} 的详情`}
+      accessibilityLabel={`查看 ${Rules.agentDisplayName(props.hook().agent)} 的详情`}
       // 悬停样式
       hoverStyle={{ borderColor: cyberAlpha(tone(), 0.48), shadowColor: tone(), shadowOpacity: 0.1, shadowRadius: 8 }}
       // 焦点样式
@@ -51,7 +51,7 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
         {/* 代理名，单行超出省略 */}
         <Text numberOfLines={1} ellipsizeMode="tail" style={{ flex: 1, minWidth: 0, color: color.ink,
           // 字号、行高与字重
-          fontSize: small() ? 13 : 18, lineHeight: small() ? 18 : 24, fontWeight: 600 }}>{agentDisplayName(props.hook().agent)}</Text>
+          fontSize: small() ? 13 : 18, lineHeight: small() ? 18 : 24, fontWeight: 600 }}>{Rules.agentDisplayName(props.hook().agent)}</Text>
         {/* 状态徽标 */}
         <HookStatus behavior={props.hook().behavior} compact={small()} />
       </View>

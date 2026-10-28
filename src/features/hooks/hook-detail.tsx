@@ -5,7 +5,7 @@ import { Dialog } from "nsh/base";
 // 引入 Hook 条目类型
 import type { HookItem } from "../../shared/contracts/snapshot";
 // 引入代理显示名
-import { agentDisplayName } from "../../shared/domain/agents";
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入可按压容器
 import { CyberPressable } from "../../shared/ui/effects";
 // 引入透明度函数与色板
@@ -51,7 +51,7 @@ export function HookDetail(props: { hook: Accessor<HookItem | null>; connected: 
       {/* 可滚动内容区 */}
       <Scroll style={{ flex: 1, minWidth: 0, minHeight: 0 }} contentStyle={{ gap: 12 }}>
         {/* 代理名 */}
-        <Text style={{ color: color.ink, fontSize: 22, lineHeight: 28, fontWeight: 600 }}>{agentDisplayName(hook().agent)}</Text>
+        <Text style={{ color: color.ink, fontSize: 22, lineHeight: 28, fontWeight: 600 }}>{Rules.agentDisplayName(hook().agent)}</Text>
         {/* 状态徽标 */}
         <HookStatus behavior={hook().behavior} />
         {/* 有正文则显示，否则提示暂无正文 */}

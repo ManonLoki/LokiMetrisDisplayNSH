@@ -1,7 +1,7 @@
 // 引入画布、文本、视图
 import { Canvas, Text, View } from "nsh";
 // 引入状态文案
-import { hookLabel } from "./paging";
+import { Rules } from "loki-metris-mobile-display/native";
 // 引入透明度函数与色板
 import { cyberAlpha, cyberColors as color } from "../../shared/ui/theme";
 
@@ -38,6 +38,6 @@ export function HookStatus(props: { behavior: string; compact?: boolean }) {
     {/* 状态文字 */}
     <Text numberOfLines={1} style={{ color: tone(), fontSize: props.compact ? 10 : 11,
       // 行高与字重
-      lineHeight: props.compact ? 14 : 16, fontWeight: 500 }}>{hookLabel(props.behavior)}</Text>
+      lineHeight: props.compact ? 14 : 16, fontWeight: 500 }}>{Rules.hooksLabel(props.behavior)}</Text>
   </View>;
 }

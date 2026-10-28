@@ -3,9 +3,6 @@ import { mount, Text, View, Storage } from "nsh";
 // 引入真实原生规则模块
 import { Rules } from "loki-metris-mobile-display/native";
 // 引入分页函数
-import { hookPages } from "../../features/hooks/paging";
-// 引入布局类型
-import type { HookLayout } from "../../shared/contracts/panel";
 
 // 查询：操作名与参数
 type Query = { op: string; args: unknown[] };
@@ -34,10 +31,8 @@ void (async () => {
       return arg;
     });
     try {
-      // 页码分格属于现有 UI 布局；直接调用原组件 helper，规则查询仍走 Rust。
-      // 分页走 UI helper，其余走 Rust 规则
-      const value = query.op === "ui.hookPages" ? hookPages(args[0] as unknown[], args[1] as HookLayout)
-        : (Rules as unknown as Record<string, (...rest: unknown[]) => unknown>)[ruleMethod(query.op)](...args);
+      // 规则查询直接走 Rust 的 Rules 方法
+      const value = (Rules as unknown as Record<string, (...rest: unknown[]) => unknown>)[ruleMethod(query.op)](...args);
       // 记录成功结果
       replies.push({ op: query.op, args, value });
     }

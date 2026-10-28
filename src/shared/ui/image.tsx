@@ -3,7 +3,8 @@ import { Image, View, cleanup, effect, signal, split, untracked, type ImageProps
 // 引入动效许可钩子
 import { useCyberMotion, type MotionProps } from "./effects";
 // 引入图片预处理
-import { prepareImage } from "./image-frames";
+import { ImageFrames } from "loki-metris-mobile-display/native";
+import type { PreparedImage } from "./image-frames";
 // 引入播放器
 import { ImagePlayback } from "./image-playback";
 
@@ -49,7 +50,8 @@ export function CyberImage(props: ImageProps & MotionProps) {
     // 副作用是否已被清理
     let disposed = false;
     // 异步准备图片
-    void prepareImage(original).then((prepared) => {
+    void (ImageFrames.prepare(typeof original === "string" ? original : original.url) as Promise<unknown>).then((result) => {
+      const prepared = result as PreparedImage;
       // 结果过期则丢弃
       if (disposed || current !== generation) return;
       // 记录是否动图

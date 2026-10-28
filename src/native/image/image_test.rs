@@ -27,7 +27,7 @@ fn prepared(source: String) -> Result<String, String> {
     // 轮询直到完成，否则停车等待唤醒
     loop {
         if let std::task::Poll::Ready(result) = future.as_mut().poll(&mut context) {
-            return result;
+            return result.map(|value| value.to_string());
         }
         // 超时说明解码线程没有唤醒消费者
         assert!(
