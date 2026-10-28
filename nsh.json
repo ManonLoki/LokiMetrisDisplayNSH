@@ -1,8 +1,8 @@
 {
   "name": "诡秘神谕",
   "id": "com.manonloki.lokimetrisdisplay.desktop",
-  "version": "1.0.11",
-  "build": 20,
+  "version": "1.0.12",
+  "build": 21,
   "appearance": "dark",
   "statusBar": { "foreground": "light" },
   "icon": "src/assets/branding/app-icon.png",

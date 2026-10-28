@@ -1,48 +1,80 @@
+# 应用的 Rust 包
 [package]
+# 包名，nsh 据此链接
 name = "nsh-app-loki-metris-mobile-display"
 version = "0.1.0"
+# 使用 2024 版语法
 edition = "2024"
+# 不发布到 crates.io
 publish = false
+# 关闭自动示例，只使用下面显式声明的
 autoexamples = false
 
+# 库目标
 [lib]
+# 只编译为 Rust 库，由 nsh 运行器链接
 crate-type = ["rlib"]
 
+# 通用依赖
 [dependencies]
+# 小组件核心，与主应用共享规则
 loki_widget_core = { path = "crates/widget-core" }
+# nsh 运行时
 nsh-core = "0.3.0"
+# 序列化
 serde = { version = "1", features = ["derive"] }
+# JSON
 serde_json = "1"
-# Reuse the ICU version already locked by NSH/URL for the existing NFC rules.
+# 复用 NSH/URL 已锁定的 ICU 版本,以沿用现有的 NFC 规则。
+# 复用 NSH 与 URL 已锁定的 ICU 版本来做 NFC 规则
 icu_normalizer = "=2.4.0"
 
-# One NSH-owned connection runtime for pairing, sessions, discovery and credentials.
+# 一个由 NSH 持有的连接运行时,负责配对、会话、发现和凭据。
+# 配对、会话与资源传输的共享库，固定到具体提交
 loki_metris_pairing = { git = "https://github.com/ManonLoki/LokiMetis.git", rev = "28b73e602060d750197b2b7384bdb8f3e30f107f" }
+# base64 编解码
 base64 = "0.23.1"
+# 生成随机 UUID
 uuid = { version = "1.28.0", features = ["v4"] }
-# Reuse the encoder version already locked by NSH for application-owned GIF frames.
+# 复用 NSH 已锁定的编码器版本,处理应用自有的 GIF 帧。
+# 复用 NSH 已锁定的编码器版本来生成应用自有的 GIF 帧
 png = "=0.17.16"
 
+# 非 iOS 平台
 [target.'cfg(not(target_os = "ios"))'.dependencies]
+# mDNS 发现（iOS 改用系统 Bonjour）
 mdns-sd = { version = "0.21.6", default-features = false }
 
+# 仅 Android
 [target.'cfg(target_os = "android")'.dependencies]
+# 保险库的认证加密
 chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+# 访问 Android 系统接口
 jni = "0.21.1"
 
+# 仅 iOS
 [target.'cfg(target_os = "ios")'.dependencies]
-# Existing locked NSH Apple bindings, now used directly by WatchConnectivity.
+# 现有已锁定的 NSH Apple 绑定,现在由 WatchConnectivity 直接使用。
+# Objective-C 运行时绑定
 objc2 = "0.6.5"
+# 已锁定的 NSH Apple 绑定，现在由 WatchConnectivity 直接使用
 objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSData", "NSDictionary", "NSError", "NSObject", "NSString", "NSURL", "NSValue", "NSNotification", "NSSet", "NSEnumerator"] }
+# 主队列派发
 dispatch2 = "0.3.1"
+# UIKit 通知
 objc2-ui-kit = { version = "0.3.2", default-features = false, features = ["std", "UIApplication", "UIResponder", "UIScene", "UISceneDefinitions"] }
 
+# 协议验证夹具示例
 [[example]]
 name = "protocol_host"
 path = "src/tests/fixtures/protocol_host.rs"
 
+# 仅测试依赖
 [dev-dependencies]
+# 测试中构造加密数据
 chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 
+# 工作区
 [workspace]
+# 包含小组件核心
 members = ["crates/widget-core"]

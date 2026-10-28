@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
+    <!-- 显示名称 -->
     <key>CFBundleDisplayName</key><string>诡秘神谕</string>
+    <!-- 声明这是一个 watchOS 应用 -->
     <key>WKApplication</key><true/>
+    <!-- 配套 iPhone 应用的包标识，由构建参数提供 -->
     <key>WKCompanionAppBundleIdentifier</key><string>$(LOKI_COMPANION_BUNDLE_IDENTIFIER)</string>
+    <!-- 不独立于配套应用运行 -->
     <key>WKRunsIndependentlyOfCompanionApp</key><false/>
+    <!-- 不是仅手表应用 -->
     <key>WKWatchOnly</key><false/>
 </dict></plist>

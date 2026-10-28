@@ -1,17 +1,24 @@
+# 小组件核心包
 [package]
 name = "loki_widget_core"
 version = "0.1.0"
 edition = "2024"
 publish = false
 
+# 库目标
 [lib]
+# 既供 Rust 使用，也编译为静态库供 Swift 链接
 crate-type = ["rlib", "staticlib"]
 
+# 依赖
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# 与主应用一致的 ICU 版本
 icu_normalizer = "=2.4.0"
 base64 = "0.23.1"
+# 小组件请求与响应的认证加密
 chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 uuid = { version = "1.28.0", features = ["v4"] }
+# 与主应用同一提交的配对库
 loki_metris_pairing = { git = "https://github.com/ManonLoki/LokiMetis.git", rev = "28b73e602060d750197b2b7384bdb8f3e30f107f" }

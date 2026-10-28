@@ -2,30 +2,40 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- 显示名称 -->
 	<key>CFBundleDisplayName</key>
 	<string>LokiMetris</string>
+	<!-- 扩展声明：这是一个 WidgetKit 小组件扩展 -->
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
+	<!-- 与主应用共享数据的 App Group，由构建参数提供 -->
 	<key>LokiWidgetAppGroup</key>
 	<string>$(LOKI_WIDGET_APP_GROUP)</string>
+	<!-- 允许访问本地网络的 HTTP（读取桌面摘要） -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- 本地网络权限的用途说明 -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>通过已配对桌面端的局域网服务更新小组件摘要。</string>
+	<!-- 包标识，由构建变量展开 -->
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<!-- 可执行文件名，由构建变量展开 -->
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<!-- 包类型：扩展（XPC!） -->
 	<key>CFBundlePackageType</key>
 	<string>XPC!</string>
+	<!-- 营销版本号，由构建变量展开 -->
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<!-- 构建号，由构建变量展开 -->
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 </dict>
