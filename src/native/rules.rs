@@ -3,7 +3,13 @@
 use nsh_core::{JsonValue, prelude::*};
 
 use crate::features::{connection, hooks, usage};
-use crate::shared::{contracts::panel, domain::agents};
+use crate::shared::{
+    contracts::{
+        models::{PanelConfig, Snapshot, UsageCardProjection, ViewState, typed},
+        panel,
+    },
+    domain::agents,
+};
 
 // 声明 nsh 原生模块；TS 里是 `import { Rules } from "loki-metris-mobile-display/native"`
 #[module]
@@ -15,8 +21,8 @@ pub struct Rules;
 #[module]
 impl Rules {
     /// 默认面板配置。
-    pub fn default_panel() -> JsonValue {
-        panel::default_panel()
+    pub fn default_panel() -> Result<PanelConfig, String> {
+        typed(panel::default_panel())
     }
 
     /// 智能体的展示名称。
@@ -25,18 +31,21 @@ impl Rules {
     }
 
     /// 指定设备的空视图。
-    pub fn connection_empty_view(device_id: String, device_name: String) -> JsonValue {
-        connection::view_state::empty_view(&device_id, &device_name)
+    pub fn connection_empty_view(device_id: String, device_name: String) -> Result<ViewState, String> {
+        typed(connection::view_state::empty_view(&device_id, &device_name))
     }
 
-    /// 把原生端口返回的 JSON 文本解析为公开视图。
-    pub fn connection_native_view(raw: String) -> Result<JsonValue, String> {
-        connection::view_state::native_view(&raw)
+    /// 把原生端口的 JSON 文本校验为公开视图。产品里由 `Link` 在 Rust 内部完成,
+    /// 这个入口让测试替身的投影也经过同一套校验。
+    pub fn connection_native_view(raw: String) -> Result<ViewState, String> {
+        typed(connection::view_state::native_view(&raw)?)
     }
 
     /// 解析桌面发来的快照;非法数据返回 null。
-    pub fn connection_parse_snapshot(value: JsonValue, images: JsonValue) -> JsonValue {
-        connection::snapshot::project_snapshot(&value, &images).unwrap_or(JsonValue::Null)
+    pub fn connection_parse_snapshot(value: JsonValue, images: JsonValue) -> Result<Option<Snapshot>, String> {
+        connection::snapshot::project_snapshot(&value, &images)
+            .map(typed)
+            .transpose()
     }
 
     /// 校验设备名称,返回错误文案;合法时返回 null。
@@ -50,8 +59,9 @@ impl Rules {
     }
 
     /// 把用量快照投影成卡片所需数据。
-    pub fn usage_card_projection(snapshot: JsonValue) -> JsonValue {
-        usage::rows::card_projection(&snapshot)
+    pub fn usage_card_projection(snapshot: Option<Snapshot>) -> Result<UsageCardProjection, String> {
+        let snapshot = serde_json::to_value(snapshot).map_err(|error| error.to_string())?;
+        typed(usage::rows::card_projection(&snapshot))
     }
 
     /// Hook 行为状态对应的展示文案。

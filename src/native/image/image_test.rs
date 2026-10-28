@@ -27,7 +27,7 @@ fn prepared(source: String) -> Result<String, String> {
     // 轮询直到完成，否则停车等待唤醒
     loop {
         if let std::task::Poll::Ready(result) = future.as_mut().poll(&mut context) {
-            return result.map(|value| value.to_string());
+            return result.map(|value| serde_json::to_string(&value).unwrap());
         }
         // 超时说明解码线程没有唤醒消费者
         assert!(
@@ -125,7 +125,7 @@ fn regular_pngs_use_the_stock_path_without_rewriting_originals() {
     // 原文件内容不变
     let untouched = fs::read(&path).unwrap();
     fs::remove_file(path).unwrap();
-    assert_eq!(result.unwrap(), "{\"animated\":false}");
+    assert_eq!(result.unwrap(), super::STATIC_IMAGE);
     assert_eq!(untouched, bytes);
 }
 
@@ -188,5 +188,5 @@ fn valid_static_images_between_eight_and_thirty_two_mib_keep_the_stock_path() {
     let result = prepare(&format!("file://{}", path.display()));
     fs::remove_file(path).unwrap();
     // 返回非动画的清单
-    assert_eq!(result.unwrap(), "{\"animated\":false}");
+    assert_eq!(result.unwrap(), super::STATIC_IMAGE);
 }

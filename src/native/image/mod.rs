@@ -15,9 +15,9 @@ mod fixtures;
 // 引入 base64
 use base64::{Engine, engine::general_purpose::STANDARD};
 // 引入 nsh 模块宏
-use nsh_core::{JsonValue, prelude::*};
+use nsh_core::prelude::*;
 // 引入序列化
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 // 引入队列与同步原语
 use std::{
     // 双端队列
@@ -47,29 +47,35 @@ const MAX_CACHE: usize = 32 * 1024 * 1024;
 // 缓存条目数上限
 const CACHE_ENTRIES: usize = 4;
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
+/// 非动画来源的清单:没有帧,播放一次。
+// 非动画结果
+const STATIC_IMAGE: &str = "{\"animated\":false,\"width\":0,\"height\":0,\"plays\":1,\"frames\":[]}";
+
+/// 一帧:PNG 数据 URI 与时长。
 // 一帧：PNG 数据 URI 与时长
-struct PreparedFrame {
-    // 来源
-    source: String,
-    // 持续毫秒数
-    duration_ms: u32,
+#[derive(Clone, Serialize, Deserialize, JsObject)]
+#[serde(rename_all = "camelCase")]
+pub struct PreparedFrame {
+    /// 来源。
+    pub source: String,
+    /// 持续毫秒数。
+    pub duration_ms: u32,
 }
 
-#[derive(Serialize)]
+/// 解码后的动画清单;静态图或不可解码的来源为非动画且没有帧。
 // 解码后的动画清单
-struct Prepared {
-    // 多于一帧才算动画
-    animated: bool,
-    // 宽度
-    width: u16,
-    // 高度
-    height: u16,
-    // 播放次数，None 表示无限循环
-    plays: Option<u32>,
-    // 各帧
-    frames: Vec<PreparedFrame>,
+#[derive(Clone, Serialize, Deserialize, JsObject)]
+pub struct Prepared {
+    /// 多于一帧才算动画。
+    pub animated: bool,
+    /// 宽度。
+    pub width: u16,
+    /// 高度。
+    pub height: u16,
+    /// 播放次数,null 表示无限循环。
+    pub plays: Option<u32>,
+    /// 各帧。
+    pub frames: Vec<PreparedFrame>,
 }
 
 // 缓存条目：原始字节与对应的 JSON
@@ -190,7 +196,7 @@ fn prepare(source: &str) -> Result<String, String> {
         // 否则分支
         } else {
             // 否则按非动画图处理
-            Ok("{\"animated\":false}".into())
+            Ok(STATIC_IMAGE.into())
         };
     }
     // 编码为帧清单
@@ -241,9 +247,9 @@ pub struct ImageFrames;
 impl ImageFrames {
     /// 准备动图帧:只有内联 GIF 和本地文件会被解码,其余来源(静态 PNG/JPEG 等)
     /// 返回非动图的空结果,由标准 Image 渲染。
-    pub async fn prepare(source: String) -> Result<JsonValue, String> {
+    pub async fn prepare(source: String) -> Result<Prepared, String> {
         if !source.starts_with("file:///") && !source.starts_with("data:image/gif;base64,") {
-            return Ok(serde_json::json!({ "animated": false, "width": 0, "height": 0, "plays": 1, "frames": [] }));
+            return Ok(Prepared { animated: false, width: 0, height: 0, plays: Some(1), frames: Vec::new() });
         }
         let json = worker::prepare(source).await?;
         serde_json::from_str(&json).map_err(|_| "图片帧结果无效".to_owned())

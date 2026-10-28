@@ -6,6 +6,7 @@ import { Button } from "nsh/base";
 import { createApp } from "../../app/application";
 // 引入视图状态类型
 import type { ViewState } from "../../features/connection";
+import { validatedView } from "./support/link-port";
 // 引入用量卡片
 import { UsageCard } from "../../features/usage";
 // 引入动效作用域
@@ -38,7 +39,7 @@ void (async () => {
   // 非动效模式：挂载完整应用，端口返回固定状态
   if (options.mode !== "motion") {
     mount(createApp({ foreground: () => true, link: {
-      initialize: () => JSON.stringify(state), poll: () => JSON.stringify(state), command: () => {},
+      initialize: () => validatedView(JSON.stringify(state)), poll: () => null, command: () => {},
     } }));
     return;
   }

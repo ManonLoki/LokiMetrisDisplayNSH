@@ -11,7 +11,7 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 1. `App.tsx` 将 `Link` 与 `UiLifecycle` 注入 `createApp`，装配展示台、设置与导航。
 2. `src/app/runtime.ts` 调用 Rust `Settings` 恢复身份和偏好，再调用 `Link.initialize` 创建连接实例。UI 定时读取前台事实与公开投影。
 3. `src/native/link.rs` 将实例绑定到 NSH `System.locals` 和应用私有目录；VM 关闭时释放。连接 owner 串行处理发现、配对、认证、快照与资源事件。
-4. Rust 校验桌面输入并生成公开快照。TSX 根据窗口尺寸、面板偏好和导航状态渲染，纯展示规则通过 `#[module]` 类型化的 `Rules` 方法（`src/native/rules.rs`）直接调用。
+4. Rust 校验桌面输入并生成公开快照。TSX 根据窗口尺寸、面板偏好和导航状态渲染，纯展示规则通过 `#[module]` 类型化的 `Rules` 方法（`src/native/rules.rs`）直接调用。`Link`、`Settings`、`ImageFrames` 同样是类型化的 `#[module]`，收发的面板、视图、快照、卡片投影等结构定义在 `src/shared/contracts/models.rs`（`#[derive(JsObject)]`），TS 类型由 `nsh check` 据此生成到 `.nsh/types`，TSX 不再手写这些类型，也不拼装或解析 JSON。
 
 ## 目录与职责
 

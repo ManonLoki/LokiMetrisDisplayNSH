@@ -44,9 +44,9 @@ export function createApp(runtime: AppRuntime): () => JSX.Element {
   // 内容区高度的初始值
   const contentHeight = signal(776);
   // 面板配置
-  const panel = signal<PanelConfig>(Rules.defaultPanel() as PanelConfig);
+  const panel = signal<PanelConfig>(Rules.defaultPanel());
   // 连接视图
-  const view = signal<ViewState>(Rules.connectionEmptyView("", "") as ViewState);
+  const view = signal<ViewState>(Rules.connectionEmptyView("", ""));
   // 设备名称草稿
   const nameDraft = signal("");
   // 名称保存反馈

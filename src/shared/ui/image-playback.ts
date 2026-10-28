@@ -2,7 +2,7 @@
 // 单帧：图片地址与时长
 export interface ImageFrame { source: string; durationMs: number }
 // 帧序列与播放次数，null 表示无限循环
-export interface ImageSequence { frames: ImageFrame[]; plays: number | null }
+export interface ImageSequence { frames: ImageFrame[]; plays?: number | null }
 // 时钟抽象，便于测试替换
 export interface PlaybackClock {
   // 当前时间（毫秒）

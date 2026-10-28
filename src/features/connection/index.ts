@@ -1,5 +1,5 @@
 // 导出连接视图的构造函数与相关类型
-export { type ViewState, type Host, type PairingRecord } from "./view-state";
+export type { Host, ViewState } from "./view-state";
 // 导出设备名称与设备 ID 的校验函数
 // 导出快照解析函数
 // 导出连接设置卡片及其状态类型

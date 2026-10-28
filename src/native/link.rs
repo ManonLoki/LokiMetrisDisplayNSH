@@ -2,7 +2,9 @@
 // 引入启动配置与连接
 use super::{bootstrap, connection};
 // 引入 nsh 本地元素与模块宏
-use nsh_core::{element::Local, prelude::*};
+use crate::features::connection::view_state;
+use crate::shared::contracts::models::{LinkCommand, ViewState, typed};
+use nsh_core::{JsonValue, element::Local, prelude::*};
 // 引入 JSON 值
 use serde_json::Value;
 // 引入内部可变性与共享指针
@@ -16,6 +18,8 @@ struct Attached {
     legacy_panel: Option<Value>,
     // 前后台观察守卫，随连接一起释放
     _activity: bootstrap::ActivityGuard,
+    // 上一次交给 UI 的投影文本，用于只在变化时返回新视图
+    last_view: Option<String>,
 }
 
 #[derive(Default)]
@@ -44,26 +48,29 @@ fn with_handle<T>(sys: &System, f: impl FnOnce(&connection::Handle) -> T) -> Res
 /// 第一个视图还携带移动宿主的旧版面板;设置页会在 `initialized` 时
 /// 采纳它一次,因此常规轮询可以省去额外的 JSON 往返。
 // 首次视图附带旧面板配置，Settings 在 initialized 时采纳一次，之后的轮询不再多一次 JSON 往返
-fn initial_view(sys: &System) -> Result<String, String> {
+fn initial_view(sys: &System) -> Result<JsonValue, String> {
     // 取连接运行时
     let runtime = sys.locals.get::<LinkRuntime>();
-    // 借用已挂载的句柄
-    let attached = runtime.0.borrow();
+    // 借用已挂载的连接
+    let mut attached = runtime.0.borrow_mut();
     // 未初始化则报错
-    let attached = attached.as_ref().ok_or("连接未初始化")?;
+    let attached = attached.as_mut().ok_or("连接未初始化")?;
     // 取当前投影
-    let raw = attached.handle.poll();
-    // 没有旧配置则直接返回
-    let Some(panel) = &attached.legacy_panel else {
-        // 返回原始文本
-        return Ok(raw);
-    };
-    // 否则把旧配置写进投影
-    let mut value: Value = serde_json::from_str(&raw).map_err(|_| "连接投影无效")?;
-    // 附上面板配置
-    value["panelConfig"] = panel.clone();
-    // 序列化，失败报连接投影无效
-    serde_json::to_string(&value).map_err(|_| "连接投影无效".into())
+    let mut raw = attached.handle.poll();
+    // 有旧配置则写进投影
+    if let Some(panel) = &attached.legacy_panel {
+        // 解析投影
+        let mut value: Value = serde_json::from_str(&raw).map_err(|_| "连接投影无效")?;
+        // 附上面板配置
+        value["panelConfig"] = panel.clone();
+        // 序列化，失败报连接投影无效
+        raw = serde_json::to_string(&value).map_err(|_| "连接投影无效")?;
+    }
+    // 校验并转换为公开视图
+    let view = view_state::native_view(&raw)?;
+    // 记录，之后的轮询只在变化时返回
+    attached.last_view = Some(raw);
+    Ok(view)
 }
 
 /// 已认证的局域网连接。配对机密留在 Rust 和系统凭据存储中。
@@ -77,7 +84,7 @@ pub struct Link;
 impl Link {
     /// 创建 VM 的连接所有者,恢复现有的设备身份和私有缓存。
     // 创建本 VM 的连接 owner，恢复设备身份与私有缓存
-    pub fn initialize(device_id: String, name: String, sys: System) -> Result<String, String> {
+    pub fn initialize(device_id: String, name: String, sys: System) -> Result<ViewState, String> {
         // 取连接运行时
         let runtime = sys.locals.get::<LinkRuntime>();
         // 只初始化一次
@@ -122,23 +129,41 @@ impl Link {
                 handle,
                 // 旧版面板
                 legacy_panel,
+                // 首次视图在下面的 initial_view 中记录
+                last_view: None,
             });
         }
         // 返回首次视图
-        initial_view(&sys)
+        typed(initial_view(&sys)?)
     }
 
     /// 在同一个所有者中,为发现、选择、遗忘、重命名或刷新入队。
     // 把发现、选择、忘记、重命名或刷新命令排入 owner 队列
-    pub fn command(json: String, sys: System) -> Result<(), String> {
+    pub fn command(command: LinkCommand, sys: System) -> Result<(), String> {
+        // 序列化为连接所有者读取的文本
+        let text = serde_json::to_string(&command).map_err(|_| "无效连接操作")?;
         // 把命令交给句柄
-        with_handle(&sys, |handle| handle.command(&json))?
+        with_handle(&sys, |handle| handle.command(&text))?
     }
 
-    /// 返回公开的连接状态和已验证的图片 URL。
-    // 返回公开连接状态与已校验的图片地址
-    pub fn poll(sys: System) -> Result<String, String> {
-        // 轮询句柄状态
-        with_handle(&sys, |handle| handle.poll())
+    /// 返回已验证的公开连接视图;自上次返回以来没有变化时返回 null。
+    // 只在投影变化时校验并返回新视图
+    pub fn poll(sys: System) -> Result<Option<ViewState>, String> {
+        // 取连接运行时
+        let runtime = sys.locals.get::<LinkRuntime>();
+        // 借用已挂载的连接
+        let mut attached = runtime.0.borrow_mut();
+        // 未初始化则报错
+        let attached = attached.as_mut().ok_or("连接未初始化")?;
+        // 取当前投影
+        let raw = attached.handle.poll();
+        // 没变化则不返回
+        if attached.last_view.as_deref() == Some(raw.as_str()) {
+            return Ok(None);
+        }
+        // 先校验，再记录；无效投影不会被记为已交付
+        let view = typed(view_state::native_view(&raw)?)?;
+        attached.last_view = Some(raw);
+        Ok(Some(view))
     }
 }

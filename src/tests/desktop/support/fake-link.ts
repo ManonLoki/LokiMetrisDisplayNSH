@@ -3,7 +3,9 @@ import { Storage } from "nsh";
 // 引入端口接口
 import type { LinkPort } from "../../../app/application";
 // 引入空视图与配对记录类型
-import type { PairingRecord, ViewState } from "../../../features/connection";
+import type { ViewState } from "../../../features/connection";
+import type { LinkCommand } from "loki-metris-mobile-display/native";
+import { changedOnly } from "./link-port";
 // 引入真实原生规则：测试替身也复用 Rust 的校验与投影
 import { Rules } from "loki-metris-mobile-display/native";
 
@@ -13,6 +15,8 @@ const validDeviceId = (id: string) => Rules.connectionValidDeviceId(id);
 const parseSnapshot = (value: unknown, images: Record<string, string> = {}) => Rules.connectionParseSnapshot(value, images) as Snapshot | null;
 // 引入快照类型
 import type { Snapshot } from "../../../shared/contracts/snapshot";
+// 引入视图变换辅助函数
+import type { PairingRecord } from "./view-fixture";
 // 引入视图变换辅助函数
 import { acceptHandshake, acceptSnapshot, expirePairing, forgetDesktop, hostsFrom, selectDesktop } from "./view-fixture";
 
@@ -59,19 +63,19 @@ export class FakeLink implements LinkPort {
   }
 
   // 初始化：套用身份并按夹具安排事件
-  initialize(deviceId: string, name: string): string {
+  initialize(deviceId: string, name: string): ViewState {
     this.state.deviceId = deviceId || this.state.deviceId;
     this.state.deviceName = name;
     // 为每个事件安排定时器
     for (const event of this.fixture.events ?? []) {
       this.timers.push(setTimeout(() => this.apply(event), Math.max(0, event.atMs - Date.now())));
     }
-    return this.poll();
+    // 与产品 Link 一样：初始化返回首个视图，之后的轮询只返回变化
+    return this.changed(this.projection())!;
   }
 
   // 处理命令
-  command(raw: string): void {
-    const command = JSON.parse(raw) as { op: string; clientId?: string; name?: string; value?: boolean };
+  command(command: LinkCommand): void {
     // 选择桌面
     if (command.op === "select") this.state = selectDesktop(this.state, command.clientId!, Date.now());
     // 忘记桌面：同步更新存储与缓存
@@ -94,10 +98,18 @@ export class FakeLink implements LinkPort {
   }
 
   // 轮询：先让过期的配对失效，再输出投影与图片
-  poll(): string {
+  poll(): ViewState | null {
+    return this.changed(this.projection());
+  }
+
+  // 先让过期的配对失效，再输出投影文本
+  private projection(): string {
     this.state = expirePairing(this.state, Date.now());
     return JSON.stringify({ ...this.state, images: this.images });
   }
+
+  // 只在投影变化时返回新视图
+  private changed = changedOnly();
 
   // 应用一个夹具事件
   private apply(event: Event): void {

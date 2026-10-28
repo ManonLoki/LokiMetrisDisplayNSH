@@ -4,6 +4,7 @@ import { mount, Storage } from "nsh";
 import { createApp } from "../../app/application";
 // 引入测试观测器
 import { observations } from "./support/observations";
+import { changedOnly } from "./support/link-port";
 
 // 隔离的公开连接端口。生产环境绝不读取这些夹具键。
 // 读取夹具后挂载
@@ -12,6 +13,8 @@ void (async () => {
   const fixture = JSON.parse((await Storage.getItem("test.mobileApp"))!);
   // 固定的连接投影
   const projection = fixture.projection;
+  // 与产品 Link.poll 一样只在投影变化时返回视图
+  const changed = changedOnly();
   // 记录收到的命令
   const commands: unknown[] = [];
   mount(createApp({
@@ -23,13 +26,13 @@ void (async () => {
     remoteNavigation: () => fixture.formFactor === "tv",
     // 隔离的端口，只返回固定投影
     link: {
-      initialize: () => JSON.stringify(projection),
-      poll: () => JSON.stringify(projection),
+      initialize: () => changed(JSON.stringify(projection))!,
+      poll: () => changed(JSON.stringify(projection)),
       // 记录命令，重命名时同步修改投影
-      command: (json) => {
-        const command = JSON.parse(json);
+      command: (value) => {
+        const command = value;
         commands.push(command);
-        if (command.op === "rename") projection.deviceName = command.name;
+        if (command.op === "rename") projection.deviceName = command.name!;
         // 把命令序列写入存储供断言
         void Storage.setItem("test.connectionCommands", JSON.stringify(commands));
       },

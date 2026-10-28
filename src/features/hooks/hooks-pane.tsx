@@ -22,7 +22,7 @@ export interface HooksPaneProps {
   // 面板高度
   height: Accessor<number>;
   // 当前快照
-  snapshot: Accessor<HookSnapshot | null>;
+  snapshot: Accessor<HookSnapshot | null | undefined>;
   // 是否已连接
   connected: Accessor<boolean>;
   // 资源告警文案
@@ -184,7 +184,7 @@ export function HooksPane(props: HooksPaneProps) {
 }
 
 // 空位占位：显示等待同步、不可用或暂无活动
-function HookPlaceholder(props: { snapshot: Accessor<HookSnapshot | null>; position: number }) {
+function HookPlaceholder(props: { snapshot: Accessor<HookSnapshot | null | undefined>; position: number }) {
   // 占位卡片容器
   return <View testID={`hook-placeholder-${props.position}`} style={{ flex: 1, minWidth: 0, minHeight: 0,
     // 相对定位、圆角与边框

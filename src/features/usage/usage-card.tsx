@@ -26,7 +26,7 @@ export interface UsageCardProps {
   // 卡片高度
   height: Accessor<number>;
   // 当前快照
-  snapshot: Accessor<UsageSnapshot | null>;
+  snapshot: Accessor<UsageSnapshot | null | undefined>;
   // 精简或详细模式
   detail: Accessor<UsageDetail>;
   // 卡片是否处于活跃状态
@@ -54,7 +54,7 @@ export function UsageCard(props: UsageCardProps) {
   // 内容区高度
   const contentHeight = () => Math.max(0, props.height() - padding() * 2);
   // 由快照计算出的投影
-  const projection = computed(() => Rules.usageCardProjection(props.snapshot()) as UsageCardProjection);
+  const projection = computed(() => Rules.usageCardProjection(props.snapshot()));
   // 是否有 Token 数据
   const hasTokens = computed(() => projection().hasTokens);
   // 是否有精确值
@@ -219,7 +219,7 @@ function Divider() {
 }
 
 // 供应商标题：名称与可选的套餐徽标
-function ProviderTitle(props: { name: string; plan: string | null; size: number; lineHeight: number; weight: number }) {
+function ProviderTitle(props: { name: string; plan?: string | null; size: number; lineHeight: number; weight: number }) {
   // 横向滚动容器，高度随字体缩放
   return <Scroll horizontal scrollbar={false} style={{ flex: 1, minWidth: 0, height: Math.max(props.lineHeight, 16) * fontScale() }}
     // 内容区样式：横向排列，底部对齐

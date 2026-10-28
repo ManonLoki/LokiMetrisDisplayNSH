@@ -1,7 +1,7 @@
 // 引入响应式原语：清理钩子、副作用、非追踪读取，以及边界/信号/尺寸类型
 import { cleanup, effect, untracked, type Bounds, type Signal, type Size } from "nsh";
 // 引入原生设置模块，Rust 侧负责设置的恢复、保存与确认
-import { Rules, Settings } from "loki-metris-mobile-display/native";
+import { Rules, Settings, type LinkCommand, type SettingsResult } from "loki-metris-mobile-display/native";
 // 引入连接视图的空状态构造与原生状态解析
 import type { ViewState } from "../features/connection";
 // 引入面板配置类型
@@ -9,12 +9,12 @@ import type { PanelConfig } from "../shared/contracts/panel";
 
 // 原生连接端口的最小抽象
 export interface LinkPort {
-  // 用设备 id 与名称初始化连接，返回状态 JSON
-  initialize(deviceId: string, name: string): string;
-  // 下发一条命令（JSON 字符串）
-  command(command: string): void;
-  // 拉取最新状态 JSON
-  poll(): string;
+  // 用设备 id 与名称初始化连接，返回 Rust 已校验的公开视图
+  initialize(deviceId: string, name: string): ViewState;
+  // 下发一条命令
+  command(command: LinkCommand): void;
+  // 拉取最新视图；自上次返回以来没有变化时为 null
+  poll(): ViewState | null;
 }
 
 /** 正常入口注入真实端口，测试宿主仍可注入同一公开投影的替身。 */
@@ -53,30 +53,6 @@ interface UiState {
 }
 
 // Rust Settings 模块每次调用的返回结构
-interface SettingsResult {
-  // 会话序号，用于丢弃过期响应
-  session: number;
-  // 以下字段为空表示本次无变化
-  savingName: boolean;
-  // 名称问题提示
-  nameIssue: string | null;
-  // 名称保存反馈
-  nameFeedback: string | null;
-  // 面板问题提示
-  panelIssue: string | null;
-  // 面板配置
-  panel: PanelConfig | null;
-  // 当前设备身份
-  device: { id: string; name: string } | null;
-  // 需要用于初始化原生端口的身份
-  initialize: { id: string; name: string } | null;
-  // 需要覆盖的名称草稿
-  draft: string | null;
-  // 需要覆盖的连接视图
-  view: ViewState | null;
-  // 需要下发给端口的命令列表
-  commands: Record<string, unknown>[];
-}
 
 /** 这里只处理 UI 时钟和端口投递；恢复、保存、确认、超时和回滚由 Settings 决定。 */
 // 创建运行时：把界面状态与视图回调接上
@@ -91,8 +67,6 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
   let nativeStarted = false;
   // 原生端口是否已完成初始化流程，可以开始轮询
   let nativeReady = false;
-  // 上一次轮询得到的原始状态，用于去重
-  let lastNativeState = "";
 
   // 调用 Rust 设置模块，并自动携带会话序号
   function accept(result: SettingsResult, draftAtRequest?: string) {
@@ -105,14 +79,14 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     // 端口响应期间继续输入时，界面保留新的草稿和输入反馈。
     if (draftAtRequest === undefined || state.nameDraft() === draftAtRequest) {
       // 同步名称问题到界面状态
-      state.nameIssue.set(result.nameIssue);
+      state.nameIssue.set(result.nameIssue ?? null);
       // 同步名称反馈到界面状态
-      state.nameFeedback.set(result.nameFeedback);
+      state.nameFeedback.set(result.nameFeedback ?? null);
       // 有草稿时更新名称草稿
       if (result.draft != null) state.nameDraft.set(result.draft);
     }
     // 同步面板错误提示
-    state.panelIssue.set(result.panelIssue);
+    state.panelIssue.set(result.panelIssue ?? null);
     // 有新面板配置则覆盖
     if (result.panel) state.panel.set(result.panel);
     // 有新连接视图则覆盖
@@ -120,11 +94,11 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
   }
 
   // 发起请求并应用结果，返回原始结果供调用方继续处理
-  async function update(call: () => Promise<unknown>) {
+  async function update(call: () => Promise<SettingsResult>) {
     // 记录请求发出时的草稿
     const draft = state.nameDraft();
     // 向引擎发送请求
-    const result = (await call()) as SettingsResult;
+    const result = await call();
     // 接受响应并更新界面状态
     accept(result, draft);
     // 返回响应
@@ -145,14 +119,12 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
   async function poll() {
     // 已销毁则不再处理
     if (disposed) return;
-    // 读取原始状态
-    const raw = runtime.link.poll();
-    // 状态未变时复用旧视图，避免重复解析
-    const next = raw === lastNativeState ? state.view() : (Rules.connectionNativeView(raw) as ViewState);
-    // 状态变化：记录、通知外部并更新信号
-    if (raw !== lastNativeState) {
-      // 记下最近一次原生状态
-      lastNativeState = raw;
+    // Rust 只在投影变化时返回新视图，未变时为 null
+    const changed = runtime.link.poll();
+    // 未变化时沿用当前视图
+    const next = changed ?? state.view();
+    // 状态变化：通知外部并更新信号
+    if (changed) {
       // 通知视图变化
       onView(next);
       // 更新视图状态
@@ -163,13 +135,13 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
   }
 
   // 向端口下发命令并立即轮询以获取结果
-  async function command(value: Record<string, unknown>) {
+  async function command(value: LinkCommand) {
     // 端口未启动或已销毁时忽略
     if (!nativeStarted || disposed) return;
     // 尝试发送命令
     try {
       // 把命令交给原生链接
-      runtime.link.command(JSON.stringify(value));
+      runtime.link.command(value);
       // 随后轮询最新状态
       await poll();
     // 出错则上报命令失败
@@ -197,21 +169,17 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
           // 设备身份必然存在
           const device = restored.device!;
           // 先显示空视图
-          state.view.set(Rules.connectionEmptyView(device.id, device.name) as ViewState);
+          state.view.set(Rules.connectionEmptyView(device.id, device.name));
           // 尝试初始化原生链接
           try {
             // 取得用于原生端口初始化的身份
             const identity = restored.initialize!;
-            // 初始化并取回原始状态
-            const raw = runtime.link.initialize(identity.id, identity.name);
+            // 初始化并取回 Rust 已校验的公开视图
+            const next = runtime.link.initialize(identity.id, identity.name);
             // 标记端口已启动，之后才允许下发命令
             nativeStarted = true;
-            // 解析为视图
-            const next = (Rules.connectionNativeView(raw) as ViewState);
             // 更新视图状态
             state.view.set(next);
-            // 记下原生状态
-            lastNativeState = raw;
             // 通知 Rust 初始化完成
             await update(() => Settings.initialized(session, next));
             // 已销毁则返回
@@ -259,7 +227,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
         // 告知原生端口界面已不再活跃
         if (nativeStarted) {
           // 通知原生端停用
-          try { runtime.link.command(JSON.stringify({ op: "active", value: false })); }
+          try { runtime.link.command({ op: "active", value: false }); }
           // 宿主可能已关闭原生所有者，忽略
           catch { /* 宿主可能已关闭原生 owner。 */ }
         }
@@ -286,7 +254,7 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     // 依次投递命令，失败则通知 Rust 回滚
     try {
       // 逐个派发待执行命令
-      for (const value of result.commands) runtime.link.command(JSON.stringify(value));
+      for (const value of result.commands) runtime.link.command(value);
     // 派发失败
     } catch {
       // 通知引擎名称派发失败

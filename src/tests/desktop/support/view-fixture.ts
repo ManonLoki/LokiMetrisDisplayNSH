@@ -1,10 +1,15 @@
 /** UI 场景替身，不执行密码协议；真实协议由 Rust 与实网专项验证。 */
 // 引入主机、配对记录与视图类型
-import type { Host, PairingRecord, ViewState } from "../../../features/connection";
+import type { Host, ViewState } from "../../../features/connection";
 // 引入快照类型
 import type { Snapshot } from "../../../shared/contracts/snapshot";
 // 引入配对规则
 import { makePairingCode, PAIRING_WINDOW_MS, pairingExpired } from "./fixture-rules";
+
+// 配对记录：客户端 ID 与保存时间
+export type PairingRecord = { clientId: string; savedAtMs: number };
+// ViewState.paired 在公开类型里是不透明的，测试替身按记录表读取
+const pairedOf = (state: ViewState) => state.paired as Record<string, PairingRecord>;
 
 // 合并发现列表与配对记录得到主机列表
 export function hostsFrom(discovered: { id: string; name: string }[], paired: Record<string, PairingRecord>): Host[] {
@@ -30,7 +35,7 @@ export function selectDesktop(state: ViewState, id: string, nowMs: number): View
   // 不可用的主机忽略
   if (!host || !host.available) return state;
   // 已配对：直接等待快照，不显示配对码
-  if (state.paired[id]) {
+  if (pairedOf(state)[id]) {
     return {
       ...state,
       selectedId: id,
@@ -89,7 +94,7 @@ export function acceptHandshake(state: ViewState, nowMs: number): ViewState {
     pairingDeadlineMs: null,
     connected: false,
     // 记录配对
-    paired: { ...state.paired, [id]: { clientId: id, savedAtMs: nowMs } },
+    paired: { ...pairedOf(state), [id]: { clientId: id, savedAtMs: nowMs } },
     // 标记该主机已配对
     hosts: state.hosts.map((host) => (host.id === id ? { ...host, paired: true } : host)),
     error: null,
@@ -101,7 +106,7 @@ export function acceptHandshake(state: ViewState, nowMs: number): ViewState {
 // 收到首份快照才标记已连接
 export function acceptSnapshot(state: ViewState, snapshot: Snapshot, receivedAtMs: number): ViewState {
   // 未选择或未配对则忽略
-  if (state.selectedId == null || state.paired[state.selectedId] == null) return state;
+  if (state.selectedId == null || pairedOf(state)[state.selectedId] == null) return state;
   // 仍在配对中则忽略
   if (state.pairingCode != null) return state;
   return {
@@ -120,7 +125,7 @@ export function acceptSnapshot(state: ViewState, snapshot: Snapshot, receivedAtM
 
 // 忘记桌面：移除配对，必要时清空展示内容
 export function forgetDesktop(state: ViewState, id: string): ViewState {
-  const paired = { ...state.paired };
+  const paired = { ...pairedOf(state) };
   delete paired[id];
   // 被忘记的桌面正在展示时需要清空
   const clearDisplay = state.selectedId === id || state.cacheSourceId === id;
