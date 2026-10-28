@@ -8,7 +8,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/ManonLoki/LokiMetrisDisplayNSH.git",
-      "revision": "50fe546999a6e68434103afa5a2c8096c499b6c0"
+      "revision": "03b1976c64c461db9732cdeb0f6b7e6573553663"
     }
   },
   "components": [
@@ -125,8 +125,8 @@
         },
         {
           "path": "src/native/connection/session.rs",
-          "line": 24,
-          "end_line": 73
+          "line": 38,
+          "end_line": 95
         },
         {
           "path": "crates/widget-core/src/widget_http.rs",
@@ -162,8 +162,8 @@
         },
         {
           "path": "src/native/connection/session.rs",
-          "line": 188,
-          "end_line": 222
+          "line": 190,
+          "end_line": 232
         }
       ]
     },
@@ -371,8 +371,8 @@
       "sources": [
         {
           "path": "src/native/connection/owner.rs",
-          "line": 287,
-          "end_line": 325
+          "line": 266,
+          "end_line": 310
         },
         {
           "path": "src/native/companion/mod.rs",
