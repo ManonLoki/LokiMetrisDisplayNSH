@@ -4,7 +4,7 @@
 
 在 Windows、macOS、Linux、Android、iPhone、iPad 和 Apple Watch 上查看 AI 编程工具的 Token 用量、账户额度、Agent 活动与图片。首次使用四位码配对，之后恢复已保存的认证连接。
 
-[下载安装包](https://github.com/ManonLoki/LokiMetrisDisplayNSH/releases/latest) · [使用说明](docs/mobile/usage.md) · [交互架构图](.archify/architecture-lokimetris-20261027-212950/lokimetris.html) · [从源码运行](#从源码运行) · [文档目录](docs/README.md)
+[下载安装包](https://github.com/ManonLoki/LokiMetrisDisplayNSH/releases/latest) · [使用说明](docs/mobile/usage.md) · [交互架构图](.archify/architecture-lokimetris-20261028-105048/lokimetris.html) · [从源码运行](#从源码运行) · [文档目录](docs/README.md)
 
 ## 能看到什么
 
@@ -83,4 +83,4 @@ python3 tools/test.py --suite watch
 | `docs/`、`.archify/` | 文档、来源记录与可交互架构图 |
 | `.nsh/`、`target/`、`output/` | 生成工程、编译缓存、包与验证结果 |
 
-五个平台共用一个 NSH TSX/Rust 应用，Watch 使用独立 SwiftUI 工程。TSX 处理布局与交互，Rust 处理规则、设置、发现、配对、会话和资源。继续阅读 [应用架构](docs/architecture/overview.md)、[代码约定](docs/development/code-style.md)、[NSH 来源](docs/provenance/nsh-runtime.md) 与 [配对库来源](docs/provenance/pairing-core.md)。
+五个平台共用一个 NSH TSX/Rust 应用，Watch 使用独立 SwiftUI 工程。TSX 只处理布局与交互；Rust 的 Shell 控制器处理启动、轮询、设置保存，并驱动发现、配对、会话和资源。继续阅读 [应用架构](docs/architecture/overview.md)、[代码约定](docs/development/code-style.md)、[NSH 来源](docs/provenance/nsh-runtime.md) 与 [配对库来源](docs/provenance/pairing-core.md)。
