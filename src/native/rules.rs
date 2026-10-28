@@ -1,6 +1,6 @@
 //! TSX 调用 Rust 业务规则的类型化入口：每条规则都是 `Rules` 模块上的一个方法。
 // 引入 nsh 模块宏与 JsonValue
-use nsh_core::{JsonValue, prelude::*};
+use nsh_core::prelude::*;
 
 use crate::features::{connection, hooks, usage};
 use crate::shared::{
@@ -59,30 +59,5 @@ impl Rules {
     /// 把 count 个 Hook 按布局("1x1" 或 "2x2")排成页;每格是 Hook 序号,空位为 null。
     pub fn hook_pages(count: u32, layout: String) -> Vec<Vec<Option<u32>>> {
         hooks::pages(count as usize, &layout)
-    }
-}
-
-/// 仅调试构建提供:测试替身(模拟桌面端的夹具)借此让自己的投影经过与产品
-/// `Link` 相同的 Rust 校验。产品构建不包含它。
-// 测试夹具专用规则，只在调试构建注册
-#[cfg(debug_assertions)]
-#[module]
-pub struct FixtureRules;
-
-// 模块方法
-#[cfg(debug_assertions)]
-#[module]
-impl FixtureRules {
-    /// 把原生端口的 JSON 文本校验为公开视图。产品里由 `Link` 在 Rust 内部完成,
-    /// 这个入口让测试替身的投影也经过同一套校验。
-    pub fn connection_native_view(raw: String) -> Result<ViewState, String> {
-        typed(connection::view_state::native_view(&raw)?)
-    }
-
-    /// 解析桌面发来的快照;非法数据返回 null。
-    pub fn connection_parse_snapshot(value: JsonValue, images: JsonValue) -> Result<Option<Snapshot>, String> {
-        connection::snapshot::project_snapshot(&value, &images)
-            .map(typed)
-            .transpose()
     }
 }

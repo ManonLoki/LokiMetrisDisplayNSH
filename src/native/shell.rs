@@ -8,19 +8,20 @@ use crate::shared::contracts::models::{LinkCommand, PanelConfig, SettingsResult,
 use nsh_core::{element::Local, prelude::*};
 // 引入内部可变性
 use std::cell::RefCell;
+#[cfg(debug_assertions)]
+use std::rc::Rc;
+#[cfg(debug_assertions)]
+use super::fixture::Fixture;
 
-// 连接后端：产品用真实连接；测试夹具以 JS 回调扮演桌面端
+// 连接后端：产品用真实连接；调试构建里测试可用 Rust 夹具扮演桌面端
 #[derive(Clone, Default)]
 enum Backend {
     // 真实连接 owner
     #[default]
     Real,
-    // 测试夹具提供的三个回调
-    Js {
-        initialize: Callback<(String, String), ViewState>,
-        command: Callback<LinkCommand, ()>,
-        poll: Callback<(), Option<ViewState>>,
-    },
+    // 测试夹具（仅调试构建）
+    #[cfg(debug_assertions)]
+    Fixture(Rc<RefCell<Fixture>>),
 }
 
 // 外壳状态：后端、最近一次公开视图与阶段标记
@@ -92,32 +93,41 @@ fn current_view(sys: &System) -> Result<ViewState, String> {
 }
 
 // 初始化连接
-async fn link_initialize(sys: &System, backend: &Backend, id: &str, name: &str) -> Result<ViewState, String> {
+#[cfg_attr(not(debug_assertions), allow(unused_variables))]
+fn link_initialize(sys: &System, backend: &Backend, id: &str, name: &str, now_ms: u64) -> Result<ViewState, String> {
     match backend {
         // 真实连接
         Backend::Real => Link::initialize(id, name, sys),
-        // 夹具回调
-        Backend::Js { initialize, .. } => initialize.call_async((id.to_owned(), name.to_owned())).await,
+        // 夹具
+        #[cfg(debug_assertions)]
+        Backend::Fixture(fixture) => fixture.borrow_mut().initialize(id, name, now_ms),
     }
 }
 
 // 轮询连接，没有变化时为 None
-async fn link_poll(sys: &System, backend: &Backend) -> Result<Option<ViewState>, String> {
+#[cfg_attr(not(debug_assertions), allow(unused_variables))]
+fn link_poll(sys: &System, backend: &Backend, now_ms: u64) -> Result<Option<ViewState>, String> {
     match backend {
         // 真实连接
         Backend::Real => Link::poll(sys),
-        // 夹具回调
-        Backend::Js { poll, .. } => poll.call_async(()).await,
+        // 夹具
+        #[cfg(debug_assertions)]
+        Backend::Fixture(fixture) => fixture.borrow_mut().poll(now_ms),
     }
 }
 
 // 下发命令
-async fn link_command(sys: &System, backend: &Backend, command: &LinkCommand) -> Result<(), String> {
+#[cfg_attr(not(debug_assertions), allow(unused_variables))]
+fn link_command(sys: &System, backend: &Backend, command: &LinkCommand, now_ms: u64) -> Result<(), String> {
     match backend {
         // 真实连接
         Backend::Real => Link::command(command, sys),
-        // 夹具回调
-        Backend::Js { command: callback, .. } => callback.call_async(command.clone()).await,
+        // 夹具
+        #[cfg(debug_assertions)]
+        Backend::Fixture(fixture) => {
+            fixture.borrow_mut().command(command, now_ms);
+            Ok(())
+        }
     }
 }
 
@@ -135,7 +145,7 @@ async fn poll_and_observe(sys: &System, draft: String, now_ms: u64) -> Result<Se
     // 取后端
     let backend = with(sys, |state| state.backend.clone());
     // 轮询：只有变化时才有新视图
-    let changed = match link_poll(sys, &backend).await {
+    let changed = match link_poll(sys, &backend, now_ms) {
         Ok(changed) => changed,
         Err(error) => return fail(sys, "poll", error),
     };
@@ -164,7 +174,7 @@ async fn command_then_poll(sys: &System, command: &LinkCommand, draft: String, n
         return Ok(None);
     }
     // 下发
-    if let Err(error) = link_command(sys, &backend, command).await {
+    if let Err(error) = link_command(sys, &backend, command, now_ms) {
         return fail(sys, "command", error).map(Some);
     }
     // 随后轮询
@@ -180,25 +190,20 @@ pub struct Shell;
 #[module]
 impl Shell {
     /// 启动:恢复身份和偏好,初始化连接,返回首个公开状态。
-    /// 不传三个回调时使用真实连接;测试夹具传入回调扮演桌面端。
-    pub async fn start(
-        initialize: Option<Callback<(String, String), ViewState>>,
-        command: Option<Callback<LinkCommand, ()>>,
-        poll: Option<Callback<(), Option<ViewState>>>,
-        sys: System,
-    ) -> Result<SettingsResult, String> {
+    /// 调试构建里,存储中有测试夹具键时由 Rust 夹具扮演桌面端,否则使用真实连接。
+    pub async fn start(now_ms: u64, sys: System) -> Result<SettingsResult, String> {
         // 选择后端
-        let backend = match (initialize, command, poll) {
-            (Some(initialize), Some(command), Some(poll)) => Backend::Js { initialize, command, poll },
-            _ => Backend::Real,
-        };
+        #[cfg(debug_assertions)]
+        let backend = Fixture::select().map_or(Backend::Real, |fixture| Backend::Fixture(Rc::new(RefCell::new(fixture))));
+        #[cfg(not(debug_assertions))]
+        let backend = Backend::Real;
         with(&sys, |state| state.backend = backend.clone());
         // 恢复身份和偏好
         let restored = Settings::boot(&sys)?;
         remember(&sys, &restored);
         let identity = restored.initialize.clone().ok_or_else(|| "设置未提供设备身份".to_owned())?;
         // 初始化连接
-        let view = match link_initialize(&sys, &backend, &identity.id, &identity.name).await {
+        let view = match link_initialize(&sys, &backend, &identity.id, &identity.name, now_ms) {
             Ok(view) => view,
             Err(error) => {
                 // 失败：用空视图占位并上报
@@ -269,7 +274,7 @@ impl Shell {
         remember(&sys, &begun);
         // 逐条下发命令；任何一条失败就回滚本次保存
         for command in &begun.commands {
-            if link_command(&sys, &backend, command).await.is_err() {
+            if link_command(&sys, &backend, command, now_ms).is_err() {
                 let session = with(&sys, |state| state.session);
                 let rolled = Settings::name_dispatch_failed(session, &sys)?;
                 remember(&sys, &rolled);
@@ -312,7 +317,7 @@ impl Shell {
         let _ = Settings::dispose(session, &sys);
         if with(&sys, |state| state.started) {
             let inactive = LinkCommand { op: crate::shared::contracts::models::LinkOp::Active, client_id: None, name: None, value: Some(false) };
-            let _ = link_command(&sys, &backend, &inactive).await;
+            let _ = link_command(&sys, &backend, &inactive, 0);
         }
         Ok(())
     }

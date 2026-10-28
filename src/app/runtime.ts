@@ -6,20 +6,8 @@ import { Shell, type LinkCommand, type SettingsResult } from "loki-metris-mobile
 import type { ViewState } from "../features/connection";
 import type { PanelConfig } from "../shared/contracts/panel";
 
-/** 测试夹具扮演桌面端的端口；产品不传，由 Rust 使用真实连接。 */
-export interface LinkPort {
-  // 用设备 id 与名称初始化，返回首个公开视图
-  initialize(deviceId: string, name: string): ViewState;
-  // 下发一条命令
-  command(command: LinkCommand): void;
-  // 拉取最新视图；没有变化时为 null
-  poll(): ViewState | null;
-}
-
-/** 应用运行时：前台事实与观测回调由宿主注入，连接端口只有测试才注入。 */
+/** 应用运行时：前台事实与观测回调由宿主注入；连接由 Rust 的 Shell 持有。 */
 export interface AppRuntime {
-  // 仅测试注入的夹具端口
-  link?: LinkPort;
   // 当前是否在前台，未知为 null
   foreground: () => boolean | null;
   // 是否启用遥控导航
@@ -85,13 +73,8 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     effect(() => {
       let timer: ReturnType<typeof setTimeout> | null = null;
       untracked(() => {
-        const link = runtime.link;
-        // 启动：夹具端口以回调形式交给 Rust，产品不传
-        void run(() => Shell.start(
-          link && ((id, name) => link.initialize(id, name)),
-          link && ((command) => link.command(command)),
-          link && (() => link.poll()),
-        ));
+        // 启动：Rust 恢复身份、初始化连接（调试构建下测试夹具由 Rust 扮演桌面端）
+        void run(() => Shell.start(Date.now()));
         // 时钟：读前台事实，并让 Rust 轮询、推进名称确认
         const tick = () => {
           if (disposed) return;

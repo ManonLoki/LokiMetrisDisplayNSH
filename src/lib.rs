@@ -25,9 +25,6 @@ fn register_bindings(registry: &mut Registry) {
     registry.module::<UiLifecycle>();
     // 注册规则查询模块
     registry.module::<Rules>();
-    // 调试构建额外注册测试夹具规则
-    #[cfg(debug_assertions)]
-    registry.module::<native::FixtureRules>();
     // 注册图片帧解码模块
     registry.module::<native::image::ImageFrames>();
 }

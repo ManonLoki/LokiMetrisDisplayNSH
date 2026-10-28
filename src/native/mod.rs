@@ -30,11 +30,11 @@ pub(crate) use link::Link;
 pub use rules::Rules;
 // 导出外壳
 pub use shell::Shell;
-// 调试构建专用的测试夹具规则
-#[cfg(debug_assertions)]
-pub use rules::FixtureRules;
 // 导出界面生命周期
 pub use ui_lifecycle::UiLifecycle;
 
 // 应用外壳控制器
 mod shell;
+// 调试构建专用的测试夹具连接
+#[cfg(debug_assertions)]
+mod fixture;

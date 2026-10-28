@@ -26,7 +26,7 @@ import { navPlacement } from "./navigation-layout";
 import { createRuntime, type AppRuntime } from "./runtime";
 
 // 重新导出运行时类型供外部使用
-export type { AppRuntime, LinkPort } from "./runtime";
+export type { AppRuntime } from "./runtime";
 
 /** 应用层只持有导航、输入草稿、可见状态和布局控制器。 */
 // 创建应用：返回根组件函数
