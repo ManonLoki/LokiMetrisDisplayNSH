@@ -41,7 +41,7 @@ VCRUNTIME140_1.dll），以及 Microsoft Edge WebView2 Runtime。
 电脑采集客户端需要包含桌面终端平台支持的 0.10.0 源码版本。
 在展示端设置页选择电脑，再在采集客户端中输入展示端的四位配对码。
 
-本包为 Windows x86-64 MSVC 交叉构建，已核对真实 PE 与应用图标。
+本包为 Windows x86-64 MSVC 交叉构建，已核对真实 PE 与多尺寸应用图标。
 Windows 实机启动、凭据存储和配对验收仍为待办。
 """
 
@@ -112,20 +112,38 @@ def main():
         resources.mkdir()
         # 图标路径
         icon = (ROOT / app["icon"]).resolve()
-        # 把图标缩放为 256 像素的 PNG
-        subprocess.run(["sips", "-z", "256", "256", str(icon), "--out", str(resources / "icon.png")], check=True)
-        # 读取转换后的 PNG
-        png = (resources / "icon.png").read_bytes()
-        # 确认确实是 256 像素的 PNG
-        if png[:8] != b"\x89PNG\r\n\x1a\n" or struct.unpack(">II", png[16:24]) != (256, 256):
-            # 图标必须是 256 像素 PNG
-            raise SystemExit("Expected a 256-pixel PNG icon")
-        # 现代 Windows ICO 支持 PNG 载荷。保留源图稿,
-        # 使用标准库的容器编码和已安装的链接器。
+        # 资源管理器、任务栏和标题栏分别取不同尺寸，只有 256 像素一档时小尺寸会显示为空
+        sizes = (16, 24, 32, 48, 64, 128, 256)
+        # 各尺寸的 PNG 载荷
+        payloads = []
+        # 逐个尺寸缩放
+        for size in sizes:
+            # 目标文件
+            target = resources / f"icon-{size}.png"
+            # 缩放为方形 PNG
+            subprocess.run(["sips", "-z", str(size), str(size), str(icon), "--out", str(target)], check=True)
+            # 读取转换后的 PNG
+            png = target.read_bytes()
+            # 确认尺寸正确
+            if png[:8] != b"\x89PNG\r\n\x1a\n" or struct.unpack(">II", png[16:24]) != (size, size):
+                # 图标必须是对应像素的 PNG
+                raise SystemExit(f"Expected a {size}-pixel PNG icon")
+            # 记录载荷
+            payloads.append(png)
+        # 图标目录头：保留位、类型 1、条目数
+        header = struct.pack("<HHH", 0, 1, len(sizes))
+        # 载荷起始偏移
+        offset = len(header) + 16 * len(sizes)
+        # 目录条目
+        entries = b""
+        # 逐个生成条目，256 像素在 ICO 里记为 0
+        for size, png in zip(sizes, payloads):
+            # 宽高、色数、保留、平面数、位深、长度、偏移
+            entries += struct.pack("<BBBBHHII", size % 256, size % 256, 0, 0, 1, 32, len(png), offset)
+            # 下一个载荷的偏移
+            offset += len(png)
         # 现代 Windows 的 ICO 支持 PNG 载荷；用标准库拼容器，保留原始图案
-        (resources / "icon.ico").write_bytes(struct.pack("<HHH", 0, 1, 1) +
-                                              # 图标文件头与 PNG 数据
-                                              struct.pack("<BBBBHHII", 0, 0, 0, 0, 1, 32, len(png), 22) + png)
+        (resources / "icon.ico").write_bytes(header + entries + b"".join(payloads))
         # 资源脚本
         (resources / "icon.rc").write_text('1 ICON "icon.ico"\n')
         # 图标资源目标文件
