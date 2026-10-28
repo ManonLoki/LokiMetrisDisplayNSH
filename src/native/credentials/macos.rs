@@ -6,10 +6,10 @@ use std::{ffi::c_void, ptr};
 type CF = *const c_void;
 // UTF-8 编码常量
 const UTF8: u32 = 0x0800_0100;
-// errSecItemNotFound
+// errSecItemNotFound:条目不存在
 const NOT_FOUND: i32 = -25300;
 #[cfg(target_os = "ios")]
-// errSecDuplicateItem
+// errSecDuplicateItem:条目已存在
 const DUPLICATE: i32 = -25299;
 
 // Core Foundation 接口

@@ -78,8 +78,8 @@ unsafe fn number_i32(dictionary: CfRef, key: CfRef) -> Option<i32> {
     }
     // 数值缓冲
     let mut result = 0_i32;
-    // kCFNumberSInt32Type = 3.
-    // kCFNumberSInt32Type = 3
+    // kCFNumberSInt32Type = 3. 32 位整数类型
+    // kCFNumberSInt32Type = 3 32 位整数类型
     // 读取数值，成功则返回
     (unsafe { CFNumberGetValue(value, 3, (&mut result as *mut i32).cast()) } != 0).then_some(result)
 }
@@ -146,8 +146,8 @@ pub(super) fn foreground() -> Option<bool> {
         }
         // 透明度缓冲
         let mut opacity = 0_f64;
-        // kCFNumberFloat64Type = 6.
-        // kCFNumberFloat64Type = 6
+        // kCFNumberFloat64Type = 6. 64 位浮点类型
+        // kCFNumberFloat64Type = 6 64 位浮点类型
         if unsafe { CFNumberGetValue(alpha, 6, (&mut opacity as *mut f64).cast()) } == 0 {
             // 返回 None
             return None;

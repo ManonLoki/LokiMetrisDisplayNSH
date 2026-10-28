@@ -23,7 +23,7 @@ loki_widget_core = { path = "crates/widget-core" }
 nsh-core = "0.3.0"
 # 序列化
 serde = { version = "1", features = ["derive"] }
-# JSON
+# JSON 序列化
 serde_json = "1"
 # 复用 NSH/URL 已锁定的 ICU 版本,以沿用现有的 NFC 规则。
 # 复用 NSH 与 URL 已锁定的 ICU 版本来做 NFC 规则

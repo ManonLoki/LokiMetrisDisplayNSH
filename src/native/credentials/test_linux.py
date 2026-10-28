@@ -13,7 +13,7 @@ from __future__ import annotations
 
 # 摘要
 import hashlib
-# JSON
+# JSON 序列化
 import json
 # 环境变量与路径分隔符
 import os

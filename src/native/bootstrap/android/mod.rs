@@ -98,7 +98,7 @@ fn read_device_form(env: &mut JNIEnv<'_>, context: &JObject<'_>) -> Result<&'sta
         .call_method(manager, "getCurrentModeType", "()I", &[])?
         // 取回返回值
         .i()?;
-    // UI_MODE_TYPE_TELEVISION
+    // UI_MODE_TYPE_TELEVISION:电视模式
     if mode == 4 {
         // 电视模式
         return Ok("tv");
@@ -276,7 +276,7 @@ pub(super) fn foreground() -> Option<bool> {
             &[],
             // 调用结束，传播 JNI 错误
         )?;
-        // getMyMemoryState
+        // getMyMemoryState:获取进程内存状态
         env.call_static_method(
             // Java 类名或方法名参数
             "android/app/ActivityManager",

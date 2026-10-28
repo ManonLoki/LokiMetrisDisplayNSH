@@ -47,7 +47,7 @@ def executable_platform(path):
             source.seek(pe)
             # 签名为 PE
             if source.read(4) == b"PE\0\0":
-                # Windows
+                # Windows 平台
                 return "windows"
     # 无法识别
     return None
@@ -99,7 +99,7 @@ def main():
         if args.target == "macos":
             # macOS：app 包里的可执行文件
             executables = list((stage / f"{name}.app/Contents/MacOS").glob("*"))
-        # Windows
+        # Windows 平台
         elif args.target == "windows":
             # exe 路径
             executables = [stage / name / f"{name}.exe"]

@@ -20,11 +20,11 @@ pub fn foreground(os: &str) -> Option<bool> {
     // 其余桌面与 iOS 平台：由各自实现提供
     #[cfg(any(
         target_os = "ios",
-        // macOS
+        // macOS 平台
         target_os = "macos",
-        // Windows
+        // Windows 平台
         target_os = "windows",
-        // Linux
+        // Linux 平台
         target_os = "linux"
     ))]
     // 返回平台前台状态
@@ -32,13 +32,13 @@ pub fn foreground(os: &str) -> Option<bool> {
     // 未知平台
     #[cfg(not(any(
         target_os = "android",
-        // iOS
+        // iOS 平台
         target_os = "ios",
-        // macOS
+        // macOS 平台
         target_os = "macos",
-        // Windows
+        // Windows 平台
         target_os = "windows",
-        // Linux
+        // Linux 平台
         target_os = "linux"
     )))]
     // 其余平台没有结果
