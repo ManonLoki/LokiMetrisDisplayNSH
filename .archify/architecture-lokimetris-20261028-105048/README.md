@@ -11,11 +11,11 @@
 | [candidate.json](candidate.json) | 13 个组件、15 条关系及对应源码范围 |
 | [lokimetris.html](lokimetris.html) | 包含 SVG 与查看器的独立 HTML |
 | [lokimetris.delivery.json](lokimetris.delivery.json) | 规范／产物 SHA-256 和交付回执 |
-| [lokimetris.finalize.json](lokimetris.finalize.json)、[lokimetris.browser-check.json](lokimetris.browser-check.json) | finalize 与浏览器检查回执 |
+| [review-2/lokimetris.finalize.json](review-2/lokimetris.finalize.json)、[review-2/lokimetris.browser-check.json](review-2/lokimetris.browser-check.json) | finalize 与浏览器检查回执 |
 
 ## 源码证据
 
-`meta.repository` 固定为 `https://github.com/ManonLoki/LokiMetrisDisplayNSH.git` 的提交 `50fe546999a6e68434103afa5a2c8096c499b6c0`，源码引用按该提交的已提交内容校验，并生成 GitHub 源码链接。运行时代码改变后，先提交代码，再更新 candidate 的 revision 和行号并重新生成。
+`meta.repository` 固定为 `https://github.com/ManonLoki/LokiMetrisDisplayNSH.git` 的提交 `653014132c9615bfe535915f4b616a8cf33c33ae`，源码引用按该提交的已提交内容校验，并生成 GitHub 源码链接。运行时代码改变后，先提交代码，再更新 candidate 的 revision 和行号并重新生成。
 
 ## 重新生成
 
