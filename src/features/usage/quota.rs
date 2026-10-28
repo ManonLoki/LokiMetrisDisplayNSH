@@ -5,11 +5,11 @@ use serde_json::{Value, json};
 pub fn quota_label(provider: &str) -> &'static str {
     // 按供应商取显示名
     match provider {
-        // Codex
+        // Codex 智能体
         "codex" => "Codex",
-        // Claude
+        // Claude 智能体
         "claude" => "Claude",
-        // Cursor
+        // Cursor 智能体
         "cursor" => "Cursor",
         // 其余为 Grok
         _ => "Grok",

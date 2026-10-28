@@ -33,17 +33,17 @@ pub fn canonical_agent_key(raw: &str) -> String {
 pub fn agent_display_name(raw: &str) -> String {
     // 按规范键取显示名
     match canonical_agent_key(raw).as_str() {
-        // Codex
+        // Codex 智能体
         "codex" => "Codex",
-        // Claude Code
+        // Claude Code 智能体
         "claude" => "Claude Code",
-        // Grok
+        // Grok 智能体
         "grok" => "Grok",
-        // WorkBuddy
+        // WorkBuddy 智能体
         "workbuddy" => "WorkBuddy",
-        // Cursor
+        // Cursor 智能体
         "cursor" => "Cursor",
-        // OpenCode
+        // OpenCode 智能体
         "opencode" => "OpenCode",
         // Hermes 的写法
         "hermes" => "Hermes",

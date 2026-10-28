@@ -14,19 +14,19 @@ use std::collections::{BTreeMap, BTreeSet};
 /// 协议中 `enabledAgents` 的规范拼写；投影只按归一化键去重，网络帧还要求精确键名。
 // 协议中 enabledAgents 的规范拼写；投影只按归一化键去重，网络帧还要求精确键名
 const WIRE_AGENTS: [&str; 14] = [
-    // Codex
+    // Codex 智能体
     "codex",
-    // Claude Code
+    // Claude Code 智能体
     "claudeCode",
-    // Cursor
+    // Cursor 智能体
     "cursor",
-    // OpenCode
+    // OpenCode 智能体
     "openCode",
-    // WorkBuddy
+    // WorkBuddy 智能体
     "workBuddy",
-    // Hermes
+    // Hermes 智能体
     "hermes",
-    // OpenClaw
+    // OpenClaw 智能体
     "openClaw",
     // CodeBuddy 的写法
     // CodeBuddy 的写法

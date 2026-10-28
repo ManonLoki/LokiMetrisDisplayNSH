@@ -24,19 +24,19 @@ func agentTitle(_ agent: String) -> String {
         }))
     // 按归一化键映射显示名，别名合并
     switch key {
-    // Codex
+    // Codex 智能体
     case "codex": return "Codex"
     // Claude 的两种写法
     case "claude", "claudecode": return "Claude Code"
     // Grok 的两种写法
     case "grok", "grokbuild": return "Grok"
-    // WorkBuddy
+    // WorkBuddy 智能体
     case "workbuddy": return "WorkBuddy"
-    // Cursor
+    // Cursor 智能体
     case "cursor": return "Cursor"
-    // OpenCode
+    // OpenCode 智能体
     case "opencode": return "OpenCode"
-    // Hermes
+    // Hermes 智能体
     case "hermes": return "Hermes"
     // OpenClaw 的显示名
     case "openclaw": return "OpenClaw"
