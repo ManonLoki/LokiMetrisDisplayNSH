@@ -11,8 +11,6 @@ import { RemoteRing, registerRemoteTarget } from "./remote-focus";
 export type CyberValue<T> = T | Accessor<T>;
 // 统一读取：函数则调用，否则返回原值
 const read = <T,>(value: CyberValue<T>): T => typeof value === "function" ? (value as Accessor<T>)() : value;
-// 全局前台状态，由宿主生命周期设置
-const foreground = signal(false);
 // 动效许可的上下文，默认不允许
 const Motion = context<Accessor<boolean>>(() => false);
 // 缓动曲线：快出慢入
@@ -24,16 +22,11 @@ const decoration = { pointerEvents: "none" as const, accessible: false,
   // 读屏属性：对辅助技术隐藏
   accessibilityElementsHidden: true, importantForAccessibility: "no-hide-descendants" as const };
 
-/** 由真实宿主的生命周期来源调用,绝不从网络状态推断。
- * NSH 目前暴露 reduceMotion,但没有公开的 AppState/scenePhase API。 */
-// 设置全局前台状态
-export function setCyberForeground(active: boolean): void { foreground.set(active); }
-
 // 动效作用域属性
 export interface CyberMotionScopeProps {
   // 是否启用动效
   enabled?: CyberValue<boolean>;
-  // 是否在前台，缺省使用全局状态
+  // 是否在前台，缺省视为后台
   foreground?: CyberValue<boolean>;
   // 子节点
   children?: JSX.Element;
@@ -46,7 +39,7 @@ export function CyberMotionScope(props: CyberMotionScopeProps) {
   // 向后代提供许可读取器
   return <Motion.Provider value={() => read(props.enabled ?? true)
     // 前景可见且未减少动效才显示
-    && read(props.foreground ?? foreground) && !reduceMotion()}>{props.children}</Motion.Provider>;
+    && read(props.foreground ?? false) && !reduceMotion()}>{props.children}</Motion.Provider>;
 }
 
 // 动效属性：active 控制单个元素是否活跃

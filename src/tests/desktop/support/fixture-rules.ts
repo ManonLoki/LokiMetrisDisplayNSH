@@ -17,12 +17,6 @@ export function makePairingCode(nowMs: number, hostId: string): string {
   return String(mixed).padStart(4, "0");
 }
 
-// 判断配对窗口是否已过期
-export function pairingExpired(nowMs: number, deadlineMs: number): boolean {
-  return nowMs >= 0 && deadlineMs >= 0 && nowMs >= deadlineMs;
-}
-
-
 // 把毫秒时间格式化为本地 “年-月-日 时:分”
 export function formatSyncTime(ms: number): string {
   const date = new Date(ms);

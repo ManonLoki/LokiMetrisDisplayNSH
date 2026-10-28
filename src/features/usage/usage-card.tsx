@@ -2,7 +2,7 @@
 import { Canvas, Scroll, Text, View, computed, effect, signal, type Accessor, type Bounds, type TextStyle, fontScale } from "nsh";
 // 引入投影函数、颜色函数与类型
 import { Rules } from "loki-metris-mobile-display/native";
-import { quotaColor, type DisplayRow, type QuotaProjection, type UsageSnapshot, type UsageCardProjection } from "./card-projection";
+import { quotaColor, type DisplayRow, type QuotaProjection, type UsageSnapshot } from "./card-projection";
 // 引入用量详细程度类型
 import type { UsageDetail } from "../../shared/contracts/panel";
 // 引入入场动效、数字动画与扫描光效
@@ -252,8 +252,8 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
     </View>
     {/* 有额度窗口或精确值时显示第二行 */}
     {props.row.windows.length > 0 || props.row.exact != null ? <Scroll horizontal scrollbar={false} style={{ minWidth: 0, width: "100%" }}
-      // 内容区样式：最小宽度，横向居中排列
-      contentStyle={{ minWidth: props.width, flexDirection: "row", gap: 6, alignItems: "center" }}>
+      // 内容区样式：撑满视口但不强制更宽（否则悬停会出现横向滚动条），横向居中排列
+      contentStyle={{ flexGrow: 1, flexDirection: "row", gap: 6, alignItems: "center" }}>
       {/* 逐个额度窗口：标签、百分比与额度条 */}
       {props.row.windows.map((window) => <View accessibilityLabel={`${props.row.name}，${window.kindLabel} 额度剩余 ${window.percent}`}
         // 样式：横向排列，间距 3

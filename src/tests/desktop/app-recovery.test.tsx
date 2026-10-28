@@ -1,11 +1,11 @@
 // 引入测试 API
 import { expect, test } from "nsh/test";
 // 引入打开函数、常量与存储键
-import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_PANEL, KEY_DEVICE, KEY_PAIRED, KEY_CACHE, KEY_INJECT, KEY_FRAMES, safe } from "./app-environment";
+import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_PANEL, KEY_DEVICE, KEY_PAIRED, KEY_CACHE, KEY_INJECT, safe } from "./app-environment";
 // 引入夹具快照
 import { representativeSnapshot } from "./app-fixtures";
 // 引入配对规则
-import { PAIRING_WINDOW_MS, formatSyncTime, makePairingCode } from "./support/fixture-rules";
+import { formatSyncTime } from "./support/fixture-rules";
 
 // 读取缓存快照不会改写同步时间，也不会显示为在线
 test("reading a cached snapshot does not rewrite its sync time or look online", async () => {
