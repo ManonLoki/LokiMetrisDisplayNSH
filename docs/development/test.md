@@ -14,7 +14,7 @@ python3 tools/test.py
 2. Python 打包回归，检查 Android Manifest、官方 Java 字节码合并、移动身份、Apple 签名、Watch 嵌入和桌面包格式。
 3. POSIX 上的 Linux 凭据适配回归，使用隔离的 `secret-tool` 替身验证大凭据、回滚和进程超时。
 4. macOS 上编译并执行 Widget 后台执行器与取消／提交竞态的 Swift 回归。
-5. `nsh check` 及三个 NSH 用例文件，检查应用交互、移动偏好迁移、安全区、电视遥控和图片播放时钟。
+5. `nsh check` 及四个 NSH 用例文件，检查应用交互、移动偏好迁移、安全区、电视遥控和图片播放时钟。
 
 Rust workspace 测试同时覆盖主应用和 `crates/widget-core/`，负责格式化、快照校验、配对认证、缓存、GIF 解码、生命周期和设置状态机；小组件另覆盖租约、读取凭据、加密 HTTP、来源撤销及旧响应竞态。NSH 测试负责页面和交互，避免重复穷举 Rust 已覆盖的纯业务规则。
 
@@ -23,6 +23,7 @@ Rust workspace 测试同时覆盖主应用和 `crates/widget-core/`，负责格�
 | `src/**/**_test.rs` | 同模块生产实现的 Rust 回归 |
 | `src/tests/packaging/` | 构建与签名工具的输入、输出和失败行为 |
 | `src/tests/desktop/app.test.tsx` | 导航、配对阶段、设置持久化、缓存、翻页和详情 |
+| `src/tests/desktop/app-recovery.test.tsx` | 缓存快照不改写同步时间、损坏的持久化数据、输入中的名称与已移除 Hook 详情 |
 | `src/tests/desktop/mobile-app.test.tsx` | 移动身份与偏好迁移、安全区和遥控输入 |
 | `src/tests/desktop/image-playback.test.ts` | 播放时钟、暂停恢复、有限循环和独立播放头 |
 | `src/native/fixture/` | 仅调试构建的 Rust 夹具连接：按存储键（`loki.inject`、`test.staticView`）扮演桌面端的配对、快照、中断和固定投影，时间全部由调用方传入虚拟时钟；产品构建不包含它 |

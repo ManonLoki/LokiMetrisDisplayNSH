@@ -16,6 +16,11 @@ use serde::{Deserialize, Serialize};
 // 引入 JSON 值
 use serde_json::{Value, json};
 
+mod device;
+use device::Device;
+
+mod names;
+
 // 面板配置的存储键
 const PANEL: &str = "loki.panel";
 // 设备身份的存储键
@@ -130,84 +135,6 @@ impl Request {
             // 销毁
             | Self::Dispose { session } => Some(*session),
         }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize)]
-// 设备身份
-struct Device {
-    /// 在连接所有者确认身份之前为空;UI 将其显示为不可用。
-    // 设备 ID；尚未确认时为空，界面显示“不可用”
-    id: String,
-    // 设备名称
-    name: String,
-}
-
-// 设备的方法
-impl Device {
-    // 从存储文本恢复：ID 必须规范，名称不能为空，否则使用默认值
-    fn restored(raw: Option<&str>) -> Self {
-        // 读取存储的原始值
-        let value = raw
-            // 解析为 JSON
-            .and_then(|raw| serde_json::from_str::<Value>(raw).ok())
-            // 失败则为 null
-            .unwrap_or(Value::Null);
-        // 构造设备
-        Self {
-            // 设备标识
-            id: value["id"]
-                // 取字符串
-                .as_str()
-                // 须是合法设备标识
-                .filter(|id| valid_device_id(id))
-                // 缺省为空
-                .unwrap_or_default()
-                // 转为字符串
-                .into(),
-            // 设备名
-            name: value["name"]
-                // 取字符串
-                .as_str()
-                // 空名不采用
-                .filter(|name| !name.is_empty())
-                // 否则用默认名
-                .unwrap_or(DEFAULT_NAME)
-                // 转为字符串
-                .into(),
-        }
-    }
-
-    // 从连接视图取得身份，不合法则报错
-    fn projected(view: &Value) -> Result<Self, String> {
-        // 读取视图里的设备标识
-        let id = view["deviceId"]
-            // 取字符串
-            .as_str()
-            // 须是合法设备标识
-            .filter(|id| valid_device_id(id))
-            // 否则报设备身份不可用
-            .ok_or("设备身份不可用")?;
-        // 读取视图里的设备名
-        let name = view["deviceName"].as_str().ok_or("设备名称不可用")?;
-        // 构造设备
-        Ok(Self {
-            // 设备标识
-            id: id.into(),
-            // 设备名
-            name: name.into(),
-        })
-    }
-
-    // 写入存储
-    fn persist(&self, store: &mut impl Store) -> Result<(), String> {
-        // 写入存储
-        store.set(
-            // 存储键
-            DEVICE,
-            // 序列化设备
-            serde_json::to_string(self).map_err(|error| error.to_string())?,
-        )
     }
 }
 
@@ -512,145 +439,6 @@ impl Engine {
         }
         // 返回响应
         Ok(result)
-    }
-
-    // 开始保存名称：校验、先写存储，再生成重命名命令
-    fn begin_name(
-        // 自身
-        &mut self,
-        // 草稿
-        draft: String,
-        // 视图
-        view: Value,
-        // 当前毫秒时间
-        now_ms: u64,
-        // 存储
-        store: &mut impl Store,
-        // 返回响应
-    ) -> Response {
-        // 已有待确认的修改，忽略重复提交
-        if self.pending.is_some() {
-            // 直接返回当前响应
-            return self.response();
-        }
-        // 修改前的身份
-        let previous = Device::projected(&view);
-        // 校验草稿
-        self.name_issue = name_error(&draft).map(str::to_owned);
-        // 身份不可用也视为失败
-        if previous.is_err() && self.name_issue.is_none() {
-            // 记录名称问题
-            self.name_issue = Some(SAVE_FAILED.into());
-        }
-        // 有问题则反馈失败
-        if self.name_issue.is_some() {
-            // 记录保存失败反馈
-            self.name_feedback = Some(SAVE_FAILED.into());
-            // 返回响应
-            return self.response();
-        }
-        // 取出之前的设备
-        let previous = previous.expect("validated device");
-        // 要尝试的新身份
-        let attempted = Device {
-            // 沿用原标识
-            id: previous.id.clone(),
-            // 新的名称
-            name: draft,
-        };
-        // 先保存，失败则不下发命令
-        if attempted.persist(store).is_err() {
-            // 记录保存失败反馈
-            self.name_feedback = Some(SAVE_FAILED.into());
-            // 返回响应
-            return self.response();
-        }
-        // 重命名命令
-        let command = json!({"op":"rename", "name":attempted.name});
-        // 进入待确认状态，3 秒内必须被连接投影确认
-        self.pending = Some(PendingName {
-            // 保存前的设备
-            previous,
-            // 待保存的设备
-            attempted,
-            // 确认期限
-            deadline_ms: now_ms.saturating_add(NAME_CONFIRM_MS),
-        });
-        // 生成响应
-        let mut result = self.response();
-        // 追加待执行命令
-        result.commands.push(command);
-        // 返回响应
-        result
-    }
-
-    // 观察连接投影是否已确认新名称，返回需要写回输入框的名称
-    fn observe_name(
-        // 自身
-        &mut self,
-        // 草稿
-        draft: &str,
-        // 视图
-        view: &Value,
-        // 当前毫秒时间
-        now_ms: u64,
-        // 存储
-        store: &mut impl Store,
-        // 返回确认的名称
-    ) -> Option<String> {
-        // 没有待确认的修改则无事可做
-        let pending = self.pending.as_ref()?;
-        // 由视图得到当前设备
-        let current = Device::projected(view).ok();
-        // 投影与尝试的身份一致：确认成功
-        if current.as_ref() == Some(&pending.attempted) {
-            // 待保存的名称
-            let name = pending.attempted.name.clone();
-            // 清除待处理保存
-            self.pending = None;
-            // 确认旧请求时不覆盖期间继续输入的草稿、校验或反馈。
-            // 草稿未再改动才清除校验并显示成功；确认旧请求时不覆盖继续输入的内容
-            if draft == name || draft.trim_matches(comparison_whitespace) == name {
-                // 清除名称问题
-                self.name_issue = None;
-                // 提示已保存，下次连接生效
-                self.name_feedback = Some("已保存，下次连接生效".into());
-                // 返回保存的名称
-                return Some(name);
-            }
-        // 超时或设备 ID 变了：视为失败
-        } else if now_ms >= pending.deadline_ms
-            // 或者当前设备与之前的不是同一个
-            || current.as_ref().is_none_or(|d| d.id != pending.previous.id)
-        {
-            // 保存失败的处理
-            self.fail_name(store);
-        }
-        // 没有规范化后的名称
-        None
-    }
-
-    // 名称保存失败：结束待确认并按需回滚
-    fn fail_name(&mut self, store: &mut impl Store) {
-        // 取出待处理保存
-        let Some(pending) = self.pending.take() else {
-            // 没有则返回
-            return;
-        };
-        // 记录保存失败反馈
-        self.name_feedback = Some(SAVE_FAILED.into());
-        // 另一个窗口可能已保存更新值，旧请求只能回滚自己仍占有的记录。
-        // 读取当前存储的记录
-        let stored = store
-            // 读取设备项
-            .get(DEVICE)
-            // 解析为 JSON
-            .and_then(|raw| serde_json::from_str::<Value>(&raw).ok());
-        // 只有记录仍是本次尝试写入的才回滚，避免覆盖其他窗口更新的值
-        if stored.as_ref() == Some(&json!(pending.attempted)) {
-            // 尝试把之前的设备写回存储
-            let _ = pending.previous.persist(store);
-        }
     }
 }
 

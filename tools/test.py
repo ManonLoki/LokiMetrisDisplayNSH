@@ -37,7 +37,7 @@ def commands(suite, output):
         # NSH 类型检查
         result.append(['nsh', 'check'])
         # 依次运行三组 NSH 界面测试并输出 JUnit 报告
-        for name in ['app.test.tsx', 'mobile-app.test.tsx', 'image-playback.test.ts']:
+        for name in ['app.test.tsx', 'app-recovery.test.tsx', 'mobile-app.test.tsx', 'image-playback.test.ts']:
             result.append(['nsh', 'test', 'src/tests/desktop/' + name, '--junit',
                            str(output / (name + '.xml'))])
         return result

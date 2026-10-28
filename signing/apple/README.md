@@ -6,7 +6,7 @@
 | --- | --- |
 | bundle ID | `com.manonloki.lokimetrisdisplay.LokiMetrisDisplay` |
 | team ID | `VV84X2M6C6` |
-| 版本 / build | `1.0.13` / `22` |
+| 版本 / build | `1.0.14` / `23` |
 | application-identifier | `VV84X2M6C6.com.manonloki.lokimetrisdisplay.LokiMetrisDisplay` |
 | widgetAppGroup | `group.com.manonloki.lokimetrisdisplay.LokiMetrisDisplay` |
 

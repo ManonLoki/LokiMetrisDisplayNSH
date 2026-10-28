@@ -105,225 +105,39 @@ def widget_group(application_id):
     return group or 'group.' + application_id
 
 
-# 生成链接器包装脚本：只把宿主垫片加到 NSH 可执行文件上，不加到依赖的动态库
+
+
+
+
+# 小组件宿主垫片与扩展核心的构建在 widget_support.py；这里按调用时的 ROOT 和 run 转交，测试可替换它们
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import package_checks  # noqa: E402
+import widget_support  # noqa: E402
+from package_checks import embedded_apple_identifier, verify_android  # noqa: E402,F401
+
+
 def widget_linker(directory, response_file, *, sdk, runner_manifest, linker=None):
-    # 文档说明：宿主垫片只作用于 NSH 可执行文件
     """Apply the host shim only to the NSH executable, never dependency dylibs."""
-    # 脚本需要的配置：响应文件、其摘要、运行器清单与真实链接器
-    configuration = {'response': str(response_file),
-                     # 响应文件摘要
-                     'responseSha256': hashlib.sha256(response_file.read_bytes()).hexdigest(),
-                     # 运行器清单路径
-                     'runnerManifest': str(runner_manifest),
-                     # 链接器，缺省为 xcrun 的 clang
-                     'linker': linker or ['xcrun', '--sdk', sdk, 'clang']}
-    # 脚本内容（内嵌的 Python 源码）；其中判断是否为最终运行器、追加响应文件与模拟器权限，并记录审计日志后转交真实链接器
-    script = '#!' + sys.executable + '\n' + '''import json
-import os
-from pathlib import Path
-import re
-import shlex
-import sys
-import tomllib
-
-# (内嵌脚本) 配置：响应文件、运行器清单与真实链接器
-CONFIGURATION = ''' + repr(configuration) + '''
-
-# (内嵌脚本) 展开链接参数里的 @响应文件，嵌套不得超过 4 层
-def expanded(arguments, depth=0):
-    # (内嵌脚本)
-    if depth > 4:
-        raise RuntimeError('Linker response files are nested too deeply')
-    # (内嵌脚本)
-    result = []
-    # (内嵌脚本)
-    for argument in arguments:
-        # (内嵌脚本) 响应文件：读出并递归展开
-        if argument.startswith('@') and Path(argument[1:]).is_file():
-            # (内嵌脚本)
-            result.extend(expanded(shlex.split(Path(argument[1:]).read_text()), depth + 1))
-        else:
-            # (内嵌脚本) 普通参数原样保留
-            result.append(argument)
-    # (内嵌脚本)
-    return result
-
-# (内嵌脚本) 判断本次链接的是不是最终的 NSH 运行器，而不是依赖的动态库
-def final_runner(arguments):
-    # (内嵌脚本)
-    values = expanded(arguments)
-    # (内嵌脚本) 带动态库标志的不是运行器
-    if any(flag in values for flag in ['-dynamiclib', '-shared', '-bundle']):
-        return False
-    # (内嵌脚本) 找出 -o 指定的输出
-    outputs = [values[index + 1] for index, value in enumerate(values[:-1]) if value == '-o']
-    # (内嵌脚本)
-    if not outputs:
-        return False
-    # (内嵌脚本) 读取运行器清单，必须只声明一个可执行文件
-    manifest = tomllib.loads(Path(CONFIGURATION['runnerManifest']).read_text())
-    # (内嵌脚本)
-    names = [entry['name'] for entry in manifest.get('bin', [])]
-    # (内嵌脚本)
-    if len(names) != 1:
-        raise RuntimeError('Expected the generated NSH iPhone runner to declare one executable')
-    # (内嵌脚本)
-    name = names[0]
-    # (内嵌脚本)
-    output = Path(outputs[-1]).name
-    # (内嵌脚本) 输出名可能是下划线形式或带哈希后缀
-    normalized = name.replace('-', '_')
-    # (内嵌脚本)
-    return output in {name, normalized} or re.fullmatch(re.escape(normalized) + '-[0-9a-f]{8,64}', output) is not None
-
-# (内嵌脚本)
-if __name__ == '__main__':
-    # (内嵌脚本)
-    arguments = sys.argv[1:]
-    # (内嵌脚本)
-    applies = final_runner(arguments)
-    # (内嵌脚本) 最终运行器：追加宿主目标文件的响应文件，以及模拟器的权限段
-    if applies:
-        # (内嵌脚本)
-        arguments.append('@' + CONFIGURATION['response'])
-        # (内嵌脚本)
-        entitlements = os.environ.get('LOKI_WIDGET_SIMULATOR_ENTITLEMENTS')
-        # (内嵌脚本)
-        if entitlements:
-            # (内嵌脚本)
-            arguments.append('-Wl,-sectcreate,__TEXT,__entitlements,' + entitlements)
-    # (内嵌脚本) 审计日志：每次链接都记一笔是否加了垫片
-    audit = Path(__file__).with_name('link-events.jsonl')
-    # (内嵌脚本)
-    values = expanded(sys.argv[1:])
-    # (内嵌脚本)
-    outputs = [values[index + 1] for index, value in enumerate(values[:-1]) if value == '-o']
-    # (内嵌脚本)
-    with audit.open('a') as output:
-        # (内嵌脚本)
-        output.write(json.dumps({'output': outputs[-1] if outputs else None, 'hostShimAdded': applies}) + '\\n')
-    # (内嵌脚本) 转交真实链接器
-    command = CONFIGURATION['linker'] + arguments
-    # (内嵌脚本)
-    os.execvp(command[0], command)
-'''
-    # 文件名带内容摘要，内容变化就换新文件
-    path = directory / ('WidgetHostLinker-' + hashlib.sha256(script.encode()).hexdigest() + '.py')
-    # 脚本内容有变化才重写
-    if not path.exists() or path.read_text() != script:
-        # 写入脚本
-        path.write_text(script)
-    # 设为可执行
-    path.chmod(0o755)
-    # 返回脚本路径
-    return path
+    return widget_support.widget_linker(directory, response_file, sdk=sdk, runner_manifest=runner_manifest, linker=linker)
 
 
-# 编译小组件核心，并把一个很小的原生宿主垫片链接进 NSH 运行器
 def build_widget_support(env, *, simulator, sdk_path, developer, deployment, log=None):
-    # 文档说明：编译扩展核心并链接宿主垫片
     """Compile the extension core and link a small native host shim into the NSH runner."""
-    # 目标三元组与 SDK 名称
-    target = 'aarch64-apple-ios-sim' if simulator else 'aarch64-apple-ios'
-    # 按是否模拟器选择 SDK
-    sdk = 'iphonesimulator' if simulator else 'iphoneos'
-    # 共享 Swift 源码目录
-    shared = ROOT / 'platform/ios/shared'
-    # 需要编译的 Swift 源文件
-    sources = [shared / (name + '.swift') for name in
-               # 共享源文件列表
-               ['LokiCore', 'PlatformRules', 'SharedSupport', 'WidgetContainer', 'WidgetRefresh', 'WidgetRefreshCommitGate']]
-    # 加入宿主桥接源文件
-    sources.append(ROOT / 'platform/ios/bridge/WidgetHostBridge.swift')
-    # C 引导文件
-    bootstrap = ROOT / 'platform/ios/bridge/WidgetHostBootstrap.c'
-    # 对所有输入求摘要，输出目录以摘要命名，实现可复用的缓存
-    digest = hashlib.sha256()
-    # 遍历全部源文件与引导文件
-    for source in sources + [bootstrap]:
-        # 把相对路径与内容计入摘要
-        digest.update(str(source.relative_to(ROOT)).encode()); digest.update(source.read_bytes())
-    # 再计入 SDK 路径与部署版本
-    digest.update((str(sdk_path) + deployment).encode())
-    # 输出目录以摘要命名，保证缓存可复用
-    output = ROOT / '.nsh/widget-support' / target / digest.hexdigest()
-    # 创建输出目录
-    output.mkdir(parents=True, exist_ok=True)
-    # Rust 核心库的输出目录
-    rust_output = ROOT / 'target/widget-core'
-    # 编译小组件核心静态库
-    run(['cargo', 'build', '--manifest-path', ROOT / 'Cargo.toml', '-p', 'loki_widget_core',
-         # 发布构建、锁定依赖、目标与目标目录
-         '--release', '--locked', '--target', target, '--target-dir', rust_output], env=env, log=log)
-    # 静态库路径
-    library = rust_output / target / 'release/libloki_widget_core.a'
-    # 库不存在
-    if not library.is_file():
-        # 核心库构建失败
-        raise RuntimeError('Widget core build did not produce its static library')
-    # Swift 目标文件路径
-    swift_object = output / 'WidgetHostBridge.o'
-    # 引导目标文件路径
-    bootstrap_object = output / 'WidgetHostBootstrap.o'
-    # 目标三元组：设备或模拟器
-    triple = 'arm64-apple-ios' + deployment + ('-simulator' if simulator else '')
-    # 缺失才重新编译 Swift 目标文件
-    if not swift_object.is_file():
-        # 编译 Swift 桥接源码
-        run(['xcrun', '--sdk', sdk, 'swiftc', '-swift-version', '5', '-parse-as-library', '-whole-module-optimization',
-             # 仅输出目标文件、优化、模块名与目标三元组
-             '-emit-object', '-O', '-module-name', 'LokiWidgetHost', '-target', triple,
-             # SDK 路径、源文件与输出文件
-             '-sdk', sdk_path, *sources, '-o', swift_object], env=env, log=log)
-    # 缺失才重新编译 C 引导
-    if not bootstrap_object.is_file():
-        # 编译 C 引导文件
-        run(['xcrun', '--sdk', sdk, 'clang', '-target', triple, '-isysroot', sdk_path,
-             # 仅编译、引导文件与输出文件
-             '-c', bootstrap, '-o', bootstrap_object], env=env, log=log)
-    # Swift 运行时库目录
-    toolchain = Path(developer) / 'Toolchains/XcodeDefault.xctoolchain/usr/lib/swift' / sdk
-    # 链接参数：目标文件、库搜索路径与运行时路径
-    arguments = [str(swift_object), str(bootstrap_object), '-L', str(toolchain),
-                 # 库路径与运行时库搜索路径
-                 '-L', str(Path(sdk_path) / 'usr/lib/swift'), '-Wl,-rpath,/usr/lib/swift']
-    # 需要的系统框架
-    for framework in ['Foundation', 'UIKit', 'SwiftUI', 'WidgetKit', 'BackgroundTasks']:
-        # 追加需要链接的系统框架
-        arguments.extend(['-framework', framework])
-    # Cargo 会把一些依赖链接为动态库。目标链接器包装器只在
-    # 链接生成的 NSH 应用二进制时才加入 Swift 宿主对象。
-    # Cargo 会把部分依赖链接为动态库；这里用链接器包装脚本，只在链接 NSH 应用二进制时加入 Swift 宿主目标文件
-    response = ''.join(shlex.quote(value) + '\n' for value in arguments)
-    # 链接响应文件按内容摘要命名
-    response_file = output / ('WidgetHostLink-' + hashlib.sha256(response.encode()).hexdigest() + '.rsp')
-    # 已有同名文件但内容不同
-    if response_file.exists() and response_file.read_text() != response:
-        # 报错
-        raise RuntimeError('Widget link response path contains unexpected data')
-    # 写入响应文件
-    response_file.write_text(response)
-    # 生成链接器包装脚本
-    wrapper = widget_linker(output, response_file, sdk=sdk,
-                            # 运行器清单路径
-                            runner_manifest=ROOT / '.nsh/rust/ios-app/Cargo.toml')
-    # 通过环境变量让 Cargo 使用包装后的链接器
-    key = 'CARGO_TARGET_' + target.upper().replace('-', '_') + '_LINKER'
-    # 把真实链接器替换为包装脚本
-    env[key] = str(wrapper)
-    # 返回静态库与构建记录
-    return library, {'target': target, 'hostSourceSha256': digest.hexdigest(),
-                     # 宿主目标文件摘要
-                     'hostObjectSha256': hashlib.sha256(swift_object.read_bytes()).hexdigest(),
-                     # 引导目标文件摘要
-                     'bootstrapObjectSha256': hashlib.sha256(bootstrap_object.read_bytes()).hexdigest(),
-                     # 宿主链接器与响应文件
-                     'hostLinker': str(wrapper), 'hostLinkResponse': str(response_file),
-                     # 小组件核心库摘要
-                     'widgetCoreSha256': hashlib.sha256(library.read_bytes()).hexdigest()}
+    return widget_support.build_widget_support(env, simulator=simulator, sdk_path=sdk_path, developer=developer,
+                                               deployment=deployment, root=ROOT, run=run, log=log)
 
 
 # 拼出 nsh 打包移动端的命令：目标、应用标识、版本与构建号
+def android_runtime_seed(cli, stage, env):
+    """Let the CLI build the project's supported 64-bit ABIs without global edits."""
+    return package_checks.android_runtime_seed(cli, stage, env, ROOT)
+
+
+def verify_runner(target):
+    """Generated runners must include the local application's Rust module."""
+    return package_checks.verify_runner(target, ROOT)
+
+
 def mobile_command(cli, target, stage, *, ios_device=False, application_id=None):
     # 目标 SDK：真机或模拟器
     sdk_target = 'ios' if ios_device else 'ios-simulator'
@@ -338,101 +152,10 @@ def mobile_command(cli, target, stage, *, ios_device=False, application_id=None)
 
 
 
-# 让 CLI 只为项目支持的 64 位 ABI 构建，而不修改全局设置
-def android_runtime_seed(cli, stage, env):
-    # 文档说明：让 CLI 只构建受支持的 64 位 ABI
-    """Let the CLI build the project's supported 64-bit ABIs without global edits."""
-    # 官方运行时的位置
-    original = Path(env.get('NSH_RUNTIME') or Path(cli).resolve().parent.parent / 'runtime') / 'android/release'
-    # 种子目录
-    seed = stage / 'runtime-seed/android/release'
-    # 创建种子目录
-    seed.mkdir(parents=True)
-    # 复制 classes.dex
-    shutil.copy2(original / 'classes.dex', seed / 'classes.dex')
-    # 只保留两个受支持的 ABI
-    for abi in ['arm64-v8a', 'x86_64']:
-        # 各 ABI 的运行时库
-        source = original / 'lib' / abi / 'libnsh.so'
-        # 库缺失
-        if not source.is_file():
-            # 报错
-            raise RuntimeError('Installed NSH runtime is missing the supported ABI: ' + abi)
-        # 目标 ABI 目录
-        directory = seed / 'lib' / abi
-        # 创建目录
-        directory.mkdir(parents=True)
-        # 复制运行时库
-        shutil.copy2(source, directory / 'libnsh.so')
-    # Cargo 会重新构建这些库;种子只决定存在哪些 ABI。
-    # Cargo 会重新编译这些库；种子只决定存在哪些 ABI
-    env['NSH_RUNTIME'] = str(stage / 'runtime-seed')
-    # CLI 生成的库目录
-    generated = ROOT / '.nsh/rust/android-release/lib'
-    # 清掉生成目录里其余 ABI
-    if generated.is_dir():
-        # 遍历生成的 ABI 目录
-        for path in generated.iterdir():
-            # 只保留受支持的两种 ABI
-            if path.name not in ['arm64-v8a', 'x86_64']:
-                # 删除其他 ABI
-                shutil.rmtree(path)
 
 
-# 生成的运行器必须依赖本应用的 Rust 模块
-def verify_runner(target):
-    # 文档说明：生成的运行器必须依赖本应用的 Rust 模块
-    """Generated runners must include the local application's Rust module."""
-    # TOML 解析器
-    import tomllib
-    # 按平台选择运行器的 Cargo.toml
-    path = ROOT / '.nsh/rust' / ('android/Cargo.toml' if target == 'android' else 'ios-app/Cargo.toml')
-    # 读取依赖表
-    dependencies = tomllib.loads(path.read_text()).get('dependencies', {}).values()
-    # 没有任何依赖指向本仓库
-    if not any(isinstance(value, dict) and value.get('path')
-               # （续）路径解析后等于仓库根目录
-               and Path(value['path']).resolve() == ROOT for value in dependencies):
-        # 报错：运行器漏掉本应用模块
-        raise RuntimeError('NSH runner omitted the local application Rust module')
 
 
-# 校验 APK：包含应用包与各 ABI 的运行时，且 ELF 架构正确
-def verify_android(path):
-    # 打开 APK 压缩包
-    with zipfile.ZipFile(path) as archive:
-        # 列出全部条目
-        names = archive.namelist()
-        # 缺少应用 bundle
-        if not any(name.endswith('bundle.nshc') for name in names):
-            # 报错
-            raise RuntimeError('APK is missing the NSH application bundle')
-        # 收集 NSH 运行时库
-        libraries = [name for name in names if name.startswith('lib/') and name.endswith('/libnsh.so')]
-        # 没有运行时库
-        if not libraries:
-            # 报错
-            raise RuntimeError('APK is missing its NSH Rust runtime')
-        # 架构列表
-        architectures = []
-        # 逐个库
-        for name in libraries:
-            # 取 ABI 目录名
-            abi = name.split('/')[1]
-            # 各 ABI 对应的 ELF 机器码
-            expected = {'arm64-v8a': 183, 'x86_64': 62, 'armeabi-v7a': 40, 'x86': 3}.get(abi)
-            # 打开该库
-            with archive.open(name) as library:
-                # 读取 ELF 头
-                header = library.read(20)
-            # 魔数和机器码都要对
-            if expected is None or header[:4] != b'\x7fELF' or int.from_bytes(header[18:20], 'little') != expected:
-                # 架构与目录名不符则报错
-                raise RuntimeError('Invalid NSH runtime architecture: ' + abi)
-            # 记录该架构
-            architectures.append(abi)
-    # 返回架构列表与 bundle 已校验
-    return {'architectures': architectures, 'bundleVerified': True}
 
 
 # 模拟器的权限放在 __TEXT 里，而不是受限的代码签名块
@@ -463,52 +186,6 @@ def simulator_link_permissions(env, application_id):
     env['LOKI_WIDGET_SIMULATOR_ENTITLEMENTS'] = str(path)
 
 
-# 从模拟器 Mach-O 的 __TEXT,__entitlements 节读出内嵌的应用标识
-def embedded_apple_identifier(executable):
-    # 以二进制方式打开可执行文件
-    with executable.open('rb') as source:
-        # 读取 Mach-O 头
-        header = source.read(32)
-        # 必须是 64 位小端 Mach-O
-        if header[:4] != b'\xcf\xfa\xed\xfe':
-            # 不是 64 位模拟器可执行文件
-            raise RuntimeError('Expected a 64-bit simulator Mach-O runner')
-        # 加载命令数量
-        commands = struct.unpack_from('<I', header, 16)[0]
-        # 遍历加载命令
-        for _ in range(commands):
-            # 记下当前位置
-            position = source.tell()
-            # 读取命令类型与大小
-            kind, size = struct.unpack('<II', source.read(8))
-            # 回到命令开头
-            source.seek(position)
-            # 读出整条命令
-            command = source.read(size)
-            # 只看 64 位段命令
-            if kind != 0x19:
-                # 不是段命令则跳过
-                continue
-            # 逐个节查找 __TEXT,__entitlements
-            for index in range(struct.unpack_from('<I', command, 64)[0]):
-                # 节头偏移
-                section = 72 + index * 80
-                # 节名
-                name = command[section:section + 16].split(b'\0')[0]
-                # 段名
-                segment = command[section + 16:section + 32].split(b'\0')[0]
-                # 找到 __TEXT 里的 __entitlements 节
-                if name == b'__entitlements' and segment == b'__TEXT':
-                    # 节长度
-                    length = struct.unpack_from('<Q', command, section + 40)[0]
-                    # 节偏移
-                    offset = struct.unpack_from('<I', command, section + 48)[0]
-                    # 跳到该节
-                    source.seek(offset)
-                    # 返回应用标识
-                    return plistlib.loads(source.read(length)).get('application-identifier')
-    # 缺少钥匙串标识权限
-    raise RuntimeError('Simulator runtime is missing its embedded Keychain identity entitlement')
 
 
 # 在最终签名之前补上发现相关的声明

@@ -6,11 +6,11 @@ import SwiftUI
 // 主界面：Hooks、Token、额度从左到右独立分页，首次显示 Token，以语义 ID 记住上次页面
 struct ContentView: View {
     // 三个页面
-    private enum Page: String, Hashable, CaseIterable { case hooks, tokens, quota }
+    enum Page: String, Hashable, CaseIterable { case hooks, tokens, quota }
     // 面板底色
-    private let panel = Color(red: 17 / 255, green: 29 / 255, blue: 45 / 255)
+    let panel = Color(red: 17 / 255, green: 29 / 255, blue: 45 / 255)
     // 强调色
-    private let accent = Color(red: 103 / 255, green: 232 / 255, blue: 249 / 255)
+    let accent = Color(red: 103 / 255, green: 232 / 255, blue: 249 / 255)
     // 环境：场景阶段、减弱动态效果、低亮度
     @Environment(\.scenePhase) private var phase
     // 读取“减少动态效果”设置
@@ -20,20 +20,20 @@ struct ContentView: View {
     // 数据模型
     @ObservedObject var model: WatchModel
     // 入场动画状态
-    @State private var entered = false
+    @State var entered = false
     // 数据更新时的边框高亮
-    @State private var updateGlow = false
+    @State var updateGlow = false
     // 高亮触发计数
-    @State private var glowRevision = 0
+    @State var glowRevision = 0
     // 当前可见的 Hook 槽位
-    @State private var visibleHookSlot: Int?
+    @State var visibleHookSlot: Int?
     // 打开详情的 Hook
-    @State private var selectedHook: HookItem?
+    @State var selectedHook: HookItem?
     // 记住上次所在页面
-    @AppStorage("watch.panel.selectedPage") private var selectedPage = Page.tokens.rawValue
+    @AppStorage("watch.panel.selectedPage") var selectedPage = Page.tokens.rawValue
 
     // 只有前台、未减弱动态效果且未低亮度时才允许动画
-    private var allowsMotion: Bool {
+    var allowsMotion: Bool {
         // 活动状态且未减少动效、未降亮度才允许动效
         phase == .active && !reduceMotion && !reducedLuminance
     }
@@ -50,7 +50,7 @@ struct ContentView: View {
     }
 
     // 三页横向分页的主体
-    private var dashboard: some View {
+    var dashboard: some View {
         // 以外层页面尺寸为准
         GeometryReader { pageArea in
             // 分页视图，绑定选中页
@@ -172,7 +172,7 @@ struct ContentView: View {
 
     /// 息屏、减弱动态效果或离开前台时，无动画地直接回到静止终态。
     // 息屏、减弱动态效果或离开前台时，无动画地直接回到静止终态
-    private func stopMotion() {
+    func stopMotion() {
         // 新建事务，用于关闭隐式动画
         var transaction = Transaction()
         // 关闭隐式动画
@@ -184,7 +184,7 @@ struct ContentView: View {
     }
 
     // Token 页：总量卡片与同步状态
-    private var tokensPage: some View {
+    var tokensPage: some View {
         // 可滚动容器
         ScrollView {
             // 纵向排列，左对齐
@@ -241,7 +241,7 @@ struct ContentView: View {
     }
 
     // 额度页：有数据显示各账户额度，否则显示等待
-    private var quotaPage: some View {
+    var quotaPage: some View {
         // 可滚动容器
         ScrollView {
             // 纵向排列，左对齐
@@ -285,7 +285,7 @@ struct ContentView: View {
     /// 每屏固定一张活动卡；沿用外层页尺寸，避免Watch分页压缩内层测量高度。
     /// 上下滚动吸附切换，左右手势留给主页面；底部只为分页圆点留空。
     // Hooks 页：每屏固定一张活动卡；沿用外层页尺寸，避免分页压缩内层测量高度。上下滚动吸附切换，左右手势留给主页面；底部只为分页圆点留空
-    private func hooksPage(size: CGSize) -> some View {
+    func hooksPage(size: CGSize) -> some View {
         // 可用宽度，两侧各留 4
         let width = max(0, size.width - 8)
         // 底部留白
@@ -362,180 +362,6 @@ struct ContentView: View {
         .accessibilityLabel("活动状态页面")
     }
 
-    // 等待 iPhone 同步的提示卡
-    private var waitingPanel: some View {
-        // 纵向排列
-        VStack(alignment: .leading, spacing: 12) {
-            // 手机图标
-            Image(systemName: "iphone").font(.title2).foregroundStyle(accent)
-            // 标题
-            Text("等待 iPhone 同步").font(.headline)
-            // 引导文字
-            Text("在 iPhone 中连接桌面后自动同步")
-                // 次要字体与颜色
-                .font(.caption).foregroundStyle(.secondary)
-                // 允许多行
-                .fixedSize(horizontal: false, vertical: true)
-            // 有附加消息时
-            if let message = model.message {
-                // 附加提示
-                Text(message).font(.caption2).foregroundStyle(.secondary)
-                    // 允许多行
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        // 卡片外观
-        .watchPanel(panel)
-        // 测试标识
-        .accessibilityIdentifier("watch-waiting")
-    }
-
-    /// Hooks 不可用或为空时的占位卡片。
-    // Hooks 不可用或为空时的占位卡片
-    private func hookPlaceholder(_ title: String) -> some View {
-        // 纵向排列
-        VStack(alignment: .leading, spacing: 8) {
-            // 标题
-            Text(title).font(.caption)
-            // 引导文字
-            Text("在 iPhone 中连接桌面后自动同步").font(.caption2)
-                // 允许多行
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        // 次要颜色
-        .foregroundStyle(.secondary)
-        // 占满宽度并套面板外观
-        .frame(maxWidth: .infinity, alignment: .leading).watchPanel(panel)
-    }
-
-    /// 大字便于扫读，小字保留完整整数；两者均来自同一精确值。
-    // Token 总量：大字便于扫读，小字保留完整整数；两者来自同一精确值
-    private func tokenTotal(_ value: TokenAmount) -> some View {
-        // 纵向排列
-        VStack(alignment: .leading, spacing: 3) {
-            // 紧凑的金额文本
-            Text(compactAmountText(value))
-                // 等宽大字号
-                .font(.system(size: 31, weight: .semibold, design: .monospaced))
-                // 等宽数字、单行并允许缩小
-                .monospacedDigit().lineLimit(1).minimumScaleFactor(0.25)
-                // 左对齐占满
-                .frame(maxWidth: .infinity, alignment: .leading)
-                // 隐私敏感
-                .privacySensitive()
-                // 数字变化动画，不允许动画时直接替换
-                .contentTransition(allowsMotion ? .numericText() : .identity)
-                // 数值变化时的动画
-                .animation(allowsMotion ? .easeOut(duration: 0.28) : nil, value: amountText(value))
-            // 有数值才显示精确整数
-            if value.total != nil {
-                // 完整金额文本
-                let exact = amountText(value)
-                // 精确值文字
-                Text(exact).font(.system(size: 11, weight: .medium, design: .monospaced))
-                    // 等宽数字、弱化颜色
-                    .monospacedDigit().foregroundStyle(.white.opacity(0.65))
-                    // 单行并允许缩小
-                    .lineLimit(1).minimumScaleFactor(0.5)
-                    // 左对齐占满
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        // 合并为一个读屏元素
-        .accessibilityElement(children: .ignore)
-        // 读屏文案：总 Token 及限定词
-        .accessibilityLabel("总 Token，\(amountText(value))\(amountQuality(value).isEmpty ? "" : "，" + amountQuality(value))")
-        // 隐私敏感
-        .privacySensitive()
-    }
-
-    /// 单张活动卡：顶部一行显示 Agent 与状态，其余空间留给图片。
-    // 单张活动卡：顶部一行显示代理与状态，其余空间留给图片
-    private func hookTile(_ hook: HookItem, height: CGFloat) -> some View {
-        // 卡片内边距
-        let inset: CGFloat = 9
-        // 纵向排列
-        return VStack(alignment: .leading, spacing: 6) {
-            // 横向排列，底部对齐
-            HStack(alignment: .bottom, spacing: 6) {
-                // 代理名称
-                Text(agentTitle(hook.agent))
-                    // 字体
-                    .font(.system(size: 12, weight: .semibold))
-                    // 单行并允许缩小
-                    .lineLimit(1).minimumScaleFactor(0.65)
-                    // 左对齐占满
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                // 状态圆点与文字
-                HStack(spacing: 3) {
-                    // 行为状态的色点
-                    Circle().fill(behaviorColor(hook.behavior)).frame(width: 5, height: 5)
-                    // 行为标题
-                    Text(behaviorTitle(hook.behavior)).font(.system(size: 11, weight: .semibold))
-                        // 单行
-                        .lineLimit(1)
-                }
-                // 行为状态的颜色
-                .foregroundStyle(behaviorColor(hook.behavior))
-                // 不压缩
-                .fixedSize(horizontal: true, vertical: false)
-            }
-            // 标题行高度随内容
-            .fixedSize(horizontal: false, vertical: true)
-            // 图片区域
-            hookImage(hook)
-        }
-        // 占满宽度
-        .frame(maxWidth: .infinity)
-        // 高度扣除内边距
-        .frame(height: max(0, height - inset * 2))
-        // 卡片外观，更新时高亮
-        .watchPanel(panel, highlighted: updateGlow && allowsMotion, padding: inset)
-        // 隐私敏感
-        .privacySensitive()
-        // 状态变化时的过渡
-        .animation(allowsMotion ? .easeOut(duration: 0.2) : nil, value: hook.behavior)
-    }
-
-    /// 仅当前 Hooks 页的可见卡片播放动图；离页或常亮模式暂停，减弱动态效果时显示首帧。
-    // 仅当前 Hooks 页的可见卡片播放动图；离页或常亮模式暂停，减弱动态效果时显示首帧
-    private func hookImage(_ hook: HookItem) -> some View {
-        // Hook 的图片地址
-        let image = model.imageURL(hook.image)
-        // 占位文案
-        let placeholder = hook.image == nil ? "暂无图片" : "图片未缓存"
-        // 可见槽位
-        let visibleSlot = visibleHookSlot ?? model.manifest?.snapshot?.hooks.min(by: { $0.slot < $1.slot })?.slot
-        // 读取图片区域的实际尺寸，使图片按区域裁剪
-        return GeometryReader { area in
-            // 分组
-            Group {
-                // 有图则显示，满足所有条件才允许播放
-                if let image {
-                    // 图片视图，仅在选中页且无详情时播放
-                    WatchHookImage(url: image, playbackEnabled: selectedHook == nil && selectedPage == Page.hooks.rawValue && allowsMotion && hook.slot == visibleSlot)
-                // 否则显示占位
-                } else {
-                    // 无图时的占位，纵向排列
-                    VStack(spacing: 4) {
-                        // 占位图标，对读屏隐藏
-                        Image(systemName: "photo").accessibilityHidden(true)
-                        // 占位文字
-                        Text(placeholder).font(.caption2)
-                    // 次要颜色
-                    }.foregroundStyle(.secondary)
-                }
-            }
-            // 尺寸与区域一致
-            .frame(width: area.size.width, height: area.size.height)
-            // 圆角裁剪
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-        }
-        // 最小高度 44
-        .frame(minHeight: 44)
-        // 读屏文案
-        .accessibilityLabel(image == nil ? placeholder : "活动图片")
-    }
 
 }
 
