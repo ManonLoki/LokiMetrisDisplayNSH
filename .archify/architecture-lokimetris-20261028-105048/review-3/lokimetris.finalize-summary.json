@@ -7,13 +7,13 @@
   "quality": "showcase",
   "specification": {
     "path": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/candidate.json",
-    "sha256": "5d37ee5fc943eb2034fc5bbfb641b95b792cc44ae554a2c9a9eb9a5a537fb2b7",
-    "bytes": 12670
+    "sha256": "543b47d1a17fa6c71e1d18c9331f27ff8ab3c529b5889964e71f111640b7acd1",
+    "bytes": 12671
   },
   "artifact": {
     "path": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/lokimetris.html",
-    "sha256": "5eabbd5f492027148fec61f7825680f041ff189df36174118224fb1da7598294",
-    "bytes": 850520
+    "sha256": "e360cb724900ac11ae79e25b9a234279f21bef7b63c0b4ecfc5d338b745499b0",
+    "bytes": 850526
   },
   "gates": {
     "validate": "pass",
@@ -28,9 +28,9 @@
     "truncated": false
   },
   "evidence": {
-    "receipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2/lokimetris.finalize.json",
-    "summaryReceipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2/lokimetris.finalize-summary.json",
-    "browserCheckReceipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2/lokimetris.browser-check.json"
+    "receipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3/lokimetris.finalize.json",
+    "summaryReceipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3/lokimetris.finalize-summary.json",
+    "browserCheckReceipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3/lokimetris.browser-check.json"
   },
   "update": {
     "status": "current",
@@ -43,7 +43,7 @@
     "noticeText": null
   },
   "visualReview": "not-requested",
-  "durationMs": 2896,
+  "durationMs": 2769,
   "browserCheck": {
     "requested": true,
     "ran": true

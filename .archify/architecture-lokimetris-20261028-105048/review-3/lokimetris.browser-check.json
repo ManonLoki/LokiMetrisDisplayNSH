@@ -6,11 +6,11 @@
   "status": "pass",
   "visualReview": "not-requested",
   "provenance": "current",
-  "deliveryReceiptId": "4711f1eb-6e46-4a9f-aa91-5b29c042ff11",
+  "deliveryReceiptId": "c03136f9-e3a7-4ec9-aa20-1c549579ca5f",
   "artifact": {
     "path": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/lokimetris.html",
-    "sha256": "5eabbd5f492027148fec61f7825680f041ff189df36174118224fb1da7598294",
-    "bytes": 850520
+    "sha256": "e360cb724900ac11ae79e25b9a234279f21bef7b63c0b4ecfc5d338b745499b0",
+    "bytes": 850526
   },
   "state": {
     "detail": "read",
@@ -715,7 +715,7 @@
     "contactSheet": null
   },
   "sidecars": {
-    "directory": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2",
+    "directory": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3",
     "receipt": "lokimetris.browser-check.json",
     "files": []
   }

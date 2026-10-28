@@ -5,16 +5,16 @@
   "status": "pass",
   "type": "architecture",
   "quality": "showcase",
-  "startedAt": "2026-10-28T03:17:20.376Z",
+  "startedAt": "2026-10-28T03:18:40.541Z",
   "specification": {
     "path": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/candidate.json",
-    "sha256": "5d37ee5fc943eb2034fc5bbfb641b95b792cc44ae554a2c9a9eb9a5a537fb2b7",
-    "bytes": 12670
+    "sha256": "543b47d1a17fa6c71e1d18c9331f27ff8ab3c529b5889964e71f111640b7acd1",
+    "bytes": 12671
   },
   "artifact": {
     "path": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/lokimetris.html",
-    "sha256": "5eabbd5f492027148fec61f7825680f041ff189df36174118224fb1da7598294",
-    "bytes": 850520
+    "sha256": "e360cb724900ac11ae79e25b9a234279f21bef7b63c0b4ecfc5d338b745499b0",
+    "bytes": 850526
   },
   "stages": {
     "validate": {
@@ -40,8 +40,8 @@
         "ok": true,
         "command": "validate",
         "specification": {
-          "sha256": "5d37ee5fc943eb2034fc5bbfb641b95b792cc44ae554a2c9a9eb9a5a537fb2b7",
-          "bytes": 12670
+          "sha256": "543b47d1a17fa6c71e1d18c9331f27ff8ab3c529b5889964e71f111640b7acd1",
+          "bytes": 12671
         },
         "validation": {
           "checksPassed": 9,
@@ -56,7 +56,7 @@
     "deliver": {
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 651,
+      "durationMs": 697,
       "command": [
         "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
         "/Users/manonloki/.agents/skills/archify/bin/archify.mjs",
@@ -72,19 +72,19 @@
       ],
       "receipt": {
         "schemaVersion": 1,
-        "receiptId": "4711f1eb-6e46-4a9f-aa91-5b29c042ff11",
+        "receiptId": "c03136f9-e3a7-4ec9-aa20-1c549579ca5f",
         "ok": true,
         "command": "deliver",
         "type": "architecture",
         "input": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/candidate.json",
         "output": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/lokimetris.html",
         "specification": {
-          "sha256": "5d37ee5fc943eb2034fc5bbfb641b95b792cc44ae554a2c9a9eb9a5a537fb2b7",
-          "bytes": 12670
+          "sha256": "543b47d1a17fa6c71e1d18c9331f27ff8ab3c529b5889964e71f111640b7acd1",
+          "bytes": 12671
         },
         "artifact": {
-          "sha256": "5eabbd5f492027148fec61f7825680f041ff189df36174118224fb1da7598294",
-          "bytes": 850520
+          "sha256": "e360cb724900ac11ae79e25b9a234279f21bef7b63c0b4ecfc5d338b745499b0",
+          "bytes": 850526
         },
         "validation": {
           "checksPassed": 9,
@@ -97,7 +97,7 @@
         "evidence": {
           "verified": true,
           "repository": "https://github.com/ManonLoki/LokiMetrisDisplayNSH",
-          "revision": "653014132c9615bfe535915f4b616a8cf33c33ae",
+          "revision": "5e1dae33ab5df6de69d404f416f2cdf04aeddab2",
           "references": 36
         },
         "update": {
@@ -116,7 +116,7 @@
     "check": {
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 295,
+      "durationMs": 299,
       "command": [
         "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
         "/Users/manonloki/.agents/skills/archify/bin/archify.mjs",
@@ -128,8 +128,8 @@
         "ok": true,
         "file": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/lokimetris.html",
         "artifact": {
-          "sha256": "5eabbd5f492027148fec61f7825680f041ff189df36174118224fb1da7598294",
-          "bytes": 850520
+          "sha256": "e360cb724900ac11ae79e25b9a234279f21bef7b63c0b4ecfc5d338b745499b0",
+          "bytes": 850526
         },
         "checks": [
           {
@@ -314,13 +314,13 @@
           "issues": []
         },
         "provenance": "current",
-        "deliveryReceiptId": "4711f1eb-6e46-4a9f-aa91-5b29c042ff11"
+        "deliveryReceiptId": "c03136f9-e3a7-4ec9-aa20-1c549579ca5f"
       }
     },
     "browser-check": {
       "status": "pass",
       "exitCode": 0,
-      "durationMs": 1748,
+      "durationMs": 1596,
       "command": [
         "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
         "/Users/manonloki/.agents/skills/archify/bin/archify.mjs",
@@ -329,7 +329,7 @@
         "--json",
         "--require-provenance",
         "--out-dir",
-        "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2"
+        "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3"
       ],
       "execution": "in-process",
       "receipt": {
@@ -340,11 +340,11 @@
         "status": "pass",
         "visualReview": "not-requested",
         "provenance": "current",
-        "deliveryReceiptId": "4711f1eb-6e46-4a9f-aa91-5b29c042ff11",
+        "deliveryReceiptId": "c03136f9-e3a7-4ec9-aa20-1c549579ca5f",
         "artifact": {
           "path": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/lokimetris.html",
-          "sha256": "5eabbd5f492027148fec61f7825680f041ff189df36174118224fb1da7598294",
-          "bytes": 850520
+          "sha256": "e360cb724900ac11ae79e25b9a234279f21bef7b63c0b4ecfc5d338b745499b0",
+          "bytes": 850526
         },
         "state": {
           "detail": "read",
@@ -1049,7 +1049,7 @@
           "contactSheet": null
         },
         "sidecars": {
-          "directory": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2",
+          "directory": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3",
           "receipt": "lokimetris.browser-check.json",
           "files": []
         }
@@ -1062,13 +1062,13 @@
   },
   "diagnostics": [],
   "evidence": {
-    "receipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2/lokimetris.finalize.json",
-    "summaryReceipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2/lokimetris.finalize-summary.json",
-    "browserCheckReceipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-2/lokimetris.browser-check.json"
+    "receipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3/lokimetris.finalize.json",
+    "summaryReceipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3/lokimetris.finalize-summary.json",
+    "browserCheckReceipt": "/Users/manonloki/Documents/study/nsh/loki-metris-mobile-display/.archify/architecture-lokimetris-20261028-105048/review-3/lokimetris.browser-check.json"
   },
   "visualReview": "not-requested",
-  "finishedAt": "2026-10-28T03:17:23.272Z",
-  "durationMs": 2896,
+  "finishedAt": "2026-10-28T03:18:43.311Z",
+  "durationMs": 2769,
   "update": {
     "status": "current",
     "installedVersion": "3.2.0",
