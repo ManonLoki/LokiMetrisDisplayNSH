@@ -1,4 +1,6 @@
 // 引入 owner 与命令等
+#[cfg(target_os = "macos")]
+use super::super::persistence;
 use super::super::{
     Command, Endpoint, Event, HANDSHAKE_FRAME, HostCommand, MAX_FRAME, Material,
     connection_test::{
@@ -6,7 +8,6 @@ use super::super::{
         snapshot, until,
     },
     owner::Owner,
-    persistence,
 };
 // 引入配对会话类型
 use loki_metris_pairing::session::AwaitingDeviceProof;

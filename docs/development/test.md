@@ -26,6 +26,7 @@ Rust workspace 测试同时覆盖主应用和 `crates/widget-core/`，负责格�
 | `src/tests/desktop/app-recovery.test.tsx` | 缓存快照不改写同步时间、损坏的持久化数据、输入中的名称与已移除 Hook 详情 |
 | `src/tests/desktop/mobile-app.test.tsx` | 移动身份与偏好迁移、安全区和遥控输入 |
 | `src/tests/desktop/image-playback.test.ts` | 播放时钟、暂停恢复、有限循环和独立播放头 |
+| `src/tests/desktop/windows-repaint.test.tsx` | Windows 重绘兼容的前后台暂停恢复、减少动态效果、卸载清理和非 Windows 静态行为 |
 | `src/native/fixture/` | 仅调试构建的 Rust 夹具连接：按存储键（`loki.inject`、`test.staticView`）扮演桌面端的配对、快照、中断和固定投影，时间全部由调用方传入虚拟时钟；产品构建不包含它 |
 
 可直接运行某组测试：

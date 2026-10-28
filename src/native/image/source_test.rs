@@ -1,4 +1,5 @@
 // 引入被测模块
+use super::super::fixtures::file_url;
 use super::*;
 
 // 临时目录，用完删除
@@ -11,7 +12,7 @@ impl Directory {
     }
     // 拼出文件 URL
     fn url(&self, name: &str) -> String {
-        format!("file://{}", self.0.join(name).display())
+        file_url(&self.0.join(name))
     }
 }
 impl Drop for Directory {
@@ -26,8 +27,10 @@ fn sources_are_bounded_local_files_or_valid_base64_gifs() {
     let root = Directory::new();
     // 文件名含空格，URL 里写成 %20
     fs::write(root.0.join("space image.gif"), b"GIF89a").unwrap();
+    let spaced_url = root.url("space image.gif");
+    assert!(spaced_url.ends_with("space%20image.gif"));
     // 本地文件可读，不是内联 GIF
-    assert_eq!(load(&root.url("space%20image.gif")).unwrap().0, b"GIF89a");
+    assert_eq!(load(&spaced_url).unwrap().0, b"GIF89a");
     // 内联 base64 GIF 同样可读，并标记为内联
     let inline = format!("data:image/gif;base64,{}", STANDARD.encode(b"GIF89a"));
     assert_eq!(load(&inline).unwrap(), (b"GIF89a".to_vec(), true));
@@ -52,7 +55,7 @@ fn sources_are_bounded_local_files_or_valid_base64_gifs() {
     large.set_len(MAX_SOURCE as u64 + 1).unwrap();
     assert!(load(&root.url("large.gif")).is_err());
     // 目录不是普通文件
-    assert!(load(&format!("file://{}", root.0.display())).is_err());
+    assert!(load(&file_url(&root.0)).is_err());
     // 编码长度超限的内联 GIF
     assert!(
         load(&format!(

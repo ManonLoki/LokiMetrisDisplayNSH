@@ -18,6 +18,12 @@ NSH 提供 TSX 组件、布局、渐变、动效、原生模块注册与生成 r
 
 iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访问 UIApplication 并启动 Watch 会话。前后台来自公开 UIScene 通知，聚合多窗口可见状态；短暂 inactive 不直接视为隐藏。Android 从 Application.onCreate 初始化应用上下文，不保存 Activity；可见性结合进程、亮屏及锁屏状态判断。
 
+## Windows 重绘兼容
+
+`src/shared/ui/windows-repaint.ts` 在 Windows 前台为全窗口背景绑定原生动画参数，使背景每帧参与重绘，绕开多个局部更新区域留下旧像素的候选路径。参数用于画布外的绘制操作，外观保持不变；静态背景命令仍可缓存，不逐帧执行 JS。切到后台或释放组件时停止，其他平台不启用。此处理增加前台重绘面积，是针对间歇花屏的应用侧兼容措施，上游根因尚未确认，未修改 SDK 或显卡设置。
+
+生命周期回归见 `src/tests/desktop/windows-repaint.test.tsx`。无界面测试不能证明 Windows 实际呈现，需要额外检查真机动画、页面切换、缩放及恢复。
+
 ## Android SDK 输入
 
 构建器优先读取已安装官方 `nsh.aar`，核对 SDK Java 类未被覆盖，只加入应用桥接类。没有 AAR 时，依据锁文件校验缓存中的原始 `.crate`，核对 Java 文件清单和内容后编译。两条路径都不修改 Cargo 缓存或保存另一份 SDK。

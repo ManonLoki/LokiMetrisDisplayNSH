@@ -125,7 +125,7 @@ export function createApp(runtime: AppRuntime): () => JSX.Element {
         <CyberMotionScope foreground={appForeground}>
           <View style={{ flex: 1 }}>
             {/* 背景特效 */}
-            <CyberBackdrop testID="cyber-backdrop" />
+            <CyberBackdrop testID="cyber-backdrop" foreground={appForeground} />
             {/* 宽屏横排（侧栏 + 内容），窄屏竖排（内容 + 底栏） */}
             <View style={{ flex: 1, flexDirection: wideNavigation() ? "row" : "column" }}>
               {/* 宽屏时侧栏在内容之前 */}

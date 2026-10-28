@@ -9,10 +9,13 @@ use super::{
     snapshot_admission::validate_snapshot,
 };
 // 引入配对库，用来模拟桌面端
-use loki_metris_pairing::{SenderSession, assets::AssetDescriptor, session::AwaitingDeviceProof};
+use loki_metris_pairing::assets::AssetDescriptor;
+#[cfg(target_os = "macos")]
+use loki_metris_pairing::{SenderSession, session::AwaitingDeviceProof};
 use serde_json::{Value, json};
+#[cfg(target_os = "macos")]
+use std::collections::BTreeMap;
 use std::{
-    collections::BTreeMap,
     fs,
     io::{Read, Write},
     net::{TcpListener, TcpStream},

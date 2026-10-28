@@ -1,5 +1,27 @@
 //! 小型的、独立编码的 GIF 测试输入;每个字面量后面都跟着一次清除。
 
+// 测试临时文件使用合法的本地 URI，兼容 Windows 盘符并编码空格等特殊字符。
+pub(super) fn file_url(path: &std::path::Path) -> String {
+    let raw = path.to_string_lossy();
+    #[cfg(windows)]
+    let raw = raw.replace('\\', "/");
+    let encoded: String = raw
+        .bytes()
+        .map(|byte| {
+            if byte.is_ascii_alphanumeric() || b"/:-_.~".contains(&byte) {
+                (byte as char).to_string()
+            } else {
+                format!("%{byte:02X}")
+            }
+        })
+        .collect();
+    if encoded.starts_with('/') {
+        format!("file://{encoded}")
+    } else {
+        format!("file:///{encoded}")
+    }
+}
+
 // 测试用 GIF 的一帧
 pub(super) struct TestFrame {
     // 帧矩形：x、y、宽、高

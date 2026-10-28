@@ -6,6 +6,8 @@ import { Button, type ButtonProps } from "nsh/base";
 import { cyberAlpha, cyberColors as color, cyberMotion as timing } from "./theme";
 // 引入遥控焦点框与目标登记
 import { RemoteRing, registerRemoteTarget } from "./remote-focus";
+// Windows 前台的全窗口重绘兼容处理
+import { useWindowsRepaint } from "./windows-repaint";
 
 // 参数既可传值也可传读取器
 export type CyberValue<T> = T | Accessor<T>;
@@ -86,9 +88,10 @@ export interface CyberDecorationProps extends MotionProps {
 }
 
 /** Android 背景:两个径向光晕,以及源码中 24dp、0.5dp 的网格。
- * 它被有意设计为静态,因为 Android 源码的背景就是静态的。 */
-// 背景：深色底、青紫两处辉光与网格线，保持静态
-export function CyberBackdrop(props: CyberDecorationProps) {
+ * 视觉外观保持静态；Windows 前台额外驱动不可见的重绘兼容处理。 */
+// 背景：深色底、青紫两处辉光与网格线
+export function CyberBackdrop(props: CyberDecorationProps & { foreground?: CyberValue<boolean> }) {
+  const repaint = useWindowsRepaint(() => read(props.foreground ?? false));
   // 画布铺满，叠加调用方样式
   return <Canvas {...decoration} testID={props.testID} style={[fill, props.style]} draw={(cx, size) => {
     // 取得画布尺寸
@@ -117,6 +120,9 @@ export function CyberBackdrop(props: CyberDecorationProps) {
     for (let y = 0; y < h; y += timing.gridStep) { cx.moveTo(0, y); cx.lineTo(w, y); }
     // 一次性描出所有网格线
     cx.stroke();
+    // 画布外的原生动画参数让整个背景参与重绘，像素外观不变。
+    // 放在最后，使前面的静态背景仍可由 NSH 缓存为绘制命令。
+    cx.fillStyle = color.canvas; cx.fillRect(-2, -2, repaint, 1);
   // 绘制回调结束
   }} />;
 }

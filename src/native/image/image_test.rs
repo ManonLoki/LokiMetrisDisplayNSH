@@ -121,7 +121,7 @@ fn regular_pngs_use_the_stock_path_without_rewriting_originals() {
     let bytes = include_bytes!("../../tests/fixtures/assets/hook.png");
     fs::write(&path, bytes).unwrap();
     // 普通 PNG 走标准路径：返回“非动画”
-    let result = prepare(&format!("file://{}", path.display()));
+    let result = prepare(&fixtures::file_url(&path));
     // 原文件内容不变
     let untouched = fs::read(&path).unwrap();
     fs::remove_file(path).unwrap();
@@ -185,7 +185,7 @@ fn valid_static_images_between_eight_and_thirty_two_mib_keep_the_stock_path() {
         .unwrap()
         .set_len(9 * 1024 * 1024)
         .unwrap();
-    let result = prepare(&format!("file://{}", path.display()));
+    let result = prepare(&fixtures::file_url(&path));
     fs::remove_file(path).unwrap();
     // 返回非动画的清单
     assert_eq!(result.unwrap(), super::STATIC_IMAGE);
