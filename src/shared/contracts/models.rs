@@ -284,8 +284,6 @@ pub struct ViewState {
     pub live: bool,
     /// 缓存快照来源的桌面标识。
     pub cache_source_id: Option<String>,
-    /// 已配对记录,以客户端标识为键。
-    pub paired: JsonValue,
 }
 
 /// 额度等级。

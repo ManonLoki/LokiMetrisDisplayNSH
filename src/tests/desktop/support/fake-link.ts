@@ -7,16 +7,16 @@ import type { ViewState } from "../../../features/connection";
 import type { LinkCommand } from "loki-metris-mobile-display/native";
 import { changedOnly } from "./link-port";
 // 引入真实原生规则：测试替身也复用 Rust 的校验与投影
-import { Rules } from "loki-metris-mobile-display/native";
+import { FixtureRules, Rules } from "loki-metris-mobile-display/native";
 
 // 测试替身用的规则别名
-const emptyView = (id: string, name: string) => Rules.connectionEmptyView(id, name) as ViewState;
+const emptyView = (id: string, name: string): FixtureView => ({ ...Rules.connectionEmptyView(id, name), paired: {} });
 const validDeviceId = (id: string) => Rules.connectionValidDeviceId(id);
-const parseSnapshot = (value: unknown, images: Record<string, string> = {}) => Rules.connectionParseSnapshot(value, images) as Snapshot | null;
+const parseSnapshot = (value: unknown, images: Record<string, string> = {}) => FixtureRules.connectionParseSnapshot(value, images) as Snapshot | null;
 // 引入快照类型
 import type { Snapshot } from "../../../shared/contracts/snapshot";
 // 引入视图变换辅助函数
-import type { PairingRecord } from "./view-fixture";
+import type { FixtureView, PairingRecord } from "./view-fixture";
 // 引入视图变换辅助函数
 import { acceptHandshake, acceptSnapshot, expirePairing, forgetDesktop, hostsFrom, selectDesktop } from "./view-fixture";
 

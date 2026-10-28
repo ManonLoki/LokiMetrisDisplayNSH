@@ -8,8 +8,9 @@ import { makePairingCode, PAIRING_WINDOW_MS, pairingExpired } from "./fixture-ru
 
 // 配对记录：客户端 ID 与保存时间
 export type PairingRecord = { clientId: string; savedAtMs: number };
-// ViewState.paired 在公开类型里是不透明的，测试替身按记录表读取
-const pairedOf = (state: ViewState) => state.paired as Record<string, PairingRecord>;
+// 测试替身自己的状态：公开视图加上配对记录表（产品的公开视图不含它）
+export type FixtureView = ViewState & { paired: Record<string, PairingRecord> };
+const pairedOf = (state: FixtureView) => state.paired;
 
 // 合并发现列表与配对记录得到主机列表
 export function hostsFrom(discovered: { id: string; name: string }[], paired: Record<string, PairingRecord>): Host[] {
@@ -30,7 +31,7 @@ export function hostsFrom(discovered: { id: string; name: string }[], paired: Re
 
 /** 用户点选后才进入配对。已有凭据则直接等快照，不显示四位码。 */
 // 选择桌面：已有配对则等待认证，否则生成配对码
-export function selectDesktop(state: ViewState, id: string, nowMs: number): ViewState {
+export function selectDesktop(state: FixtureView, id: string, nowMs: number): FixtureView {
   const host = state.hosts.find((item) => item.id === id);
   // 不可用的主机忽略
   if (!host || !host.available) return state;
@@ -67,7 +68,7 @@ export function selectDesktop(state: ViewState, id: string, nowMs: number): View
 }
 
 // 配对窗口过期则清除配对码并报错
-export function expirePairing(state: ViewState, nowMs: number): ViewState {
+export function expirePairing(state: FixtureView, nowMs: number): FixtureView {
   if (state.pairingDeadlineMs == null || !pairingExpired(nowMs, state.pairingDeadlineMs)) return state;
   return {
     ...state,
@@ -82,7 +83,7 @@ export function expirePairing(state: ViewState, nowMs: number): ViewState {
 
 /** 握手成功只保存配对材料，不算已连接。 */
 // 握手成功：保存配对，等待认证
-export function acceptHandshake(state: ViewState, nowMs: number): ViewState {
+export function acceptHandshake(state: FixtureView, nowMs: number): FixtureView {
   // 缺少选择或配对码则忽略
   if (state.selectedId == null || state.pairingCode == null || state.pairingDeadlineMs == null) return state;
   // 已过期则按过期处理
@@ -104,7 +105,7 @@ export function acceptHandshake(state: ViewState, nowMs: number): ViewState {
 
 /** 第一份真实快照才标记已连接，并保留事件里的接收时间。 */
 // 收到首份快照才标记已连接
-export function acceptSnapshot(state: ViewState, snapshot: Snapshot, receivedAtMs: number): ViewState {
+export function acceptSnapshot(state: FixtureView, snapshot: Snapshot, receivedAtMs: number): FixtureView {
   // 未选择或未配对则忽略
   if (state.selectedId == null || pairedOf(state)[state.selectedId] == null) return state;
   // 仍在配对中则忽略
@@ -124,7 +125,7 @@ export function acceptSnapshot(state: ViewState, snapshot: Snapshot, receivedAtM
 }
 
 // 忘记桌面：移除配对，必要时清空展示内容
-export function forgetDesktop(state: ViewState, id: string): ViewState {
+export function forgetDesktop(state: FixtureView, id: string): FixtureView {
   const paired = { ...pairedOf(state) };
   delete paired[id];
   // 被忘记的桌面正在展示时需要清空

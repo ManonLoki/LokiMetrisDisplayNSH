@@ -34,7 +34,7 @@ void (async () => {
     selectedId: source, status: "已连接 · 正在同步", error: null, assetWarning: null,
     pairingCode: null, pairingDeadlineMs: null, connected: true, snapshot,
     receivedAtMs: 1_720_111_000_000, live: true, cacheSourceId: source,
-    paired: { [source]: { clientId: source, savedAtMs: 1_720_111_000_000 } }, panelConfig: config,
+    panelConfig: config,
   };
   // 非动效模式：挂载完整应用，端口返回固定状态
   if (options.mode !== "motion") {

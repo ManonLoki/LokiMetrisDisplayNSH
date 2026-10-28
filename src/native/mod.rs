@@ -27,5 +27,8 @@ pub(crate) mod widgets;
 pub use link::Link;
 // 导出规则
 pub use rules::Rules;
+// 调试构建专用的测试夹具规则
+#[cfg(debug_assertions)]
+pub use rules::FixtureRules;
 // 导出界面生命周期
 pub use ui_lifecycle::UiLifecycle;
