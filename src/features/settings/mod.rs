@@ -67,17 +67,41 @@ impl Settings {
     }
 
     /// 原生连接初始化完成,并带上首个公开视图。
-    pub(crate) fn initialized(session: u64, view: &ViewState, sys: &System) -> Result<SettingsResult, String> {
-        apply(engine::Request::Initialized { session, view: json(view)? }, sys)
+    pub(crate) fn initialized(
+        session: u64,
+        view: &ViewState,
+        sys: &System,
+    ) -> Result<SettingsResult, String> {
+        apply(
+            engine::Request::Initialized {
+                session,
+                view: json(view)?,
+            },
+            sys,
+        )
     }
 
     /// 保存面板偏好。
-    pub(crate) fn save_panel(session: u64, panel: &PanelConfig, sys: &System) -> Result<SettingsResult, String> {
-        apply(engine::Request::SavePanel { session, panel: json(panel)? }, sys)
+    pub(crate) fn save_panel(
+        session: u64,
+        panel: &PanelConfig,
+        sys: &System,
+    ) -> Result<SettingsResult, String> {
+        apply(
+            engine::Request::SavePanel {
+                session,
+                panel: json(panel)?,
+            },
+            sys,
+        )
     }
 
     /// 编辑设备名称草稿。
-    pub(crate) fn edit_name(session: u64, draft: String, sys: &System) -> Result<SettingsResult, String> {
+    pub(crate) fn edit_name(
+        session: u64,
+        draft: String,
+        sys: &System,
+    ) -> Result<SettingsResult, String> {
         apply(engine::Request::EditName { session, draft }, sys)
     }
 
@@ -89,7 +113,15 @@ impl Settings {
         now_ms: u64,
         sys: &System,
     ) -> Result<SettingsResult, String> {
-        apply(engine::Request::BeginNameSave { session, draft, view: json(view)?, now_ms }, sys)
+        apply(
+            engine::Request::BeginNameSave {
+                session,
+                draft,
+                view: json(view)?,
+                now_ms,
+            },
+            sys,
+        )
     }
 
     /// 观察原生视图,推进名称保存的确认与超时。
@@ -100,11 +132,22 @@ impl Settings {
         now_ms: u64,
         sys: &System,
     ) -> Result<SettingsResult, String> {
-        apply(engine::Request::ObserveName { session, draft, view: json(view)?, now_ms }, sys)
+        apply(
+            engine::Request::ObserveName {
+                session,
+                draft,
+                view: json(view)?,
+                now_ms,
+            },
+            sys,
+        )
     }
 
     /// 名称命令投递失败,回滚保存。
-    pub(crate) fn name_dispatch_failed(session: u64, sys: &System) -> Result<SettingsResult, String> {
+    pub(crate) fn name_dispatch_failed(
+        session: u64,
+        sys: &System,
+    ) -> Result<SettingsResult, String> {
         apply(engine::Request::NameDispatchFailed { session }, sys)
     }
 
@@ -116,7 +159,15 @@ impl Settings {
         error: String,
         sys: &System,
     ) -> Result<SettingsResult, String> {
-        apply(engine::Request::PortFailure { session, view: json(view)?, stage, error }, sys)
+        apply(
+            engine::Request::PortFailure {
+                session,
+                view: json(view)?,
+                stage,
+                error,
+            },
+            sys,
+        )
     }
 
     /// 释放会话。

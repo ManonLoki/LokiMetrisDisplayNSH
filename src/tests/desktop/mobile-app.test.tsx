@@ -1,29 +1,25 @@
 // 引入测试 API
 import { expect, test } from "nsh/test";
-// 引入视图状态类型
-import type { ViewState } from "../../features/connection";
 // 引入打开函数与常量
 import { open, PHONE, safe } from "./app-environment";
 // 引入夹具快照
 import { representativeSnapshot } from "./app-fixtures";
-// 引入原生规则查询辅助
-import { nativeFunctions, query } from "./support/native-logic";
 
 // 旧版本遗留的面板偏好
 const oldPanel = { showUsage: true, showHooks: true, usageDetail: "detailed", hookLayout: "2x2" };
-// 构造夹具：空视图加旧面板偏好
-async function fixture(formFactor = "phone") {
-  // 向原生查询空视图
-  const call = await nativeFunctions([query("connection.emptyView", PHONE, "客厅手机")]);
+// 构造夹具：未选择、未连接的空视图加旧面板偏好（Rust 夹具连接原样返回它）
+function fixture(formFactor = "phone") {
   return { formFactor, projection: {
-    ...call<ViewState>("connection.emptyView", PHONE, "客厅手机"), panelConfig: oldPanel,
-  } };
+    deviceId: PHONE, deviceName: "客厅手机", hosts: [], selectedId: null, status: "正在发现桌面端…", error: null,
+    pairingCode: null, pairingDeadlineMs: null, connected: false, snapshot: null, receivedAtMs: null, live: false,
+    cacheSourceId: null, panelConfig: oldPanel,
+  } as Record<string, unknown> };
 }
 
 // 移动端身份与旧面板偏好被迁移到 NSH 存储
 test("mobile identity and previous panel choices are adopted into NSH storage", async () => {
   const app = await open("./mobile-app.tsx", { width: 390, height: 2600, safeArea: safe,
-    storage: { "test.mobileApp": JSON.stringify(await fixture()) } });
+    storage: { "test.mobileApp": JSON.stringify(fixture()) } });
   // 等待迁移写入
   await app.waitUntil(() => app.storage()["loki.panel"] != null && app.storage()["loki.device"] != null);
   // 设备 ID 应为手机 ID
@@ -40,7 +36,7 @@ test("mobile identity and previous panel choices are adopted into NSH storage", 
 
 // 移动端 Hook 详情使用共享对话框
 test("mobile Hook details use the shared NSH dialog", async () => {
-  const value = await fixture();
+  const value = fixture();
   // 填入快照并标记已连接
   value.projection.snapshot = representativeSnapshot();
   value.projection.receivedAtMs = 1_720_111_000_000;
@@ -64,7 +60,7 @@ test("mobile Hook details use the shared NSH dialog", async () => {
 // 电视形态保留遥控导航
 test("televisions keep remote navigation in the shared NSH application", async () => {
   const app = await open("./mobile-app.tsx", { width: 960, height: 540, safeArea: safe,
-    storage: { "test.mobileApp": JSON.stringify(await fixture("tv")) } });
+    storage: { "test.mobileApp": JSON.stringify(fixture("tv")) } });
   // 宽屏使用侧栏
   await app.waitFor("nav-side");
   // 第一次按下：焦点落在“展示台”
@@ -81,7 +77,7 @@ test("televisions keep remote navigation in the shared NSH application", async (
 // 手机与平板忽略遥控按键
 test("phones and tablets ignore remote navigation keys", async () => {
   const app = await open("./mobile-app.tsx", { width: 960, height: 540, safeArea: safe,
-    storage: { "test.mobileApp": JSON.stringify(await fixture("tablet")) } });
+    storage: { "test.mobileApp": JSON.stringify(fixture("tablet")) } });
   await app.waitFor("nav-side");
   await app.keyboard.press("down");
   // 不应出现焦点框
@@ -90,7 +86,7 @@ test("phones and tablets ignore remote navigation keys", async () => {
 
 // 系统栏通过安全区缩小内容区域
 test("mobile system bars reduce the content area through NSH safe-area facts", async () => {
-  const value = JSON.stringify(await fixture());
+  const value = JSON.stringify(fixture());
   // 无安全区
   const plain = await open("./mobile-app.tsx", { width: 390, height: 844, safeArea: safe,
     storage: { "test.mobileApp": value } });

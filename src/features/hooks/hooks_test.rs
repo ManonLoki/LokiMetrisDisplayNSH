@@ -20,6 +20,9 @@ fn pages_fill_cells_in_order_and_keep_one_empty_page() {
     assert_eq!(super::pages(2, "1x1"), vec![vec![Some(0)], vec![Some(1)]]);
     assert_eq!(
         super::pages(5, "2x2"),
-        vec![vec![Some(0), Some(1), Some(2), Some(3)], vec![Some(4), None, None, None]]
+        vec![
+            vec![Some(0), Some(1), Some(2), Some(3)],
+            vec![Some(4), None, None, None]
+        ]
     );
 }

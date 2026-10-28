@@ -81,7 +81,11 @@ pub(crate) struct Link;
 impl Link {
     /// 创建 VM 的连接所有者,恢复现有的设备身份和私有缓存。
     // 创建本 VM 的连接 owner，恢复设备身份与私有缓存
-    pub(crate) fn initialize(device_id: &str, name: &str, sys: &System) -> Result<ViewState, String> {
+    pub(crate) fn initialize(
+        device_id: &str,
+        name: &str,
+        sys: &System,
+    ) -> Result<ViewState, String> {
         // 取连接运行时
         let runtime = sys.locals.get::<LinkRuntime>();
         // 只初始化一次

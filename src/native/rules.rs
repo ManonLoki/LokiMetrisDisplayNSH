@@ -31,7 +31,10 @@ impl Rules {
     }
 
     /// 指定设备的空视图。
-    pub fn connection_empty_view(device_id: String, device_name: String) -> Result<ViewState, String> {
+    pub fn connection_empty_view(
+        device_id: String,
+        device_name: String,
+    ) -> Result<ViewState, String> {
         typed(connection::view_state::empty_view(&device_id, &device_name))
     }
 
@@ -46,7 +49,9 @@ impl Rules {
     }
 
     /// 把用量快照投影成卡片所需数据。
-    pub fn usage_card_projection(snapshot: Option<Snapshot>) -> Result<UsageCardProjection, String> {
+    pub fn usage_card_projection(
+        snapshot: Option<Snapshot>,
+    ) -> Result<UsageCardProjection, String> {
         let snapshot = serde_json::to_value(snapshot).map_err(|error| error.to_string())?;
         typed(usage::rows::card_projection(&snapshot))
     }

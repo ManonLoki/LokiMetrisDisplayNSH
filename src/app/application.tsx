@@ -67,7 +67,7 @@ export function createApp(runtime: AppRuntime): () => JSX.Element {
   const ports = createRuntime(runtime, {
     // 界面状态与回调集合
     panel, view, nameDraft, nameFeedback, nameIssue, panelIssue, savingName, foreground: appForeground,
-  }, (next) => { closeMissingHook(next); runtime.onView?.(next); });
+  }, closeMissingHook);
   // 画布背景色
   const bg = cyberColors.canvas;
 

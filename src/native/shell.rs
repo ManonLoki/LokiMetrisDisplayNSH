@@ -7,11 +7,11 @@ use crate::shared::contracts::models::{LinkCommand, PanelConfig, SettingsResult,
 // 引入 nsh 本地元素与模块宏
 use nsh_core::{element::Local, prelude::*};
 // 引入内部可变性
+#[cfg(debug_assertions)]
+use super::fixture::Fixture;
 use std::cell::RefCell;
 #[cfg(debug_assertions)]
 use std::rc::Rc;
-#[cfg(debug_assertions)]
-use super::fixture::Fixture;
 
 // 连接后端：产品用真实连接；调试构建里测试可用 Rust 夹具扮演桌面端
 #[derive(Clone, Default)]
@@ -94,7 +94,13 @@ fn current_view(sys: &System) -> Result<ViewState, String> {
 
 // 初始化连接
 #[cfg_attr(not(debug_assertions), allow(unused_variables))]
-fn link_initialize(sys: &System, backend: &Backend, id: &str, name: &str, now_ms: u64) -> Result<ViewState, String> {
+fn link_initialize(
+    sys: &System,
+    backend: &Backend,
+    id: &str,
+    name: &str,
+    now_ms: u64,
+) -> Result<ViewState, String> {
     match backend {
         // 真实连接
         Backend::Real => Link::initialize(id, name, sys),
@@ -118,7 +124,12 @@ fn link_poll(sys: &System, backend: &Backend, now_ms: u64) -> Result<Option<View
 
 // 下发命令
 #[cfg_attr(not(debug_assertions), allow(unused_variables))]
-fn link_command(sys: &System, backend: &Backend, command: &LinkCommand, now_ms: u64) -> Result<(), String> {
+fn link_command(
+    sys: &System,
+    backend: &Backend,
+    command: &LinkCommand,
+    now_ms: u64,
+) -> Result<(), String> {
     match backend {
         // 真实连接
         Backend::Real => Link::command(command, sys),
@@ -141,7 +152,11 @@ fn fail(sys: &System, stage: &str, error: String) -> Result<SettingsResult, Stri
 }
 
 // 轮询一次并让设置引擎观察名称确认的时钟
-async fn poll_and_observe(sys: &System, draft: String, now_ms: u64) -> Result<SettingsResult, String> {
+async fn poll_and_observe(
+    sys: &System,
+    draft: String,
+    now_ms: u64,
+) -> Result<SettingsResult, String> {
     // 取后端
     let backend = with(sys, |state| state.backend.clone());
     // 轮询：只有变化时才有新视图
@@ -166,7 +181,12 @@ async fn poll_and_observe(sys: &System, draft: String, now_ms: u64) -> Result<Se
 }
 
 // 下发一条命令，随后立即轮询
-async fn command_then_poll(sys: &System, command: &LinkCommand, draft: String, now_ms: u64) -> Result<Option<SettingsResult>, String> {
+async fn command_then_poll(
+    sys: &System,
+    command: &LinkCommand,
+    draft: String,
+    now_ms: u64,
+) -> Result<Option<SettingsResult>, String> {
     // 取后端
     let backend = with(sys, |state| state.backend.clone());
     // 端口未启动或已销毁时忽略
@@ -194,20 +214,28 @@ impl Shell {
     pub async fn start(now_ms: u64, sys: System) -> Result<SettingsResult, String> {
         // 选择后端
         #[cfg(debug_assertions)]
-        let backend = Fixture::select().map_or(Backend::Real, |fixture| Backend::Fixture(Rc::new(RefCell::new(fixture))));
+        let backend = Fixture::select().map_or(Backend::Real, |fixture| {
+            Backend::Fixture(Rc::new(RefCell::new(fixture)))
+        });
         #[cfg(not(debug_assertions))]
         let backend = Backend::Real;
         with(&sys, |state| state.backend = backend.clone());
         // 恢复身份和偏好
         let restored = Settings::boot(&sys)?;
         remember(&sys, &restored);
-        let identity = restored.initialize.clone().ok_or_else(|| "设置未提供设备身份".to_owned())?;
+        let identity = restored
+            .initialize
+            .clone()
+            .ok_or_else(|| "设置未提供设备身份".to_owned())?;
         // 初始化连接
         let view = match link_initialize(&sys, &backend, &identity.id, &identity.name, now_ms) {
             Ok(view) => view,
             Err(error) => {
                 // 失败：用空视图占位并上报
-                let device = restored.device.clone().ok_or_else(|| "设置未提供设备身份".to_owned())?;
+                let device = restored
+                    .device
+                    .clone()
+                    .ok_or_else(|| "设置未提供设备身份".to_owned())?;
                 let empty = crate::shared::contracts::models::typed::<ViewState>(
                     crate::features::connection::view_state::empty_view(&device.id, &device.name),
                 )?;
@@ -234,7 +262,11 @@ impl Shell {
     }
 
     /// 每个 UI 时钟周期调用:轮询连接并推进名称确认。初始化完成前不做任何事。
-    pub async fn tick(draft: String, now_ms: u64, sys: System) -> Result<Option<SettingsResult>, String> {
+    pub async fn tick(
+        draft: String,
+        now_ms: u64,
+        sys: System,
+    ) -> Result<Option<SettingsResult>, String> {
         // 未就绪或已释放：无变化
         if !with(&sys, |state| state.ready && !state.disposed) {
             return Ok(None);
@@ -243,7 +275,12 @@ impl Shell {
     }
 
     /// 下发一条连接命令(选择、遗忘、刷新等)并立即轮询。
-    pub async fn command(command: LinkCommand, draft: String, now_ms: u64, sys: System) -> Result<Option<SettingsResult>, String> {
+    pub async fn command(
+        command: LinkCommand,
+        draft: String,
+        now_ms: u64,
+        sys: System,
+    ) -> Result<Option<SettingsResult>, String> {
         if with(&sys, |state| state.disposed) {
             return Ok(None);
         }
@@ -263,7 +300,11 @@ impl Shell {
     }
 
     /// 保存设备名称:设置引擎给出命令,外壳下发并轮询。
-    pub async fn save_name(draft: String, now_ms: u64, sys: System) -> Result<Option<SettingsResult>, String> {
+    pub async fn save_name(
+        draft: String,
+        now_ms: u64,
+        sys: System,
+    ) -> Result<Option<SettingsResult>, String> {
         if with(&sys, |state| state.disposed) {
             return Ok(None);
         }
@@ -290,14 +331,22 @@ impl Shell {
     }
 
     /// 保存面板偏好:设置引擎落盘,外壳下发它给出的命令。
-    pub async fn save_panel(panel: PanelConfig, draft: String, now_ms: u64, sys: System) -> Result<Option<SettingsResult>, String> {
+    pub async fn save_panel(
+        panel: PanelConfig,
+        draft: String,
+        now_ms: u64,
+        sys: System,
+    ) -> Result<Option<SettingsResult>, String> {
         if with(&sys, |state| state.disposed) {
             return Ok(None);
         }
         let session = with(&sys, |state| state.session);
         let saved = Settings::save_panel(session, &panel, &sys)?;
         remember(&sys, &saved);
-        let mut merged = SettingsResult { commands: Vec::new(), ..saved.clone() };
+        let mut merged = SettingsResult {
+            commands: Vec::new(),
+            ..saved.clone()
+        };
         for command in &saved.commands {
             if let Some(next) = command_then_poll(&sys, command, draft.clone(), now_ms).await? {
                 merged = merge(merged, next);
@@ -316,7 +365,12 @@ impl Shell {
         // VM 可能已开始关闭，失败不再上报
         let _ = Settings::dispose(session, &sys);
         if with(&sys, |state| state.started) {
-            let inactive = LinkCommand { op: crate::shared::contracts::models::LinkOp::Active, client_id: None, name: None, value: Some(false) };
+            let inactive = LinkCommand {
+                op: crate::shared::contracts::models::LinkOp::Active,
+                client_id: None,
+                name: None,
+                value: Some(false),
+            };
             let _ = link_command(&sys, &backend, &inactive, 0);
         }
         Ok(())

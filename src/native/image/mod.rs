@@ -49,7 +49,8 @@ const CACHE_ENTRIES: usize = 4;
 
 /// 非动画来源的清单:没有帧,播放一次。
 // 非动画结果
-const STATIC_IMAGE: &str = "{\"animated\":false,\"width\":0,\"height\":0,\"plays\":1,\"frames\":[]}";
+const STATIC_IMAGE: &str =
+    "{\"animated\":false,\"width\":0,\"height\":0,\"plays\":1,\"frames\":[]}";
 
 /// 一帧:PNG 数据 URI 与时长。
 // 一帧：PNG 数据 URI 与时长
@@ -249,7 +250,13 @@ impl ImageFrames {
     /// 返回非动图的空结果,由标准 Image 渲染。
     pub async fn prepare(source: String) -> Result<Prepared, String> {
         if !source.starts_with("file:///") && !source.starts_with("data:image/gif;base64,") {
-            return Ok(Prepared { animated: false, width: 0, height: 0, plays: Some(1), frames: Vec::new() });
+            return Ok(Prepared {
+                animated: false,
+                width: 0,
+                height: 0,
+                plays: Some(1),
+                frames: Vec::new(),
+            });
         }
         let json = worker::prepare(source).await?;
         serde_json::from_str(&json).map_err(|_| "图片帧结果无效".to_owned())

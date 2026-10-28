@@ -12,8 +12,6 @@ export interface AppRuntime {
   foreground: () => boolean | null;
   // 是否启用遥控导航
   remoteNavigation?: () => boolean;
-  // 测试用：观测 Rust 交付的每个新视图
-  onView?: (view: ViewState) => void;
   // 测试用：上报面板边界
   onFrame?: (id: "usage" | "hook", bounds: Bounds) => void;
   // 测试用：上报图片加载尺寸

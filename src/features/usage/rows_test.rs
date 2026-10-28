@@ -109,5 +109,8 @@ fn card_projection_provides_total_accessibility_and_filtered_balances() {
 // 空快照（null）投影出没有 Token 的卡片
 #[test]
 fn null_snapshot_projects_a_card_without_tokens() {
-    assert_eq!(card_projection(&serde_json::Value::Null)["hasTokens"], false);
+    assert_eq!(
+        card_projection(&serde_json::Value::Null)["hasTokens"],
+        false
+    );
 }
