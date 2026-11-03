@@ -1,6 +1,18 @@
 //! 镜像到已配对 Apple Watch 的公开、不含凭据的快照。
 // 手表发件箱：写入公开快照
+/// 真实Watch回执的跨平台可测状态，不拥有WCSession或桌面凭据。
+#[cfg(any(target_os = "ios", test))]
+pub(in crate::native) mod presence;
 mod watch_outbox;
+
+/// 即时探测意图只在iOS转交原WC worker；其它平台不会伪造Watch回执。
+#[cfg(any(target_os = "ios", test))]
+pub(in crate::native) fn presence_command(command: presence::Command) {
+    #[cfg(target_os = "ios")]
+    ios::presence_command(command);
+    #[cfg(not(target_os = "ios"))]
+    drop(command);
+}
 
 // 非 iOS 的测试也编译 iOS 文件与策略模块
 #[cfg(all(test, not(target_os = "ios")))]

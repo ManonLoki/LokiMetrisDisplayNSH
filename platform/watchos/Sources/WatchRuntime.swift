@@ -30,11 +30,13 @@ final class WatchRuntime: @unchecked Sendable {
             // 无启动提示
             self.startupMessage = nil
             // 缓存变化时发通知，附带可能的错误文案
-            self.transport = disableTransport ? nil : WatchSession(cache: cache) { message in
+            self.transport = disableTransport ? nil : WatchSession(cache: cache) { message, adopted, receiptForegroundId in
                 // 发出缓存变化通知
-                NotificationCenter.default.post(name: .watchCacheChanged, object: nil,
-                                                // 附带错误信息
-                                                userInfo: message.map { ["error": $0] })
+                var info: [String: Any] = [:]
+                if let message { info["error"] = message }
+                if let adopted { info["adoptedManifest"] = adopted }
+                if let receiptForegroundId { info["receiptForegroundId"] = receiptForegroundId }
+                NotificationCenter.default.post(name: .watchCacheChanged, object: nil, userInfo: info)
             }
             // 启动传输
             transport?.start()

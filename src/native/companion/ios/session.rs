@@ -106,6 +106,10 @@ extern_protocol!(
         // 收到消息
         fn received(&self, session: &WCSession, message: &NSDictionary<NSString, AnyObject>);
         #[optional]
+        #[unsafe(method(session:didReceiveMessageData:))]
+        // Watch前台撤销使用独立的小JSON，不影响背景文件传输。
+        fn received_data(&self, session: &WCSession, data: &NSData);
+        #[optional]
         #[unsafe(method(session:didFinishFileTransfer:error:))]
         // 文件传输结束
         fn file_finished(
@@ -137,6 +141,10 @@ impl WCSession {
         #[unsafe(method_family = none)]
         // 激活状态
         pub(super) fn activation_state(&self) -> isize;
+        #[unsafe(method(isReachable))]
+        #[unsafe(method_family = none)]
+        // 仅为发送前提，不能用作实际Watch在线证明。
+        pub(super) fn reachable(&self) -> bool;
         #[unsafe(method(isPaired))]
         #[unsafe(method_family = none)]
         // 是否已配对手表
@@ -321,6 +329,11 @@ define_class!(
                 // 通知系统状态变化
                 super::system_changed();
             }
+        }
+        #[unsafe(method(session:didReceiveMessageData:))]
+        // 回调内有界复制，worker再验证身份/前台代次，不由WC线程修改连接状态。
+        fn received_data(&self, _session: &WCSession, data: &NSData) {
+            super::presence::revoked(data);
         }
         #[unsafe(method(session:didFinishFileTransfer:error:))]
         // 文件传输结束：记录成功与否

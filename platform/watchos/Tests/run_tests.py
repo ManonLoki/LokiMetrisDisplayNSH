@@ -45,6 +45,12 @@ def main():
                         str(sources / 'Sources/AmountText.swift'), str(sources / 'Sources/DisplayNames.swift'), str(sources / 'Tests/PresentationTests.swift'),
                         '-o', str(presentation)], check=True, cwd=ROOT)
         subprocess.run([str(presentation), str(ROOT / 'src/tests/fixtures/display-names.json')], check=True, cwd=ROOT)
+        # 当前前台回执只测纯状态，不启动系统WCSession或触碰真实安装身份。
+        presence = Path(directory) / 'presence-tests'
+        subprocess.run(['xcrun', 'swiftc', str(sources / 'Sources/Contract.swift'),
+                        str(sources / 'Sources/PresenceReceipt.swift'), str(sources / 'Tests/PresenceReceiptTests.swift'),
+                        '-o', str(presence)], check=True, cwd=ROOT)
+        subprocess.run([str(presence)], check=True, cwd=ROOT)
         # 图片测试
         images = Path(directory) / 'image-tests'
         subprocess.run(['xcrun', 'swiftc', str(sources / 'Sources/WatchImageAsset.swift'),

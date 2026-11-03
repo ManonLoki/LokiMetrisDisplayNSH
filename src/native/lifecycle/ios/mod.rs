@@ -18,6 +18,8 @@ use objc2_ui_kit::{
     UIApplicationDidFinishLaunchingNotification,
     // 应用状态
     UIApplicationState,
+    // 真实系统设备类型，只在UIKit主线程采样。
+    UIDevice,
     // 场景
     UIScene,
     // 场景激活状态
@@ -34,6 +36,7 @@ use objc2_ui_kit::{
     UISceneWillDeactivateNotification,
     // 场景将进入前台通知
     UISceneWillEnterForegroundNotification,
+    UIUserInterfaceIdiom,
 };
 // 引入内部可变性与一次性初始化
 use std::{
@@ -42,6 +45,14 @@ use std::{
     // 原子引用计数与一次性初始化
     sync::{Arc, OnceLock},
 };
+
+/// UIKit启动时采样并冻结安装设备形态；JS线程只读此值，不跨线程调用UIKit。
+static DEVICE_FORM_FACTOR: OnceLock<Option<&'static str>> = OnceLock::new();
+
+/// 返回实际安装设备报告的手机/平板形态；未知或尚未初始化保持None。
+pub(in crate::native) fn form_factor() -> Option<&'static str> {
+    DEVICE_FORM_FACTOR.get().copied().flatten()
+}
 
 // 全局观察者集合
 fn observers() -> &'static Arc<ActivityObservers> {
@@ -134,6 +145,11 @@ define_class!(
 pub(in crate::native) fn install(on_launch: fn()) {
     // 必须在主线程
     let mtm = MainThreadMarker::new().expect("iOS lifecycle installs on the main thread");
+    DEVICE_FORM_FACTOR.get_or_init(|| match UIDevice::currentDevice(mtm).userInterfaceIdiom() {
+        UIUserInterfaceIdiom::Phone => Some("phone"),
+        UIUserInterfaceIdiom::Pad => Some("tablet"),
+        _ => None,
+    });
     // 访问线程局部状态
     NOTIFICATIONS.with(|slot| {
         // 可变借用

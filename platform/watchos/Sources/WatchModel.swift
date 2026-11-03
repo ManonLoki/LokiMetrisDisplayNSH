@@ -30,12 +30,17 @@ final class WatchModel: ObservableObject {
         observer = NotificationCenter.default.addObserver(forName: .watchCacheChanged, object: nil, queue: .main) { [weak self] notification in
             // 通知里的错误信息
             let message = notification.userInfo?["error"] as? String
+            let adopted = notification.userInfo?["adoptedManifest"] as? Data
+            let receiptForegroundId = notification.userInfo?["receiptForegroundId"] as? String
             // 回到主线程
             Task { @MainActor [weak self] in
                 // 自身已释放则返回
                 guard let self else { return }
                 // 读取缓存里的清单
                 self.manifest = self.runtime.cache?.manifest
+                // 完整验证由串行缓存负责；只有当前显示的同一changed清单才能登记前台接纳。
+                if let adopted, let value = try? JSONDecoder().decode(CompanionManifest.self, from: adopted),
+                   self.manifest == value { self.runtime.transport?.adoptedChanged(value, receiptForegroundId: receiptForegroundId) }
                 // 更新提示信息
                 self.message = message
                 // 图片版本加一
@@ -51,6 +56,12 @@ final class WatchModel: ObservableObject {
     deinit {
         // 移除通知观察者
         if let observer { NotificationCenter.default.removeObserver(observer) }
+    }
+
+    /// scenePhase初始值和每次变化都先推进真实前台资格；冷缓存仍只用于显示，不登记同步。
+    func setForeground(_ active: Bool) {
+        runtime.transport?.setForeground(active)
+        if active { foreground() }
     }
 
     // 回到前台：重读缓存并向手机请求最新数据

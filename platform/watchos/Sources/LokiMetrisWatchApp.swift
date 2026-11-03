@@ -28,9 +28,9 @@ struct LokiMetrisWatchApp: App {
                 // 强调色
                 .tint(Color(red: 103 / 255, green: 232 / 255, blue: 249 / 255))
                 // 回到前台时刷新
-                .onChange(of: phase) { _, phase in
+                .onChange(of: phase, initial: true) { _, phase in
                     // 回到活动状态时通知前台
-                    if phase == .active { model.foreground() }
+                    model.setForeground(phase == .active)
                 }
         }
         // 系统因 WatchConnectivity 唤醒时处理后台投递

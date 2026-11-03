@@ -59,10 +59,12 @@ jni = "0.21.1"
 objc2 = "0.6.5"
 # 已锁定的 NSH Apple 绑定，现在由 WatchConnectivity 直接使用
 objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSData", "NSDictionary", "NSError", "NSObject", "NSString", "NSURL", "NSValue", "NSNotification", "NSSet", "NSEnumerator"] }
+# WC即时消息的escaping成功/失败回执块；复用现有锁图的同版本。
+block2 = { version = "0.6.2", default-features = false, features = ["alloc"] }
 # 主队列派发
 dispatch2 = "0.3.1"
 # UIKit 通知
-objc2-ui-kit = { version = "0.3.2", default-features = false, features = ["std", "UIApplication", "UIResponder", "UIScene", "UISceneDefinitions"] }
+objc2-ui-kit = { version = "0.3.2", default-features = false, features = ["std", "UIApplication", "UIResponder", "UIScene", "UISceneDefinitions", "UIDevice"] }
 
 # 协议验证夹具示例
 [[example]]

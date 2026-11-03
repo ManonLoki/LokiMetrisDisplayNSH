@@ -44,6 +44,8 @@ use std::{
 };
 
 mod flush;
+mod presence;
+pub(in crate::native) use presence::command as presence_command;
 
 /// 操作系统持有排队的传输;应用从不构建无限增长的文件积压。
 // 操作系统拥有排队的传输；应用不会堆出无界的文件积压
@@ -75,6 +77,12 @@ struct Signals {
     activated: Option<bool>,
     // 已完成的传输及其成败
     completed: Vec<(Transfer, bool)>,
+    // 最新LAN探测/撤销意图及有界WC终态、前台撤销数据。
+    presence: Option<crate::native::companion::presence::Command>,
+    presence_completed: Vec<(String, Option<Vec<u8>>)>,
+    presence_revoked: Vec<Vec<u8>>,
+    // 邮箱满时不能丢掉撤销事实后仍接纳迟到的在线回执。
+    presence_revoked_overflow: bool,
 }
 
 // 全局信号
@@ -87,6 +95,10 @@ static SIGNALS: Mutex<Signals> = Mutex::new(Signals {
     activated: None,
     // 完成记录为空
     completed: Vec::new(),
+    presence: None,
+    presence_completed: Vec::new(),
+    presence_revoked: Vec::new(),
+    presence_revoked_overflow: false,
 });
 // 唤醒工作线程的通道
 static WAKE: OnceLock<SyncSender<()>> = OnceLock::new();
@@ -224,6 +236,8 @@ fn start() {
 
 // 工作线程的全部状态
 struct Actor {
+    // 即时前台回执与背景文件传输各自拥有状态；序号跨LAN代次保留。
+    presence: crate::native::companion::presence::Controller,
     // 根目录
     root: PathBuf,
     // 会话
@@ -262,6 +276,7 @@ impl Actor {
         session.attach(&delegate);
         // 构造执行者
         Self {
+            presence: Default::default(),
             // 根目录
             root,
             // 会话
@@ -300,7 +315,10 @@ impl Actor {
             // 应用本轮收到的信号
             self.apply(signals);
             // 在自动释放池内执行一轮工作
-            autoreleasepool(|_| self.flush());
+            autoreleasepool(|_| {
+                self.flush();
+                self.flush_presence();
+            });
             // 计算最近的重试期限
             let deadline = self
                 // 各资源的重试策略
@@ -315,6 +333,7 @@ impl Actor {
                 .chain(self.activation_retry.deadline())
                 // 加上激活期限
                 .chain(self.activation_deadline)
+                .chain(self.presence.deadline())
                 // 只保留尚未到的时刻
                 .filter(|deadline| *deadline > Instant::now())
                 // 取最早的时刻
@@ -341,6 +360,19 @@ impl Actor {
 
     // 应用信号到状态
     fn apply(&mut self, signals: Signals) {
+        if let Some(command) = signals.presence {
+            self.presence.command(command);
+        }
+        // 同轮撤销优先于迟到positive回执，避免旧前台短暂复活。
+        self.presence.revoke_batch(
+            signals.presence_revoked,
+            signals.presence_revoked_overflow,
+            Instant::now(),
+        );
+        for (challenge, bytes) in signals.presence_completed {
+            self.presence
+                .complete(&challenge, bytes.as_deref(), Instant::now());
+        }
         // 有新的根目录
         if let Some(root) = signals.root {
             // 产品只有一个固定的公开缓存;拒绝意外的任意路径读取。

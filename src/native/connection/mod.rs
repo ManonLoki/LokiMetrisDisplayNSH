@@ -26,6 +26,9 @@ mod session;
 mod snapshot_admission;
 // 小组件共享
 mod widget;
+// 已选Watch前台合同到桌面wire的租约绑定。
+#[cfg(any(target_os = "ios", test))]
+mod watch;
 
 // 仅 macOS 的配套设备测试
 #[cfg(all(test, target_os = "macos"))]
@@ -247,6 +250,14 @@ enum Event {
     Socket(u64, framed_socket::SocketEvent),
     // 发现事件
     Discovery(discovery::Found),
+    // 原生WC实际回执，仍由当前连接owner独占加密发送。
+    #[cfg(any(target_os = "ios", test))]
+    Companion {
+        generation: u64,
+        scope: String,
+        nonce: u64,
+        report: crate::native::companion::presence::WireReport,
+    },
 }
 
 /// NSH 应用读取的最新公开投影。
@@ -447,3 +458,7 @@ impl Drop for Handle {
 #[cfg(test)]
 #[path = "connection_test.rs"]
 mod connection_test;
+
+#[cfg(test)]
+#[path = "watch_test.rs"]
+mod watch_test;

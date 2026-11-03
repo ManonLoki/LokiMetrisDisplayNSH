@@ -89,6 +89,7 @@ impl Owner {
             credential_service: service.into(),
             // 尚未上报设备形态
             form_factor_reported: false,
+            watch: Default::default(),
         }
     }
 

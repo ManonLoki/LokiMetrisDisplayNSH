@@ -61,6 +61,8 @@ impl Owner {
                 }
                 // 发现到桌面
                 Ok(Event::Discovery(found)) => self.found(found),
+                #[cfg(any(target_os = "ios", test))]
+                Ok(Event::Companion { generation, scope, nonce, report }) => self.watch_report(generation, &scope, nonce, report),
                 // 超时只为检查期限
                 Err(RecvTimeoutError::Timeout) => {}
             }

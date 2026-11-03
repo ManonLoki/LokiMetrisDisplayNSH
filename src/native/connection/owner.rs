@@ -158,6 +158,9 @@ pub(super) struct Owner {
     pub credential_service: String,
     // 本连接是否已上报设备形态
     pub form_factor_reported: bool,
+    // 当前LAN的WC回调资格与真实桌面ping锚。
+    #[cfg(any(target_os = "ios", test))]
+    pub watch: super::watch::Relay,
 }
 
 // 所有者的方法
@@ -237,6 +240,8 @@ impl Owner {
             credential_service: super::CREDENTIAL_SERVICE.into(),
             // 尚未上报设备形态
             form_factor_reported: false,
+            #[cfg(any(target_os = "ios", test))]
+            watch: Default::default(),
         };
         // 对账小组件授权
         this.reconcile_widget_authorization();

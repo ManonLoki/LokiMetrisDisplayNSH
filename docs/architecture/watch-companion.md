@@ -75,3 +75,13 @@ python3 tools/test.py --suite watch
 ```
 
 模拟器可验证编译、UI 与离线缓存。`transferFile` 的真实投递须在已配对的 iPhone／Watch 上验收；模拟器注入图片只证明缓存接收与展示。参见 [Apple 文件传输要求](https://developer.apple.com/documentation/watchconnectivity/wcsession/transferfile(_:metadata:))。其余测试入口和设备要求见 [测试说明](../development/test.md)。
+
+## 回传桌面的前台状态
+
+iPhone 只在当前连接完整验证了认证快照中的 `watchCompanionV1` 后响应这项能力；裸设备信息仍保留原来的四字段。每个真实桌面 Ping 先正常回复 Pong，再将当前来源、流和修订号及一次性挑战发送给 Watch。iOS 的手机／平板形态在 UIKit 主线程从 `UIDevice.userInterfaceIdiom` 采样，不依据名称或窗口尺寸推断。
+
+Watch 只有真实 `scenePhase.active` 才持有前台代次。新清单经过缓存完整校验并由当前主模型接纳后，才能产生该代次的同步事实；后台文件交付、冷缓存重读和重复修订号都不刷新同步时间。离开前台立即撤销本地资格，并尽力通知手机。
+
+iPhone 的原有 WatchConnectivity worker 校验即时回执的挑战、来源、前台代次和期限，再由当前连接 owner 复核连接代次、能力、活动状态及桌面 nonce，沿原加密会话发送 `companionStatus`。接触计数只在真实有效回执时递增，重复探针不续同步时间；年龄使用单调时钟保守计算。配对、安装、系统可达或文件发送成功仅能作为发送前提，不能直接宣称 Watch 在线。
+
+在途探针只有一个物理槽；逻辑超时撤销其资格，终态回调前不叠加请求。撤销邮箱溢出时先撤销当前在途资格，避免丢失撤销后迟到回执重新上线。测试可验证状态机及加密消息形状；真实 iPhone／Watch 传输与安装仍需各自的设备验收。

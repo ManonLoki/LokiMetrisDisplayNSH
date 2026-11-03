@@ -73,6 +73,8 @@ impl Owner {
 
     // 暂停：清掉重试、配对与实时状态，并礼貌地告知桌面
     fn pause(&mut self) {
+        #[cfg(any(target_os = "ios", test))]
+        self.watch.reset();
         // 清除重试时刻
         self.retry_at = None;
         // 清除配对状态

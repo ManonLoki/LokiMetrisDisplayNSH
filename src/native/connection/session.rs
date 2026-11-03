@@ -202,6 +202,9 @@ impl Owner {
                         let nonce = message["nonce"].as_u64().ok_or("无效心跳编号")?;
                         // 回复心跳
                         self.send_secure(json!({"type":"pong","nonce":nonce}))?;
+                        // 先pong再探测；只有实际WC回执才会稍后形成companionStatus。
+                        #[cfg(any(target_os = "ios", test))]
+                        self.watch_ping(nonce);
                         // 续租小组件
                         self.renew_widget_lease();
                         // 发布视图
@@ -394,6 +397,8 @@ impl Owner {
 
     // 丢弃套接字及其资源与能力
     pub(super) fn drop_socket(&mut self) {
+        #[cfg(any(target_os = "ios", test))]
+        self.watch.reset();
         // 取走套接字
         if self.socket.take().is_some() {
             // 更新发现状态

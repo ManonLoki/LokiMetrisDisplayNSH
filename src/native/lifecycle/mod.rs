@@ -72,7 +72,7 @@ mod platform;
 
 #[cfg(target_os = "ios")]
 // 重新导出安装与观察接口
-pub(super) use platform::{install, observe};
+pub(super) use platform::{form_factor, install, observe};
 
 #[cfg(target_os = "ios")]
 // 活动观察者

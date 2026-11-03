@@ -62,6 +62,8 @@ pub(super) fn configure(
         "root": root, "deviceId": device_id, "name": name,
         // 宿主身份、宿主生命周期、平台与手表配套
         "hostIdentity": true, "hostLifecycle": true, "platform": "ios", "watchCompanion": true,
+        // 从UIKit启动阶段已采样的系统事实读取，不根据设备名称或UI窗口尺寸猜测。
+        "formFactor": lifecycle::form_factor(),
         // 应用版本
         "appVersion": bundle_string("CFBundleShortVersionString").unwrap_or_else(|| "1.0".into()),
         // 旧版面板配置与小组件目录

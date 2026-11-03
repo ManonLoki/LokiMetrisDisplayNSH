@@ -890,6 +890,7 @@ name = "nsh-app-loki-metris-mobile-display"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "block2",
  "chacha20poly1305",
  "dispatch2",
  "icu_normalizer",
