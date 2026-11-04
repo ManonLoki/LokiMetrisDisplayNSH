@@ -60,6 +60,8 @@ GIF 在 Rust 后台工作线程解码为完整画布 PNG 帧。TSX 播放时钟�
 
 Android 的同一共享目录与应用内发布路径由系统小组件复用：提供器与主应用同进程，经 JNI 调用同一小组件核心读取摘要并渲染 RemoteViews；应用收到快照即刷新，系统调度（不低于三十分钟）唤醒时由提供器执行一次独立只读 HTTP。目录与凭据只在应用私有存储，不进入 TSX 或 Watch 投影。
 
+iPhone 的灵动岛实时活动走应用内通道：连接 owner 在认证快照落库后把首条 Hook（槽位最小项）经垫片交给主应用，由 ActivityKit 发起或更新；扩展按共享的 AgentActivityAttributes 渲染锁屏与灵动岛。断开、忘记或切换来源时撤下。
+
 ## 构建与源码证据
 
 `nsh.json` 声明应用信息，`src/lib.rs` 注册 Rust 模块，官方 NSH 生成 `.nsh/` runner。`tools/build/` 补齐移动权限、应用接线、平台身份与签名，并校验最终包格式。独立 Watch 工程通过包装器与 iPhone 组成配套归档。

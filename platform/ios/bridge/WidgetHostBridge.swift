@@ -336,3 +336,110 @@ final class WidgetBackgroundExecution: @unchecked Sendable {
         completion(result)
     }
 }
+
+/// 灵动岛的 Agent 状态：主应用在前台收到认证快照后发起与更新；来源切换或断开时撤下。
+// 灵动岛控制器：只在获得系统授权时存在活动，失败静默不影响连接
+#if canImport(ActivityKit) && os(iOS)
+// 引入 ActivityKit
+import ActivityKit
+
+// 灵动岛通知入口：Rust 传入 JSON 载荷
+@_cdecl("loki_agent_activity_notify")
+// 导出：把载荷交给控制器
+public func lokiAgentActivityNotify(_ payload: UnsafePointer<CChar>?) {
+    // 载荷必须可读
+    guard let payload, let text = String(cString: payload, encoding: .utf8) else { return }
+    // 活动请求 API 需要 iOS 16.2 以上
+    guard #available(iOS 16.2, *) else { return }
+    // 活动请求必须在主线程；系统拒绝时静默，不影响连接
+    DispatchQueue.main.async {
+        // 交给控制器
+        AgentActivityController.shared.apply(raw: text)
+    }
+}
+
+/// 灵动岛活动的启停与更新；同一时刻至多一个活动。
+@available(iOS 16.2, *)
+@MainActor
+// 灵动岛控制器
+private final class AgentActivityController {
+    // 单例
+    static let shared = AgentActivityController()
+    // 当前活动
+    private var current: Activity<AgentActivityAttributes>?
+
+    // 解析并应用载荷；解析失败视为撤下
+    func apply(raw: String) {
+        // 解析载荷
+        guard let data = raw.data(using: .utf8),
+            let payload = try? JSONDecoder().decode(AgentActivityPayload.self, from: data) else {
+            // 撤下
+            end()
+            // 完成
+            return
+        }
+        // 有状态且字段齐备才展示
+        if payload.present, let agent = payload.agent, let behavior = payload.behavior {
+            // 组装状态
+            let state = AgentActivityAttributes.ContentState(
+                agent: agent, behavior: behavior,
+                content: payload.content ?? "", receivedAtMs: payload.receivedAtMs ?? 0)
+            // 更新或发起
+            show(state: state)
+        // 其余撤下
+        } else {
+            // 撤下
+            end()
+        }
+    }
+
+    // 发起或更新活动
+    private func show(state: AgentActivityAttributes.ContentState) {
+        // 已有活动就更新
+        if let current = current {
+            // 异步更新
+            Task { await current.update(using: AgentActivityAttributes.ContentState(agent: state.agent,
+                behavior: state.behavior, content: state.content, receivedAtMs: state.receivedAtMs)) }
+        // 没有则请求
+        } else {
+            // 属性固定为产品名
+            let attributes = AgentActivityAttributes(sourceName: "诡秘神谕")
+            // 异步请求；系统可能拒绝（额度、设置），失败即无活动
+            Task {
+                // 请求活动
+                let activity = try? Activity.request(attributes: attributes,
+                    content: .init(state: state, staleDate: nil))
+                // 记录活动
+                self.current = activity
+            }
+        }
+    }
+
+    // 撤下当前活动
+    private func end() {
+        // 取出并清空
+        guard let current = current else { return }
+        // 清空引用
+        self.current = nil
+        // 异步撤下
+        Task { await current.end(nil, dismissalPolicy: .immediate) }
+    }
+}
+
+/// 灵动岛载荷的解码形状；字段缺失按撤下处理。
+// 灵动岛载荷
+@available(iOS 16.2, *)
+// 载荷解码形状
+private struct AgentActivityPayload: Decodable {
+    // 是否有状态
+    let present: Bool
+    // Agent 展示名
+    let agent: String?
+    // 行为标签
+    let behavior: String?
+    // 状态文案
+    let content: String?
+    // 接收时间
+    let receivedAtMs: Double?
+}
+#endif

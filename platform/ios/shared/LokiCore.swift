@@ -286,3 +286,35 @@ enum SyncTimeFormat {
     // 空间有限时省略年份
     static let short = Date.FormatStyle.dateTime.locale(locale).month().day().hour().minute()
 }
+
+// 灵动岛属性在主应用（发起/更新）与扩展（渲染）之间共享。
+// 灵动岛属性：主应用经 ActivityKit 发起与更新，扩展按同一类型渲染
+#if canImport(ActivityKit) && os(iOS)
+// 引入 ActivityKit
+import ActivityKit
+
+/// 灵动岛的静态属性：来源显示名固定，动态状态全部在 ContentState。
+// 灵动岛静态属性
+public struct AgentActivityAttributes: ActivityAttributes {
+    // 动态状态：Agent 展示名、行为、状态文案与接收时间
+    public struct ContentState: Codable, Hashable {
+        // Agent 展示名
+        public let agent: String
+        // 行为标签（空闲/运行/询问/出错）
+        public let behavior: String
+        // 状态文案
+        public let content: String
+        // 接收时间（毫秒）
+        public let receivedAtMs: Double
+        // 
+        public init(agent: String, behavior: String, content: String, receivedAtMs: Double) {
+            // 逐项赋值
+            self.agent = agent; self.behavior = behavior; self.content = content; self.receivedAtMs = receivedAtMs
+        }
+    }
+    // 来源显示名
+    public let sourceName: String
+    // 
+    public init(sourceName: String) { self.sourceName = sourceName }
+}
+#endif

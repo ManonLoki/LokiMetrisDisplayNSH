@@ -30,6 +30,8 @@ unsafe extern "C" {
     fn loki_widget_host_reload();
     // 注册系统入口
     fn loki_widget_host_bootstrap();
+    // 通知灵动岛的 Agent 状态载荷
+    fn loki_agent_activity_notify(payload: *const c_char);
 }
 
 /// 安装进程的系统刷新入口,不会另外创建局域网所有者。
@@ -190,6 +192,23 @@ impl ReloadGate {
         }
         // 返回需要等待的时间
         Some(remaining)
+    }
+}
+
+/// 把首条 Hook 状态推给灵动岛：载荷由连接 owner 组装，平台层决定启停与更新。
+pub(super) fn agent_activity(payload: &str) {
+    // 仅 iOS 有灵动岛
+    #[cfg(target_os = "ios")]
+    {
+        // SAFETY: 载荷字符串在本调用期间存活；垫片复制后立即归还。
+        let c_payload = match std::ffi::CString::new(payload) {
+            // 构造成功
+            Ok(value) => value,
+            // 内部 NUL 不会出现（JSON 文本）
+            Err(_) => return,
+        };
+        // SAFETY: 垫片持有其幂等的系统注册，回调在系统队列执行。
+        unsafe { loki_agent_activity_notify(c_payload.as_ptr()) };
     }
 }
 

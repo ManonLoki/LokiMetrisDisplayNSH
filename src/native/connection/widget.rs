@@ -115,6 +115,8 @@ impl Owner {
             self.widget.authenticated = true;
             // 通知小组件有变化
             crate::native::widgets::changed();
+            // 首条 Hook（槽位最小）同步到灵动岛；无 Hook 时撤下
+            crate::native::widgets::agent_activity(&lead_activity_payload(message, received));
         }
     }
 
@@ -146,6 +148,8 @@ impl Owner {
     pub(super) fn pause_widget_lease(&mut self) {
         // 标记未认证
         self.widget.authenticated = false;
+        // 撤下灵动岛的 Agent 状态
+        crate::native::widgets::agent_activity(&serde_json::json!({"present": false}).to_string());
     }
 
     // 切换来源：共享存储同步切换并刷新，认证状态重置
@@ -171,6 +175,10 @@ impl Owner {
             store.forget(source)?;
             // 通知小组件有变化
             crate::native::widgets::changed();
+            // 撤下灵动岛
+            crate::native::widgets::agent_activity(
+                &serde_json::json!({"present": false}).to_string(),
+            );
         }
         // 被忘记的正是选中项
         if self.selected.as_deref() == Some(source) {
@@ -180,6 +188,41 @@ impl Owner {
         // 完成
         Ok(())
     }
+}
+
+/// 由认证快照提取首条 Hook（槽位最小）的灵动岛状态；
+/// 内容与桌面桌宠当前页同源，缺失或为空时撤下活动。
+fn lead_activity_payload(message: &serde_json::Value, received: u64) -> String {
+    // 快照来源与 lead_activity 的取数一致
+    let snapshot = if message["type"] == "snapshot" {
+        &message["snapshot"]
+    } else {
+        message
+    };
+    // 槽位最小的 Hook 作为灵动岛状态
+    let lead = snapshot["hooks"]
+        .as_array()
+        .and_then(|hooks| hooks.iter().min_by_key(|hook| hook["slot"].as_u64()));
+    // 没有 Hook 或行为缺失则撤下
+    let Some(lead) = lead.filter(|lead| !lead["agent"].is_null() && !lead["behavior"].is_null())
+    else {
+        // 撤下
+        return serde_json::json!({"present": false}).to_string();
+    };
+    // 组装载荷：展示名、行为、文案与接收时间
+    serde_json::json!({
+        // 有状态
+        "present": true,
+        // 展示名
+        "agent": crate::shared::domain::agents::agent_display_name(lead["agent"].as_str().unwrap_or_default()),
+        // 行为标识
+        "behavior": lead["behavior"].as_str().unwrap_or_default(),
+        // 状态文案
+        "content": lead["content"].as_str().unwrap_or_default(),
+        // 接收时间
+        "receivedAtMs": received,
+    })
+    .to_string()
 }
 
 // 测试模块

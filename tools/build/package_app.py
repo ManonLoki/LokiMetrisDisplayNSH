@@ -214,6 +214,8 @@ def configure_apple(app, *, simulator, application_id, minimum_os=None):
     value['UIBackgroundModes'] = sorted(set(value.get('UIBackgroundModes', []) + ['fetch']))
     # 允许访问本地网络的 HTTP
     value['NSAppTransportSecurity'] = dict(value.get('NSAppTransportSecurity', {}), NSAllowsLocalNetworking=True)
+    # 支持灵动岛/锁屏的实时活动
+    value['NSSupportsLiveActivities'] = True
     # 写回二进制 plist
     info.write_bytes(plistlib.dumps(value, fmt=plistlib.FMT_BINARY))
     # 模拟器：核对内嵌标识并做临时签名
