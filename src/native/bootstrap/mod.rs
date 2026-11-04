@@ -56,6 +56,20 @@ pub(super) fn foreground() -> Option<bool> {
     android::foreground()
 }
 
+#[cfg(target_os = "android")]
+// Android 的小组件共享目录
+pub(super) fn android_widget_directory() -> Option<std::path::PathBuf> {
+    // 由 Android 引导实现给出
+    android::widget_directory()
+}
+
+#[cfg(target_os = "android")]
+// 通知 Android 系统小组件重绘
+pub(super) fn android_widget_changed() {
+    // 由 Android 引导实现派发
+    android::widget_changed()
+}
+
 // 密钥记录格式，测试也编译
 #[cfg(any(target_os = "android", test))]
 #[path = "android/key_record.rs"]

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 小组件背景：与产品深色外观一致的圆角色块 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- 深色底色 -->
+    <solid android:color="#FF14161C" />
+    <!-- 系统建议的组件圆角 -->
+    <corners android:radius="16dp" />
+</shape>

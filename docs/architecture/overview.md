@@ -58,6 +58,8 @@ GIF 在 Rust 后台工作线程解码为完整画布 PNG 帧。TSX 播放时钟�
 
 小组件通过 App Group 读取最近摘要。认证会话收到 `widgetHttpV1` 与只读端点后，只在原生私有路径记录权限，以实际已认证 TCP 对端为主机地址；端点和密钥不进入 TSX 或 Watch 公共投影。收到认证快照时发布、心跳时续租，断线停止续租并保留摘要；切换或忘记来源撤销相应配置。跨进程锁和请求代次避免旧 HTTP 响应覆盖新来源。WidgetKit 时间线与 BGAppRefreshTask 都申请约 15 分钟后再次刷新，实际执行时机由 iOS 决定。Swift 只经 `loki_core_call` 调用 `store.load`、`view.describe`、`widget.begin/finish` 等少量操作；主应用连接 owner 直接使用 widget-core 的 Rust API。
 
+Android 的同一共享目录与应用内发布路径由系统小组件复用：提供器与主应用同进程，经 JNI 调用同一小组件核心读取摘要并渲染 RemoteViews；应用收到快照即刷新，系统调度（不低于三十分钟）唤醒时由提供器执行一次独立只读 HTTP。目录与凭据只在应用私有存储，不进入 TSX 或 Watch 投影。
+
 ## 构建与源码证据
 
 `nsh.json` 声明应用信息，`src/lib.rs` 注册 Rust 模块，官方 NSH 生成 `.nsh/` runner。`tools/build/` 补齐移动权限、应用接线、平台身份与签名，并校验最终包格式。独立 Watch 工程通过包装器与 iPhone 组成配套归档。
@@ -69,7 +71,7 @@ GIF 在 Rust 后台工作线程解码为完整画布 PNG 帧。TSX 播放时钟�
 | 规则、控制器与设置存储 | [Rules](../../src/native/rules.rs)、[Shell](../../src/native/shell.rs)、[设置用例](../../src/features/settings/mod.rs)、[测试夹具](../../src/native/fixture/mod.rs) |
 | 移动前台与缓存差异 | [生命周期推进](../../src/native/connection/app_visibility.rs)、[Android 初始化](../../src/native/bootstrap/android/mod.rs) |
 | 资源验证与播放 | [资源接收](../../src/native/connection/assets.rs)、[图片模块](../../src/native/image/mod.rs)、[界面图片](../../src/shared/ui/image.tsx) |
-| 小组件通道 | [摘要发布与撤销](../../src/native/connection/widget.rs)、[共享存储](../../crates/widget-core/src/store.rs)、[Swift 入口](../../crates/widget-core/src/ffi.rs)、[系统调度](../../platform/ios/bridge/WidgetHostBridge.swift) |
+| 小组件通道 | [摘要发布与撤销](../../src/native/connection/widget.rs)、[共享存储](../../crates/widget-core/src/store.rs)、[Swift 入口](../../crates/widget-core/src/ffi.rs)、[系统调度](../../platform/ios/bridge/WidgetHostBridge.swift)、[Android 提供器](../../src/native/android/java/com/manonloki/lokimetrisdisplay/widget/LokiWidgetProvider.java)、[小组件打包](../../tools/build/android_widget.py) |
 | iPhone 到 Watch | [缓存发布](../../src/native/companion/mod.rs)、[系统投递](../../src/native/companion/ios/session.rs)、[手表缓存](../../platform/watchos/Sources/SnapshotCache.swift) |
 
 交互图由 archify 的 architecture 模式生成，[candidate.json](../../.archify/architecture-lokimetris-20261028-105048/candidate.json) 保存组件、关系与源码行号，证据固定在本仓库的一次提交。生成命令与检查结果见图目录的 [维护说明](../../.archify/architecture-lokimetris-20261028-105048/README.md)。

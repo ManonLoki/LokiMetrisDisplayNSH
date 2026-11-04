@@ -8,6 +8,17 @@ use std::{
     path::PathBuf,
 };
 
+// 仅 Android：引入 JNI 类型
+#[cfg(target_os = "android")]
+use jni::{
+    // JNI 环境与字符串
+    JNIEnv,
+    objects::{JClass, JString},
+};
+// 仅 Android：引入路径类型
+#[cfg(target_os = "android")]
+use std::path::PathBuf;
+
 #[cfg(target_os = "ios")]
 // Swift 垫片导出的函数
 unsafe extern "C" {
@@ -70,6 +81,74 @@ pub(super) fn directory() -> Option<PathBuf> {
     path.filter(|path| path.is_absolute() && path.is_dir())
 }
 
+/// Android 的共享目录是应用私有的 files/widget；小组件提供器与主应用同进程同用户，
+/// 经同一条规范化路径访问，避免 /data/user/0 与 /data/data 别名不一致。
+#[cfg(target_os = "android")]
+pub(super) fn directory() -> Option<PathBuf> {
+    // 由 Android 引导层给出规范化的私有目录
+    super::bootstrap::android_widget_directory()
+}
+
+/// 小组件提供器经 JNI 调用小组件核心：一次 JSON 请求换一个 JSON 结果。
+/// 请求解析、校验与加密全部在 widget-core 内完成，Java 只执行传输与绘制。
+#[cfg(target_os = "android")]
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_nativeCall(
+    // JNI 环境
+    mut env: JNIEnv<'_>,
+    // 类（未使用）
+    _class: JClass<'_>,
+    // JSON 请求文本
+    request: JString<'_>,
+) -> jni::sys::jstring {
+    // 读取请求文本；null 按空请求处理，由核心返回统一错误
+    let request = if request.is_null() {
+        // 空请求
+        String::new()
+    // 否则分支
+    } else {
+        // SAFETY: JNI 合同保证 request 是有效的本地引用字符串。
+        match unsafe { env.get_string(&request) } {
+            // 转为自有文本
+            Ok(text) => text.to_string_lossy().into_owned(),
+            // 取文本失败
+            Err(_) => String::new(),
+        }
+    };
+    // 调用小组件核心
+    let response = loki_widget_core::ffi::call(&request);
+    // 返回结果字符串；失败交由 Java 侧按 null 处理
+    env.new_string(response)
+        // 失败返回 null 引用
+        .map(|value| value.into_raw())
+        // 异常路径
+        .unwrap_or_else(|_| std::ptr::null_mut())
+}
+
+/// 返回与主应用连接 owner 相同的规范化小组件共享目录，保证两侧访问同一份文件。
+#[cfg(target_os = "android")]
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_nativeWidgetDir(
+    // JNI 环境
+    mut env: JNIEnv<'_>,
+    // 类（未使用）
+    _class: JClass<'_>,
+) -> jni::sys::jstring {
+    // 取共享目录；未就绪时返回 null，调用方按未同步处理
+    match super::bootstrap::android_widget_directory() {
+        // 有目录则返回路径文本
+        Some(directory) => env
+            // 构造 Java 字符串
+            .new_string(directory.to_string_lossy().into_owned())
+            // 成功返回引用
+            .map(|value| value.into_raw())
+            // 失败返回 null
+            .unwrap_or_else(|_| std::ptr::null_mut()),
+        // 没有目录
+        None => std::ptr::null_mut(),
+    }
+}
+
 #[cfg(any(target_os = "ios", test))]
 #[derive(Default)]
 // 刷新节流门
@@ -117,6 +196,9 @@ impl ReloadGate {
 /// 合并摘要变更触发的刷新,每三十秒保留一次尾随更新。
 // 摘要变化时合并刷新请求，每 30 秒最多保留一次补刷
 pub(super) fn changed() {
+    // Android 直接重绘 RemoteViews，无 WidgetKit 刷新预算，不做节流
+    #[cfg(target_os = "android")]
+    super::bootstrap::android_widget_changed();
     #[cfg(target_os = "ios")]
     {
         // 标准库同步原语

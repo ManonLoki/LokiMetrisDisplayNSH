@@ -14,8 +14,9 @@
 - **自定义展示台**：独立开关用量与 Hooks，选择 1×1／2×2 卡片布局，适配窄窗口、横屏与宽屏侧栏。
 - **Apple Watch**：读取 iPhone 同步的用量、额度、活动与图片，保留本地缓存和真实同步时间。
 - **iPhone 小组件与待机显示**：主屏幕小／中组件、三种锁屏组件与待机显示共用旧版 WidgetKit 标识，显示最近摘要和真实同步时间。
+- **Android 系统小组件**：主屏幕小／中组件显示最近摘要；应用前台收到快照即更新，系统调度下经独立只读权限拉取最新摘要。
 
-展示端读取电脑提供的快照，不独立采集 AI 会话或重新计算总量。普通应用在前台连接电脑；iOS 小组件由系统调度，使用桌面授予的独立只读权限短时拉取摘要；每次申请约 15 分钟后刷新，实际唤醒由系统决定。Watch 可由系统继续接收 iPhone 已排队的缓存。Android 系统小组件、悬浮窗和后台常驻同步尚未包含。
+展示端读取电脑提供的快照，不独立采集 AI 会话或重新计算总量。普通应用在前台连接电脑；iOS 小组件由系统调度，使用桌面授予的独立只读权限短时拉取摘要；每次申请约 15 分钟后刷新，实际唤醒由系统决定。Watch 可由系统继续接收 iPhone 已排队的缓存。Android 小组件与应用内更新随前台连接工作，系统调度下的独立刷新约每 30 分钟；Android 悬浮窗和后台常驻同步尚未包含。
 
 ## 支持的设备
 
@@ -24,7 +25,7 @@
 | Windows | NSH 共享界面；原生开发使用 MSVC，macOS 可交叉打包 |
 | macOS | NSH 共享界面；使用 macOS 与 Apple 开发工具 |
 | Linux | NSH 共享界面；需要 GTK 4.14+、会话 D-Bus 与 Secret Service |
-| Android 手机、平板、电视 | NSH 共享界面与应用 Java 接线；电视支持方向键导航 |
+| Android 手机、平板、电视 | NSH 共享界面与应用 Java 接线；手机与平板提供系统小组件；电视支持方向键导航 |
 | iPhone / iPad | NSH 共享界面；WidgetKit 小组件、待机显示及系统共享容器 |
 | Apple Watch | 独立 SwiftUI 配套应用，需与运行本应用的 iPhone 配对 |
 
@@ -77,6 +78,7 @@ python3 tools/test.py --suite watch
 | `src/native/` | Rust 连接 owner、凭据、生命周期、图片与 iPhone 缓存同步 |
 | `platform/watchos/` | SwiftUI Watch 应用与对应测试 |
 | `platform/ios/`、`crates/widget-core/` | WidgetKit 界面、系统刷新接线与纯 Rust 摘要／HTTP 核心 |
+| `platform/android/`、`src/native/android/java/.../widget/` | 系统小组件资源与提供器 Java 接线 |
 | `src/tests/` | 界面、打包、Android 入口、像素测试与协议夹具 |
 | `tools/` | 构建脚本与统一测试入口 |
 | `signing/` | 移动身份配置和本机签名材料 |

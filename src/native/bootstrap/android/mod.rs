@@ -253,12 +253,48 @@ pub(super) fn configure(
             "formFactor":(form != "tv").then_some(form),
             // 旧版面板配置
             "legacyPanel":legacy_panel(env, context)?,
+            // 小组件共享目录：files/widget
+            "widgetDir":Some(root.join("widget")),
         }))
         // 配置无效
         .map_err(|_| jni_support::invalid("Android 连接配置无效。"))
     })
     // 失败转为文本
     .map_err(|error: Failure| error.0)
+}
+
+/// 小组件共享目录：应用私有的 files/widget。小组件提供器经 JNI 读取同一路径，
+/// 双方都必须使用这里给出的规范化形式，避免挂载命名空间的路径别名。
+// 小组件共享目录，主应用与提供器共用
+pub(super) fn widget_directory() -> Option<PathBuf> {
+    // 取应用上下文并执行
+    context::with_context(|env, context| {
+        // 取规范化的文件目录并拼接小组件子目录
+        Ok(files_dir(env, context)?.join("widget"))
+    })
+    // 失败则没有共享目录
+    .ok()
+}
+
+/// 通知系统小组件有新摘要：调用 Java 侧静态刷新入口，在当前线程上重绘 RemoteViews。
+// 通知 Android 系统小组件重绘
+pub(super) fn widget_changed() {
+    // 取应用上下文并执行；失败静默，不阻断连接事件
+    let _: Result<()> = context::with_context(|env, context| {
+        // 调用提供器的静态刷新方法
+        env.call_static_method(
+            // 提供器类
+            "com/manonloki/lokimetrisdisplay/widget/LokiWidgetProvider",
+            // 静态刷新方法
+            "refreshAll",
+            // 签名：接收应用上下文
+            "(Landroid/content/Context;)V",
+            // 传入应用对象
+            &[JValue::Object(context)],
+        )?;
+        // 成功
+        Ok(())
+    });
 }
 
 /// 查询操作系统的进程重要性,但不把后台应用当作可见。

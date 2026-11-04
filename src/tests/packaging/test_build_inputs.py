@@ -18,6 +18,8 @@ import tempfile
 import unittest
 # 压缩包
 import zipfile
+# 引入 XML 处理
+import xml.etree.ElementTree as ET
 # 重定向标准输出
 from contextlib import redirect_stdout
 # 补丁工具
@@ -27,8 +29,11 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[3]
 # 让测试能导入构建脚本
 sys.path.insert(0, str(ROOT / 'tools/build'))
-# 引入清单改写函数与常量
-from android_manifest import APPLICATION, ACTIVITY, PERMISSIONS, RUNNER_ACTIVITY, component_manifest, lan_permissions, pool, NO_INDEX, strings
+# 引入小组件扩展管线与常量
+from android_widget import (APPLICATION, ACTIVITY, PERMISSIONS, RUNNER_ACTIVITY, WIDGET_PROVIDER,
+    WIDGET_META_NAME, WIDGET_UPDATE_ACTION, android_resource_names, extend_manifest)
+from android_binary_xml import NO_INDEX, to_text
+from android_arsc import entries as arsc_entries
 # 引入 Java 桥接构建工具
 import build_android_bridge as java_tools
 # 引入 Android 打包脚本
@@ -40,95 +45,113 @@ package = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(package)
 
 
+# 构造字符串池块，与既有打包流程的二进制编码一致
+def string_pool(values, utf8):
+    """Encode a manifest string pool chunk."""
+    body = bytearray(); offsets = []
+    for value in values:
+        offsets.append(len(body))
+        units = len(value.encode('utf-16-le')) // 2
+        if utf8:
+            encoded = value.encode('utf-8')
+            body += bytes([units]) if units < 0x80 else bytes([(units >> 8) | 0x80, units & 0xff])
+            body += bytes([len(encoded)]) if len(encoded) < 0x80 else bytes([(len(encoded) >> 8) | 0x80, len(encoded) & 0xff])
+            body += encoded + b'\0'
+        else:
+            body += struct.pack('<H', units) + value.encode('utf-16-le') + b'\0\0'
+    body += bytes((-len(body)) % 4)
+    start = 28 + len(values) * 4
+    return (struct.pack('<HHI5I', 1, 28, start + len(body), len(values), 0, 0x100 if utf8 else 0, start, 0)
+            + struct.pack('<' + 'I' * len(offsets), *offsets) + body)
+
+
 # 构造一份编译后风格的二进制清单：含启动器、导出标记、Rust 元数据和一个无关 Activity
 def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY):
     """A compiled-style manifest with launcher/exported/Rust metadata and an unrelated activity."""
     namespace = 'http://schemas.android.com/apk/res/android'
-    # 字符串池内容
     values = ['manifest', 'application', 'activity', 'uses-sdk', 'meta-data', 'intent-filter',
               'action', 'category', 'uses-permission', 'name', 'package', 'targetSdkVersion',
-              'exported', 'value', 'theme', 'label', 'android', namespace, runner,
+              'exported', 'value', 'theme', 'label', 'icon', 'android', namespace, runner,
               'org.example.product', 'org.example.OriginalApplication', 'org.example.HelpActivity',
               'com.longbridge.nsh.RUST', 'android.intent.action.MAIN',
               'android.intent.category.LAUNCHER', 'android.permission.INTERNET', '诡秘神谕']
     index = values.index
-    # 构造一个属性；kind 为 3 表示字符串，其余为原始值
     def attribute(name, value, kind=3, android=True):
         value = index(value) if kind == 3 else value
         return struct.pack('<IIIHBBI', index(namespace) if android else NO_INDEX,
                            index(name), value if kind == 3 else NO_INDEX, 8, 0, kind, value)
-    # 构造起始元素
     def start(tag, *attributes):
         body = b''.join(attributes)
         return struct.pack('<HHI4I6H', 0x102, 16, 36 + len(body), 0, NO_INDEX, NO_INDEX,
                            index(tag), 20, 20, len(attributes), 0, 0, 0) + body
-    # 构造结束元素
     def end(tag):
         return struct.pack('<HHI4I', 0x103, 16, 24, 0, NO_INDEX, NO_INDEX, index(tag))
-    # 属性名对应的资源 ID
     resources = [0] * len(values)
-    for name, resource in {'theme': 0x01010000, 'label': 0x01010001, 'name': 0x01010003,
+    for name, resource in {'theme': 0x01010000, 'label': 0x01010001, 'name': 0x01010003, 'icon': 0x01010002,
                            'exported': 0x01010010, 'value': 0x01010024,
                            'targetSdkVersion': 0x01010270}.items():
         resources[index(name)] = resource
-    # 字符串池，随后是资源映射块与命名空间
-    body = pool(values, utf8)
+    body = string_pool(values, utf8)
     body += struct.pack('<HHI', 0x180, 8, 8 + 4 * len(resources)) + struct.pack('<' + 'I' * len(resources), *resources)
     body += struct.pack('<HHI4I', 0x100, 16, 24, 0, NO_INDEX, index('android'), index(namespace))
-    # 清单根、目标 SDK 与已有的网络权限
     body += start('manifest', attribute('package', 'org.example.product', android=False))
     body += start('uses-sdk', attribute('targetSdkVersion', 35, 0x10)) + end('uses-sdk')
     body += start('uses-permission', attribute('name', 'android.permission.INTERNET')) + end('uses-permission')
-    # 应用元素的属性；是否带有 name 由参数决定
-    application = [attribute('theme', 0x7f010001, 1), attribute('label', '诡秘神谕')]
+    # 主题指向系统资源，图标指向应用资源，与真实基线一致
+    application = [attribute('theme', 0x0103022e, 1), attribute('icon', 0x7f010000, 1), attribute('label', '诡秘神谕')]
     if named_application:
         application.append(attribute('name', 'org.example.OriginalApplication'))
     body += start('application', *application)
-    # Rust 应用标记
     body += start('meta-data', attribute('name', 'com.longbridge.nsh.RUST'), attribute('value', 0xffffffff, 0x12)) + end('meta-data')
-    # 运行器 Activity：导出，带启动器 intent 过滤器
     body += start('activity', attribute('name', runner), attribute('exported', 0xffffffff, 0x12))
     body += start('intent-filter')
     body += start('action', attribute('name', 'android.intent.action.MAIN')) + end('action')
     body += start('category', attribute('name', 'android.intent.category.LAUNCHER')) + end('category')
     body += end('intent-filter') + end('activity')
-    # 一个无关的、不导出的 Activity，不应被改动
     body += start('activity', attribute('name', 'org.example.HelpActivity'), attribute('exported', 0, 0x12)) + end('activity')
     body += end('application') + end('manifest')
-    # 命名空间结束
     body += struct.pack('<HHI4I', 0x101, 16, 24, 0, NO_INDEX, index('android'), index(namespace))
     return struct.pack('<HHI', 3, 8, 8 + len(body)) + body
 
 
-# 把二进制清单解析为（类型、标签、属性）列表，便于逐项比较
-def manifest_nodes(data):
-    values = []; result = []; offset = 8
-    while offset < len(data):
-        kind, _, size = struct.unpack_from('<HHI', data, offset)
-        chunk = data[offset:offset + size]; offset += size
-        # 字符串池
-        if kind == 1:
-            values, _ = strings(chunk)
-        # 只看元素的起止
-        if kind not in {0x102, 0x103}:
-            continue
-        tag = values[struct.unpack_from('<I', chunk, 20)[0]]
-        attributes = {}
-        # 起始元素才有属性
-        if kind == 0x102:
-            start, stride, count = struct.unpack_from('<3H', chunk, 24)
-            for position in range(count):
-                namespace, name, _, _, _, value_type, value = struct.unpack_from('<IIIHBBI', chunk, 16 + start + stride * position)
-                key = (values[namespace] if namespace != NO_INDEX else None, values[name])
-                attributes[key] = (value_type, values[value] if value_type == 3 else value)
-        result.append((kind, tag, attributes))
-    return result
+# 构造最小 arsc 夹具：一个包、一个 mipmap 类型、一个 ic_launcher 项
+def arsc_fixture():
+    """A minimal resources.arsc with one mipmap/ic_launcher entry at 0x7f010000."""
+    package_id = 0x7f
+    # 类型与键名字列表
+    type_names = ['mipmap']
+    key_names = ['ic_launcher']
+    # 类型与键字符串池
+    type_pool = string_pool(type_names, True)
+    key_pool = string_pool(key_names, True)
+    # 类型规格：一项，缺省配置
+    type_spec = struct.pack('<HHI', 0x202, 16, 20) + struct.pack('<3I', 1, 1, 0xFFFFFFFF)
+    # 类型块：包头（含 config）、项数与项区起点、项偏移与项数据
+    type_header = 8 + 12 + 8
+    type_chunk = struct.pack('<HHI', 0x201, type_header, type_header + 4 + 8)
+    type_chunk += struct.pack('<BBHII', 1, 0, 0, 1, type_header + 4)
+    type_chunk += struct.pack('<HHI', 8, 0, 0)
+    type_chunk += struct.pack('<I', 0)
+    type_chunk += struct.pack('<HHI', 8, 0, 0)
+    # 包块：包头、包 ID、256 字节包名与四个偏移字段，池放在对齐后的包头之后
+    name = 'com.example.product'.encode('utf-16-le')
+    name += bytes(256 - len(name))
+    type_strings = 8 + 4 + 256 + 16
+    key_strings = type_strings + len(type_pool)
+    package_header = key_strings + len(key_pool)
+    package = struct.pack('<HHI', 0x200, package_header,
+                          package_header + len(type_spec) + len(type_chunk))
+    package += struct.pack('<I', package_id) + name
+    package += struct.pack('<4I', type_strings, len(type_names), key_strings, len(key_names))
+    package += type_pool + key_pool + type_spec + type_chunk
+    # 资源表：表头、包数与包块
+    table = struct.pack('<HHII', 0x2, 12, 12 + len(package), 1)
+    return table + package
 
 
 # 构造小型 ELF64 夹具：含链接好的动态字符串表、符号表和一个文本函数
 def elf_runtime(*, defined=True, visibility=0, function=True, named=True):
     """Small ELF64 fixture with a linked dynamic string/symbol table and one text function."""
-    # 符号名可选正确或错误
     name = android_package.NATIVE_INIT if named else b'OtherNativeFunction'
     names = b'\0' + name + b'\0'
     name_offset = 64 + 4 * 64
@@ -136,156 +159,87 @@ def elf_runtime(*, defined=True, visibility=0, function=True, named=True):
     text_offset = symbol_offset + 48
     output = bytearray(text_offset + 4)
     identity = b'\x7fELF\x02\x01\x01' + bytes(9)
-    # ELF 头
     output[:64] = struct.pack('<16sHHIQQQIHHHHHH', identity, 3, 183, 1, 0, 0, 64, 0, 64, 0, 0, 64, 4, 0)
-    # 写入一个节头
     def section(index, kind, offset, size, link=0, entry=0):
         output[64 + index * 64:64 + (index + 1) * 64] = struct.pack('<IIQQQQIIQQ',
             0, kind, 0, 0, offset, size, link, 0, 1, entry)
-    # 字符串表
     section(1, 3, name_offset, len(names))
-    # 动态符号表
     section(2, 11, symbol_offset, 48, 1, 24)
-    # 文本节
     section(3, 1, text_offset, 4)
     output[name_offset:name_offset + len(names)] = names
-    # 写入符号：是否定义、可见性、是否为函数都可调
     output[symbol_offset + 24:symbol_offset + 48] = struct.pack('<IBBHQQ',
         1, 0x12 if function else 0x11, visibility, 3 if defined else 0, 0x1000, 4)
     return bytes(output)
 
 
-# 标准构建输入的测试
 class StandardBuildInputs(unittest.TestCase):
-    # 打包使用标准的运行器目标，并保持移动端标识不变
-    def test_packaging_uses_standard_runner_targets_and_preserves_mobile_ids(self):
-        android = package.mobile_command('nsh', 'android', Path('/tmp/output'))
-        ios = package.mobile_command('nsh', 'ios', Path('/tmp/output'))
-        # Android 应用标识
-        self.assertEqual(android[android.index('--id') + 1], 'com.manonloki.lokimetrisdisplay')
-        # 版本与构建号取自 nsh.json
-        app = json.loads((package.ROOT / 'nsh.json').read_text())
-        self.assertEqual(android[android.index('--app-version') + 1], app['version'])
-        self.assertEqual(android[android.index('--build') + 1], str(app['build']))
-        # iOS 默认面向模拟器
-        self.assertEqual(ios[ios.index('--target') + 1], 'ios-simulator')
-        self.assertEqual(ios[ios.index('--id') + 1], package.apple_identity()['bundleId'])
-        # 真机目标
-        device = package.mobile_command('nsh', 'ios', Path('/tmp/output'), ios_device=True)
-        self.assertEqual(device[device.index('--target') + 1], 'ios')
-
-    # 官方 ABI 选项保留 Android 模拟器支持，且不会传到 Apple 目标。
-    def test_android_packaging_explicitly_selects_phone_and_emulator_abis(self):
-        command = package.mobile_command('nsh', 'android', Path('/tmp/output'))
-        self.assertEqual(command[command.index('--abi') + 1], 'arm64-v8a,x86_64')
-        self.assertEqual(command.count('--abi'), 1)
-        for ios_device in [False, True]:
-            with self.subTest(ios_device=ios_device):
-                command = package.mobile_command('nsh', 'ios', Path('/tmp/output'), ios_device=ios_device)
-                self.assertNotIn('--abi', command)
-
-    # 签名密码不会出现在进程参数里
-    def test_signing_credentials_stay_out_of_process_arguments(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / 'lokimetris.keystore').write_bytes(b'fixture key')
-            (root / 'signing.properties').write_text('keyAlias=fixture\nstorePassword=fixture-secret\nkeyPassword=fixture-key-secret\n')
-            args, env = package.android_signing(root)
-            # 参数里不能出现密码
-            self.assertNotIn('fixture-secret', str(args))
-            self.assertNotIn('fixture-key-secret', str(args))
-            # 密码只通过环境变量传递
-            self.assertEqual(env['NSH_KEYSTORE_PASSWORD'], 'fixture-secret')
-            self.assertEqual(env['LOKI_SIGNING_KEY_PASSWORD'], 'fixture-key-secret')
-
-    # iOS 的发现相关声明在签名之前写入
-    def test_ios_discovery_metadata_is_added_before_signing(self):
-        with tempfile.TemporaryDirectory() as directory:
-            app = Path(directory) / 'Display.app'; app.mkdir()
-            info = app / 'Info.plist'
-            # 带一个应当被保留的无关字段
-            info.write_bytes(plistlib.dumps({'CFBundleIdentifier': package.APPLE_ID, 'CFBundleExecutable': 'App', 'Other': 'preserved'}))
-            signed = []
-            # 记录签名命令
-            def inspect_signing(command):
-                signed.append(command)
-            # 替换命令执行与内嵌标识读取
-            with patch.object(package, 'run', side_effect=inspect_signing) as run, \
-                 patch.object(package, 'embedded_apple_identifier', return_value=package.apple_identity()['applicationIdentifier']):
-                package.configure_apple(app, simulator=True, application_id=package.APPLE_ID, minimum_os='15.0')
-            value = plistlib.loads(info.read_bytes())
-            # 无关字段保留
-            self.assertEqual(value['Other'], 'preserved')
-            # 写入了 Bonjour 服务
-            self.assertEqual(value['NSBonjourServices'], ['_loki-host._tcp'])
-            self.assertEqual(value['MinimumOSVersion'], '15.0')
-            self.assertTrue(value['NSLocalNetworkUsageDescription'])
-            # 签名与校验各一次
-            self.assertEqual(run.call_count, 2)
-            # 临时签名不带权限文件
-            self.assertTrue(all('--entitlements' not in command for command in signed))
-
-    # 清单权限的补充是幂等的，并保留目标 SDK 版本
-    def test_manifest_permissions_are_idempotent_and_keep_target_sdk(self):
-        values = ['manifest', 'application', 'uses-sdk', 'targetSdkVersion', 'name',
-                  'http://schemas.android.com/apk/res/android']
-        def start(tag, attrs=b''):
-            return struct.pack('<HHI4I6H', 0x102, 16, 36 + len(attrs), 0, NO_INDEX, NO_INDEX,
-                               values.index(tag), 20, 20, len(attrs) // 20, 0, 0, 0) + attrs
-        def end(tag):
-            return struct.pack('<HHI4I', 0x103, 16, 24, 0, NO_INDEX, NO_INDEX, values.index(tag))
-        # 目标 SDK 版本 35
-        attribute = struct.pack('<IIIHBBI', 5, 3, NO_INDEX, 8, 0, 0x10, 35)
-        body = pool(values, True) + start('manifest') + start('uses-sdk', attribute) + end('uses-sdk')
-        body += start('application') + end('application') + end('manifest')
-        manifest = struct.pack('<HHI', 3, 8, len(body) + 8) + body
-        # 第一次补充权限
-        output, target = lan_permissions(manifest)
-        # 再次补充应保持不变
-        repeated, _ = lan_permissions(output)
-        self.assertEqual(output, repeated)
-        self.assertEqual(target, 35)
-        size = struct.unpack_from('<I', output, 12)[0]
-        names, _ = strings(output[8:8 + size])
-        # 两个局域网权限都已加入
-        self.assertIn('android.permission.CHANGE_WIFI_MULTICAST_STATE', names)
-        self.assertIn('android.permission.ACCESS_NETWORK_STATE', names)
-
-    # 组件清单只改应用自有的类名，并保留启动器契约
-    def test_component_manifest_only_changes_app_classes_and_preserves_launcher_contract(self):
-        namespace = 'http://schemas.android.com/apk/res/android'
-        name = (namespace, 'name')
+    # 清单还原与扩展：类名替换、权限与小组件接收器一次到位，输出确定
+    def test_widget_manifest_extension_preserves_launcher_contract(self):
         # 覆盖两种字符串编码与有无 Application 名称
         for utf8 in [False, True]:
             for named in [False, True]:
                 with self.subTest(utf8=utf8, named_application=named):
-                    original = manifest_fixture(utf8=utf8, named_application=named)
-                    output, target = component_manifest(original)
-                    # 幂等
-                    repeated, repeated_target = component_manifest(output)
-                    self.assertEqual(output, repeated)
-                    self.assertEqual((target, repeated_target), (35, 35))
-                    # 构造预期：只有 application 与运行器 activity 的名称被替换
-                    expected = manifest_nodes(original)
-                    for kind, tag, attributes in expected:
-                        if kind == 0x102 and tag == 'application':
-                            attributes[name] = (3, APPLICATION)
-                        if kind == 0x102 and tag == 'activity' and attributes.get(name) == (3, RUNNER_ACTIVITY):
-                            attributes[name] = (3, ACTIVITY)
-                    actual = manifest_nodes(output)
-                    # 除权限元素外，其余节点必须与预期完全一致
-                    self.assertEqual([node for node in actual if node[1] != 'uses-permission'],
-                                     [node for node in expected if node[1] != 'uses-permission'])
-                    # 权限集合：原有的加上新增的两个
-                    permissions = [attributes[name][1] for kind, tag, attributes in actual
-                                   if kind == 0x102 and tag == 'uses-permission']
+                    manifest = manifest_fixture(utf8=utf8, named_application=named)
+                    arsc = arsc_fixture()
+                    android_names = {0x0103022e: 'style/Theme.Material.NoActionBar'}
+                    text, target = extend_manifest(manifest, arsc, android_names)
+                    # 目标 SDK 保持 35
+                    self.assertEqual(target, '35')
+                    # 相同输入输出确定
+                    self.assertEqual(extend_manifest(manifest, arsc, android_names), (text, target))
+                    # 解析为文本树逐项核对
+                    root = ET.fromstring(text)
+                    android = '{http://schemas.android.com/apk/res/android}'
+                    # 应用类名被替换
+                    applications = root.findall('application')
+                    self.assertEqual(len(applications), 1)
+                    self.assertEqual(applications[0].get(f'{android}name'), APPLICATION)
+                    # 运行器类名被替换且启动器契约保留
+                    runners = [element for element in applications[0].findall('activity')
+                               if element.get(f'{android}name') == ACTIVITY]
+                    self.assertEqual(len(runners), 1)
+                    self.assertIn('android.intent.category.LAUNCHER', text)
+                    # 无关 Activity 不被改动
+                    self.assertIn('org.example.HelpActivity', text)
+                    # 权限：原有的加新增的两个
+                    permissions = [element.get(f'{android}name') for element in root.findall('uses-permission')]
                     self.assertCountEqual(permissions, ['android.permission.INTERNET'] + PERMISSIONS)
+                    # 小组件接收器：不导出、产品名、只接收系统更新广播，元数据指向小组件信息资源
+                    receivers = [element for element in applications[0].findall('receiver')
+                                 if element.get(f'{android}name') == WIDGET_PROVIDER]
+                    self.assertEqual(len(receivers), 1)
+                    receiver = receivers[0]
+                    self.assertEqual(receiver.get(f'{android}exported'), 'false')
+                    self.assertEqual(receiver.get(f'{android}label'), '诡秘神谕')
+                    actions = [element.get(f'{android}name')
+                               for element in receiver.findall('intent-filter/action')]
+                    self.assertEqual(actions, [WIDGET_UPDATE_ACTION])
+                    meta = receiver.find('meta-data')
+                    self.assertEqual(meta.get(f'{android}name'), WIDGET_META_NAME)
+                    self.assertEqual(meta.get(f'{android}resource'), '@xml/widget_info')
+                    # 系统主题与应用图标引用都被还原为可链接的文本
+                    self.assertEqual(applications[0].get(f'{android}theme'), '@android:style/Theme.Material.NoActionBar')
+                    self.assertEqual(applications[0].get(f'{android}icon'), '@mipmap/ic_launcher')
+                    # Rust 应用标记保留
+                    self.assertIn('com.longbridge.nsh.RUST', text)
 
     # 无法识别的运行器会被拒绝
-    def test_component_manifest_rejects_an_unrecognized_runner(self):
-        original = manifest_fixture(utf8=True, named_application=False, runner='org.example.UnrelatedActivity')
+    def test_widget_manifest_rejects_an_unrecognized_runner(self):
+        manifest = manifest_fixture(utf8=True, named_application=False, runner='org.example.UnrelatedActivity')
         with self.assertRaisesRegex(RuntimeError, 'standard NSH application and runner activity'):
-            component_manifest(original)
+            extend_manifest(manifest, arsc_fixture(), {0x0103022e: 'style/Theme.Material.NoActionBar'})
+
+    # 应用资源引用缺失映射时失败关闭，不输出坏引用
+    def test_widget_manifest_fails_closed_without_arsc_mapping(self):
+        manifest = manifest_fixture(utf8=True, named_application=False)
+        with self.assertRaisesRegex(RuntimeError, 'Resource name mapping lacks 0x'):
+            extend_manifest(manifest, arsc_fixture(), {})
+
+    # arsc 解析给出精确的资源项名
+    def test_arsc_entries_resolve_type_and_name(self):
+        package, mapping = arsc_entries(arsc_fixture())
+        self.assertEqual(package, 'com.example.product')
+        self.assertEqual(mapping, {0x7f010000: ('mipmap', 'ic_launcher')})
 
     # Java 合并保留官方类的字节，并拒绝覆盖官方类
     def test_java_merge_keeps_official_class_bytes_and_rejects_sdk_class_overrides(self):

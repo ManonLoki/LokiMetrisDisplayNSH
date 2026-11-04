@@ -250,7 +250,7 @@ def write_jar(path, entries):
 
 
 # 把应用自有的 Java 适配层编译到官方 NSH 之上
-def build(args):
+def build(args, extra_sources=()):
     # 定位 SDK
     sdk = sdk_directory(args.sdk)
     # 定位平台 jar
@@ -323,8 +323,8 @@ def build(args):
                                           for p in sdk_sources}}
         # 以 Java 8 级别编译
         command = [str(javac), '--release', '8', '-classpath', os.pathsep.join(dependencies), '-d', str(classes)]
-        # 编译官方源码与应用源码
-        subprocess.run(command + [str(path) for path in sdk_sources + sources], check=True)
+        # 编译官方源码、应用源码与资源生成的源码（如 R.java）
+        subprocess.run(command + [str(path) for path in sdk_sources + list(sources) + [str(path) for path in extra_sources]], check=True)
         # 收集本应用编译出的类
         app_entries = {p.relative_to(classes).as_posix(): p.read_bytes() for p in sorted(classes.rglob('*.class'))}
         # 没有产出任何类

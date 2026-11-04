@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 小组件资源文本 -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 小组件选择器中的描述 -->
+    <string name="widget_description">查看当日 Token、额度与 Hooks 摘要</string>
+</resources>

@@ -42,9 +42,10 @@ def commands(suite, output):
             result.append(['nsh', 'test', 'src/tests/desktop/' + name, '--junit',
                            str(output / (name + '.xml'))])
         return result
-    # Android 入口测试
+    # Android 入口与小组件渲染测试
     if suite == 'android':
-        return [[python, 'src/tests/android/test_entry.py']]
+        return [[python, 'src/tests/android/test_entry.py'],
+                [python, 'src/tests/android/test_widget.py']]
     # 手表缓存测试
     if suite == 'watch':
         return [[python, 'platform/watchos/Tests/run_tests.py', '--report', str(output / 'cache.json')]]

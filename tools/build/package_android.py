@@ -15,8 +15,8 @@ import zipfile
 
 # 引入桥接构建与 SDK 定位函数
 from build_android_bridge import build, platform_jar, sdk_directory
-# 引入清单改写函数
-from android_manifest import component_manifest
+# 引入小组件扩展管线
+from android_widget import WIDGET_RES, android_resource_names, assemble, extend_manifest, link_resources
 
 # 运行时必须导出的 JNI 初始化函数名
 NATIVE_INIT = b'Java_com_manonloki_lokimetrisdisplay_bridge_DisplayApplication_nativeInit'
@@ -134,7 +134,7 @@ def verify_jni_exports(apk):
     return sorted(abis)
 
 
-# 替换 APK 的 Java 桥接与清单，对齐并重新签名
+# 替换 APK 的 Java 桥接、小组件资源与清单，对齐并重新签名
 def update_java_and_sign(apk, signing, env, log):
     # 过时的官方/先前运行时无法初始化本应用新的 Application。
     # 旧的或官方运行时无法初始化本应用新的 Application
@@ -161,8 +161,48 @@ def update_java_and_sign(apk, signing, env, log):
     with tempfile.TemporaryDirectory(prefix='nsh-apk-', dir=apk.parent) as temporary:
         # 暂存目录
         stage = Path(temporary)
-        # 编译桥接 Java 源码
-        build(argparse.Namespace(out=stage / 'java', sdk=sdk, compile_sdk=37, javac=None))
+        # 读取基线清单与资源表，并把基线资源与小组件资源合并到同一资源目录
+        with zipfile.ZipFile(apk) as original:
+            # 基线清单与资源表
+            base_manifest = original.read('AndroidManifest.xml')
+            base_arsc = original.read('resources.arsc')
+            # 基线资源条目
+            base_res = [name for name in original.namelist() if name.startswith('res/')]
+        # 合并资源目录
+        res_dir = stage / 'res'
+        # 逐条复制基线资源
+        with zipfile.ZipFile(apk) as original:
+            # 逐个条目
+            for name in base_res:
+                # 保持相对路径
+                target = res_dir / Path(name).relative_to('res')
+                # 建目录并写入
+                target.parent.mkdir(parents=True, exist_ok=True)
+                # 原样写入
+                target.write_bytes(original.read(name))
+        # 复制小组件资源
+        for source in sorted(WIDGET_RES.rglob('*')):
+            # 只复制文件
+            if source.is_file():
+                # 目标路径
+                target = res_dir / source.relative_to(WIDGET_RES)
+                # 建目录
+                target.parent.mkdir(parents=True, exist_ok=True)
+                # 原样复制
+                shutil.copy2(source, target)
+        # 还原并扩展清单；系统资源名由 aapt2 解析
+        manifest_text, target_sdk = extend_manifest(
+            base_manifest, base_arsc, android_resource_names(tools, platform, log))
+        # 目标 SDK 37 起需要显式的本地网络运行时权限支持
+        if target_sdk is not None and int(target_sdk) >= 37:
+            # 报错：目标 SDK 37 起需显式声明本地网络权限
+            raise RuntimeError('Target SDK 37+ requires explicit local-network runtime permission support')
+        # 链接资源并生成 R 类
+        linked, java_out = link_resources(platform, tools, res_dir, manifest_text, stage, log)
+        # 资源生成的 R.java
+        r_sources = sorted(java_out.rglob('R.java'))
+        # 编译桥接 Java 源码（含 R.java）
+        build(argparse.Namespace(out=stage / 'java', sdk=sdk, compile_sdk=37, javac=None), r_sources)
         # dex 输出目录
         dex = stage / 'dex'; dex.mkdir()
         # 用 D8 转成 DEX
@@ -173,32 +213,8 @@ def update_java_and_sign(apk, signing, env, log):
                         str(stage / 'java/classes.jar')], check=True, stdout=log, stderr=subprocess.STDOUT)
         # 未签名 APK 路径
         unsigned = stage / 'unsigned.apk'
-        # 复制原 APK，去掉旧签名与旧 DEX，改写清单
-        with zipfile.ZipFile(apk) as original, zipfile.ZipFile(unsigned, 'w') as output:
-            # 遍历原 APK 条目
-            for entry in original.infolist():
-                # 跳过签名信息与旧 dex
-                if entry.filename.startswith('META-INF/') or (entry.filename.startswith('classes') and entry.filename.endswith('.dex')):
-                    # 跳过
-                    continue
-                # 清单文件
-                if entry.filename == 'AndroidManifest.xml':
-                    # 改写清单并取目标 SDK
-                    manifest, target_sdk = component_manifest(original.read(entry.filename))
-                    # 目标 SDK 37 起需要显式的本地网络运行时权限支持
-                    if target_sdk is not None and target_sdk >= 37:
-                        # 报错：目标 SDK 37 起需显式声明本地网络权限
-                        raise RuntimeError('Target SDK 37+ requires explicit local-network runtime permission support')
-                    # 写入新清单
-                    output.writestr(entry, manifest)
-                # 其他条目
-                else:
-                    # 原样写入
-                    output.writestr(entry, original.read(entry.filename))
-            # 加入新的 DEX
-            for path in sorted(dex.glob('*.dex')):
-                # 加入新生成的 dex
-                output.write(path, path.name, compress_type=zipfile.ZIP_DEFLATED)
+        # 组装：链接资源 + 基线资产/本地库 + 新 DEX
+        assemble(linked, apk, sorted(dex.glob('*.dex')), unsigned, log)
         # 对齐后的 APK 路径
         aligned = stage / 'aligned.apk'
         # 16 KB 页对齐

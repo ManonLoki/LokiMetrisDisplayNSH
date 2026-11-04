@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 中号小组件：左侧用量块，右侧各 Agent 明细与额度行 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_background"
+    android:padding="12dp">
+    <!-- 左列：与小号一致的用量块 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <!-- 产品名 -->
+        <TextView
+            android:id="@+id/widget_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="诡秘神谕"
+            android:textSize="11sp"
+            android:textColor="#FF9AA3AF" />
+        <!-- Token 总量或备用文案 -->
+        <TextView
+            android:id="@+id/widget_token"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FFF2F4F8" />
+        <!-- 统计日期与同步时间 -->
+        <TextView
+            android:id="@+id/widget_sync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="#FF9AA3AF" />
+        <!-- Hooks 行 -->
+        <TextView
+            android:id="@+id/widget_hooks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#FFC9D1DC" />
+    </LinearLayout>
+    <!-- 右列：Agent 明细与额度 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:orientation="vertical"
+        android:gravity="center_vertical">
+        <!-- Agent 明细行（最多三行） -->
+        <TextView
+            android:id="@+id/widget_agent_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#FFF2F4F8" />
+        <TextView
+            android:id="@+id/widget_agent_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#FFF2F4F8" />
+        <TextView
+            android:id="@+id/widget_agent_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#FFF2F4F8" />
+        <!-- 额度行（最多两行） -->
+        <TextView
+            android:id="@+id/widget_quota_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="#FFC9D1DC" />
+        <TextView
+            android:id="@+id/widget_quota_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="#FFC9D1DC" />
+    </LinearLayout>
+</LinearLayout>
