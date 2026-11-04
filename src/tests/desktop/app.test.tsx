@@ -171,14 +171,14 @@ test("snapshot numbers, hooks and connection phases", async () => {
   expect(app.texts()).toContain("60 秒内有效 · 保持应用在前台");
   expect(app.texts().join("\n")).not.toContain("已连接");
   // 推进 1 秒触发握手
-  await app.clock.runFor(1000);
+  await app.clock!.runFor(1000);
   expect(app.texts().join("\n")).not.toContain("已连接");
   // 握手后配对码消失
   expect(app.texts().includes(code ?? "")).toBe(false);
   // 配对记录已保存
   expect(app.storage()[KEY_PAIRED]?.includes(DESKTOP)).toBe(true);
   // 再推进 1 秒收到快照
-  await app.clock.runFor(1000);
+  await app.clock!.runFor(1000);
   // 收到快照后才算已连接
   await app.waitUntil(() => app.texts().join("\n").includes("已连接"));
   expect(app.texts()).toContain("已连接桌面");
@@ -314,7 +314,7 @@ test("pairing window expires and can be started again", async () => {
   // 显示配对码
   expect(app.texts()).toContain(makePairingCode(T0, DESKTOP));
   // 快进整个配对窗口
-  await app.clock.fastForward(PAIRING_WINDOW_MS);
+  await app.clock!.fastForward(PAIRING_WINDOW_MS);
   // 提示窗口已过期
   await app.waitUntil(() => app.texts().includes("配对窗口已过期，请重新选择桌面。"));
   expect(app.texts().join("\n")).not.toContain("已连接");
@@ -394,7 +394,7 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
   await app.press("设置");
   // 连接桌面
   await app.press(`host-connect-${DESKTOP}`);
-  await app.clock.runFor(1000);
+  await app.clock!.runFor(1000);
   await app.press("展示台");
   // 第一张图片已挂载
   expect(app.shows("hook-image-1")).toBe(true);

@@ -98,20 +98,20 @@ export function UsageCard(props: UsageCardProps) {
     <CyberNumber value={text()} active={props.active} style={{ width: "100%", alignItems: "center" }} render={(value, exiting) =>
       <Scroll horizontal scrollbar={false} style={{ maxWidth: "100%", flexShrink: 1 }} contentStyle={{ alignItems: "center" }}>
         {/* 退出动画中的副本不带 testID */}
-        <Text testID={exiting ? undefined : "usage-total"} selectable numberOfLines={1} style={numberStyle()}>{value}</Text>
+        <Text testID={exiting ? undefined : "usage-total"} style={[numberStyle(), { numberOfLines: 1, userSelect: "text" }]}>{value}</Text>
       </Scroll>
     } />
   </View>;
   // 精确值行：有值时显示并上报高度
-  const exact = () => hasExact() ? <View onLayout={(bounds) => measureHeight(detailsHeight, bounds)}
+  const exact = () => hasExact() ? <View onLayout={({ bounds }) => measureHeight(detailsHeight, bounds)}
     // 样式：宽度占满并居中
     style={{ width: "100%", alignItems: "center" }}>
     {/* 横向可滚动，避免长文本被截断 */}
     <Scroll horizontal scrollbar={false} style={{ maxWidth: "100%", flexShrink: 1 }}>
       {/* 精确值文本 */}
-      <Text testID="usage-exact" selectable numberOfLines={1} accessibilityLabel={projection().amountAccessibility ?? ""}
+      <Text testID="usage-exact" accessibilityLabel={projection().amountAccessibility ?? ""}
         // 样式：等宽字体与详情字号
-        style={{ color: muted, fontFamily: "monospace", fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>
+        style={{ numberOfLines: 1, userSelect: "text", color: muted, fontFamily: "monospace", fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>
         {projection().exact}
       </Text>
     </Scroll>
@@ -121,7 +121,7 @@ export function UsageCard(props: UsageCardProps) {
     {projection().missingText}
   </Text>;
   // 卡片入场容器
-  return <CyberArrival order={0} active={props.active} testID="usage-card" onLayout={props.onFrame}
+  return <CyberArrival order={0} active={props.active} testID="usage-card" onLayout={({ bounds }) => props.onFrame?.(bounds)}
     // 样式：撑满、背景色与圆角
     style={{ flex: 1, minWidth: 0, minHeight: 0, backgroundColor: background, borderRadius: 18,
       // 描边与裁剪
@@ -129,9 +129,9 @@ export function UsageCard(props: UsageCardProps) {
     {/* 表面扫描光效 */}
     <CyberSurfaceScan active={props.active} surfaceColor={background} testID="usage-surface-scan" />
     {/* 隐形画布：借助 measureText 二分求出能放下的最大字号 */}
-    <Canvas pointerEvents="none" accessible={false} accessibilityElementsHidden
+    <Canvas accessible={false} accessibilityElementsHidden
       // 样式：隐藏的占位
-      style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} draw={(cx) => {
+      style={{ pointerEvents: "none", position: "absolute", width: 1, height: 1, opacity: 0 }} draw={(cx) => {
         // 二分下界
         let low = compact() ? 20 : 18;
         // 二分上界
@@ -156,7 +156,7 @@ export function UsageCard(props: UsageCardProps) {
       // 内容区样式：内边距、间距与最小高度
       contentStyle={{ padding: padding(), gap: spacing(), minHeight: props.height() - 2 }}>
       {/* 标题行：标题与日期，并测量高度 */}
-      <View onLayout={(bounds) => measureHeight(headerHeight, bounds)}
+      <View onLayout={({ bounds }) => measureHeight(headerHeight, bounds)}
         // 样式：横向换行排列，两端对齐
         style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", rowGap: 4 }}>
         {/* 标题 */}
@@ -182,7 +182,7 @@ export function UsageCard(props: UsageCardProps) {
             <Text style={{ color: muted, fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>设备时区</Text>
             {/* 时区文本右对齐且可横向滚动 */}
             <Scroll horizontal scrollbar={false} style={{ flex: 1, minWidth: 0 }} contentStyle={{ flexGrow: 1, justifyContent: "flex-end" }}>
-              <Text testID="usage-timezone" numberOfLines={1} style={{ color: muted, fontSize: detailSize(), lineHeight: detailSize() * 1.4, textAlign: "right" }}>{projection().zone}</Text>
+              <Text testID="usage-timezone" style={{ numberOfLines: 1, color: muted, fontSize: detailSize(), lineHeight: detailSize() * 1.4, textAlign: "right" }}>{projection().zone}</Text>
             </Scroll>
           </View>
         </> : missing()}
@@ -225,12 +225,12 @@ function ProviderTitle(props: { name: string; plan?: string | null; size: number
     // 内容区样式：横向排列，底部对齐
     contentStyle={{ flexDirection: "row", gap: 6, alignItems: "flex-end" }}>
     {/* 供应商名称 */}
-    <Text numberOfLines={1} style={{ color: foreground, fontSize: props.size, lineHeight: props.lineHeight, fontWeight: props.weight }}>{props.name}</Text>
+    <Text style={{ numberOfLines: 1, color: foreground, fontSize: props.size, lineHeight: props.lineHeight, fontWeight: props.weight }}>{props.name}</Text>
     {/* 有套餐时显示徽标 */}
     {props.plan ? <View style={{ borderRadius: 4, backgroundColor: cyberAlpha(color.cyan, 0.08), borderWidth: 0.5,
       // 边框颜色与内边距
       borderColor: cyberAlpha(color.cyan, 0.3), paddingHorizontal: 5, paddingVertical: 1 }}>
-      <Text numberOfLines={1} style={{ color: color.cyan, fontSize: 10, lineHeight: 14, fontWeight: 500 }}>{props.plan}</Text>
+      <Text style={{ numberOfLines: 1, color: color.cyan, fontSize: 10, lineHeight: 14, fontWeight: 500 }}>{props.plan}</Text>
     </View> : null}
   </Scroll>;
 }
@@ -245,7 +245,7 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
       <ProviderTitle name={props.row.name} plan={props.row.plan} size={18 * props.scale} lineHeight={25 * props.scale} weight={700} />
       {/* 有紧凑用量时显示，宽度不超过 55% */}
       {props.row.compact != null ? <Scroll horizontal scrollbar={false} style={{ maxWidth: props.width * 0.55, flexShrink: 1 }}>
-        <Text selectable numberOfLines={1} style={{ color: foreground, fontFamily: "monospace", fontSize: 18 * props.scale,
+        <Text style={{ numberOfLines: 1, userSelect: "text", color: foreground, fontFamily: "monospace", fontSize: 18 * props.scale,
           // 行高
           lineHeight: 18 * props.scale * 1.35 }}>{props.row.compact}</Text>
       </Scroll> : null}
@@ -259,9 +259,9 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
         // 样式：横向排列，间距 3
         style={{ flexDirection: "row", gap: 3, alignItems: "center" }}>
         {/* 窗口标签 */}
-        <Text numberOfLines={1} style={{ color: muted, fontSize: props.detailSize, lineHeight: props.detailSize * 1.4, fontWeight: 500 }}>{window.kindLabel}</Text>
+        <Text style={{ numberOfLines: 1, color: muted, fontSize: props.detailSize, lineHeight: props.detailSize * 1.4, fontWeight: 500 }}>{window.kindLabel}</Text>
         {/* 剩余百分比，颜色表示等级 */}
-        <Text numberOfLines={1} style={{ color: quotaColor(window.level), fontFamily: "monospace", fontSize: props.detailSize,
+        <Text style={{ numberOfLines: 1, color: quotaColor(window.level), fontFamily: "monospace", fontSize: props.detailSize,
           // 行高与字重
           lineHeight: props.detailSize * 1.4, fontWeight: 500 }}>{window.percent}</Text>
         {/* 剩余额度条 */}
@@ -270,9 +270,9 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
       {/* 弹性占位，把精确值推到右侧 */}
       <View style={{ flex: 1 }} />
       {/* 精确值 */}
-      {props.row.exact != null ? <Text selectable numberOfLines={1} accessibilityLabel={`Token ${props.row.tokenText}`}
+      {props.row.exact != null ? <Text accessibilityLabel={`Token ${props.row.tokenText}`}
         // 样式：等宽字体与详情字号
-        style={{ color: muted, fontFamily: "monospace", fontSize: props.detailSize, lineHeight: props.detailSize * 1.4 }}>{props.row.exact}</Text> : null}
+        style={{ numberOfLines: 1, userSelect: "text", color: muted, fontFamily: "monospace", fontSize: props.detailSize, lineHeight: props.detailSize * 1.4 }}>{props.row.exact}</Text> : null}
     </Scroll> : null}
   </View>;
 }

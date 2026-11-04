@@ -41,7 +41,7 @@ export function ConnectionSettings(props: ConnectionSettingsProps) {
   // 忘记前先弹确认框，用户点击“忘记”才真正执行
   const forget = async (id: string) => {
     // 弹窗确认是否忘记
-    const result = await AlertDialog.show({ title: "忘记此桌面？",
+    const { action } = await AlertDialog.show({ title: "忘记此桌面？",
       // 说明：将删除本机配对凭据
       description: "将删除本机配对凭据。再次连接需要重新配对；桌面端的记录需在桌面设备管理中移除。",
       // 按钮：取消与忘记
@@ -49,7 +49,7 @@ export function ConnectionSettings(props: ConnectionSettingsProps) {
       // 按 Esc 或点击背景可关闭
       closeOnEscape: true, closeOnBackdropPress: true });
     // 选择“忘记”则回调
-    if (result === "forget") props.onForget(id);
+    if (action === "forget") props.onForget(id);
   };
   // 卡片主体
   return <SettingsCard order={1} testID="settings-connection-card">
@@ -81,7 +81,7 @@ export function ConnectionSettings(props: ConnectionSettingsProps) {
       // 宽度占满、内边距与间距
       width: "100%", padding: 16, gap: 8 }}>
       <Text style={{ color: color.cyan, fontSize: 12, lineHeight: 18 }}>在桌面输入配对码</Text>
-      <Text testID="devices-pair-code" selectable style={{ color: color.ink, fontSize: 38, letterSpacing: 8, fontWeight: 600, fontFamily: "monospace" }}>
+      <Text testID="devices-pair-code" style={{ userSelect: "text", color: color.ink, fontSize: 38, letterSpacing: 8, fontWeight: 600, fontFamily: "monospace" }}>
         {pairingCode()}
       </Text>
       <Text style={{ color: color.muted, fontSize: 11, lineHeight: 16 }}>60 秒内有效 · 保持应用在前台</Text>

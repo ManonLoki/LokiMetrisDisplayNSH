@@ -19,8 +19,8 @@ crate-type = ["rlib"]
 [dependencies]
 # 小组件核心，与主应用共享规则
 loki_widget_core = { path = "crates/widget-core" }
-# nsh 运行时
-nsh-core = "0.3.0"
+# 官方 v0.4.0 源码；iOS 的 crates.io 包遗漏跨 crate 共享的 speech.rs。
+nsh-core = { version = "=0.4.0", git = "https://github.com/longbridge/nsh.git", rev = "e626a8dd8f8d8b277b9507cfd5ac74d0e67020f3" }
 # 序列化
 serde = { version = "1", features = ["derive"] }
 # JSON 序列化

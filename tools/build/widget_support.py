@@ -129,7 +129,8 @@ if __name__ == '__main__':
 
 
 # 编译小组件核心，并把一个很小的原生宿主垫片链接进 NSH 运行器
-def build_widget_support(env, *, simulator, sdk_path, developer, deployment, root, run, log=None):
+def build_widget_support(env, *, simulator, sdk_path, developer, deployment, root, run, log=None,
+                         runner_manifest=None):
     # 文档说明：编译扩展核心并链接宿主垫片
     """Compile the extension core and link a small native host shim into the NSH runner."""
     # 目标三元组与 SDK 名称
@@ -215,7 +216,7 @@ def build_widget_support(env, *, simulator, sdk_path, developer, deployment, roo
     # 生成链接器包装脚本
     wrapper = widget_linker(output, response_file, sdk=sdk,
                             # 运行器清单路径
-                            runner_manifest=root / '.nsh/rust/ios-app/Cargo.toml')
+                            runner_manifest=runner_manifest or root / '.nsh/rust/ios-app/Cargo.toml')
     # 通过环境变量让 Cargo 使用包装后的链接器
     key = 'CARGO_TARGET_' + target.upper().replace('-', '_') + '_LINKER'
     # 把真实链接器替换为包装脚本

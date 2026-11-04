@@ -1,6 +1,6 @@
 # 构建与打包
 
-主应用使用 NSH 0.3.0、共享 TSX 与 Rust，支持 macOS、Windows、Linux、Android 和 iOS/iPadOS。iOS 默认包含独立 WidgetKit 扩展，Apple Watch 通过选项配套打包。小组件的纯 Rust 核心只复用项目已锁定的依赖，无需 KMP。
+主应用使用 NSH 0.4.0、共享 TSX 与 Rust，支持 macOS、Windows、Linux、Android 和 iOS/iPadOS。iOS 默认包含独立 WidgetKit 扩展，Apple Watch 通过选项配套打包。小组件的纯 Rust 核心只复用项目已锁定的依赖，无需 KMP。
 
 所有命令在项目根目录执行。先准备已安装的 `nsh`、Rust/Cargo、Python 3.11+ 与目标平台工具链。脚本复用现有工具，Rust 依赖由 `Cargo.toml` 和 `Cargo.lock` 管理。
 
@@ -43,7 +43,7 @@ python3 tools/build/package_app.py --target android --out output/packages/build-
 adb -s <设备序列号> install -r <生成的APK路径>
 ```
 
-包装器为两个 64 位 ABI 构建应用 runtime，核对 JNI 导出，保留官方 NSH Java 类，再编译自有 Application/Activity 接线，经 D8、对齐和原证书签名后生成 APK。清单补入网络、多播权限与应用入口。编译 SDK 与目标 SDK 分别核对；目前目标 SDK 达到 37 时会因缺少本地网络动态权限支持而拒绝出包。
+包装器通过 NSH 0.4 的官方 `--abi arm64-v8a,x86_64` 选项为手机与模拟器构建两个 64 位 ABI 的应用 runtime，核对 JNI 导出，保留官方 NSH Java 类，再编译自有 Application/Activity 接线，经 D8、对齐和原证书签名后生成 APK。清单补入网络、多播权限与应用入口。编译 SDK 与目标 SDK 分别核对；目前目标 SDK 达到 37 时会因缺少本地网络动态权限支持而拒绝出包。
 
 移动标识可用 `--id` 覆盖。已有安装须沿用原标识与证书，才能覆盖升级并保留身份及配对。移动包使用项目入口完成组装。
 

@@ -1,5 +1,5 @@
 // 引入 nsh 的画布、视图、响应式原语与动画 API
-import { Canvas, View, cleanup, context, effect, signal, split, untracked, type Accessor, type JSX, type StyleProp, type ViewProps, type ViewStyle, type YNode, Animated, createAnimatedValue, type CompositeAnimation, type Easing, reduceMotion } from "nsh";
+import { Canvas, View, cleanup, context, effect, signal, split, untracked, type Accessor, type JSX, type StyleProp, type ViewProps, type ViewStyle, type ViewRef, Animated, createAnimatedValue, type CompositeAnimation, type Easing, reduceMotion } from "nsh";
 // 引入原生按钮
 import { Button, type ButtonProps } from "nsh/base";
 // 引入透明度函数、色板与动效参数
@@ -18,9 +18,9 @@ const Motion = context<Accessor<boolean>>(() => false);
 // 缓动曲线：快出慢入
 const fastOutSlowIn: Easing = [0.4, 0, 0.2, 1];
 // 铺满父容器的绝对定位样式
-const fill: ViewStyle = { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 };
+const fill: ViewStyle = { pointerEvents: "none", position: "absolute", top: 0, right: 0, bottom: 0, left: 0 };
 // 装饰元素公共属性：不接收事件、对无障碍隐藏
-const decoration = { pointerEvents: "none" as const, accessible: false,
+const decoration = { accessible: false,
   // 读屏属性：对辅助技术隐藏
   accessibilityElementsHidden: true, importantForAccessibility: "no-hide-descendants" as const };
 
@@ -149,7 +149,7 @@ export function CyberSurfaceScan(props: CyberSurfaceScanProps) {
     // 样式：填充、圆角与裁剪
     style={[fill, { borderRadius: timing.edgeRadius, overflow: "hidden" }, props.style]}
     // 尺寸变化超过阈值才更新
-    onLayout={(bounds) => {
+    onLayout={({ bounds }) => {
       // 宽度变化超过阈值才更新
       if (Math.abs(width() - bounds.size.width) > 0.1) width.set(bounds.size.width);
       // 高度变化超过阈值才更新
@@ -225,7 +225,7 @@ export function CyberConnectionDot(props: CyberConnectionDotProps) {
   // 仅在连接且活跃时才有相位动画
   const progress = phase({ active: () => read(props.connected) && read(props.active ?? true) }, timing.connectionDuration);
   // 画布装饰
-  return <Canvas {...decoration} testID={props.testID} style={[{ width: timing.connectionSize, height: timing.connectionSize }, props.style]}
+  return <Canvas {...decoration} testID={props.testID} style={[{ pointerEvents: "none", width: timing.connectionSize, height: timing.connectionSize }, props.style]}
     // 绘制回调
     draw={(cx, { width: w, height: h }) => {
       // 读取连接状态
@@ -316,7 +316,7 @@ export function CyberPressable(props: CyberPressableProps) {
   // 销毁时停止动画
   cleanup(() => animation?.stop());
   // 节点引用，供遥控导航测量
-  let node: YNode | undefined;
+  let node: ViewRef | undefined;
   // 以 testID 作为遥控目标标识
   const id = props.testID;
   // 有标识才登记为遥控目标
@@ -330,7 +330,7 @@ export function CyberPressable(props: CyberPressableProps) {
   // 拆出自有属性，其余透传给 Button
   const [, rest] = split(props, ["active", "style", "children", "onPressDown", "onPressUp", "ref", "onRemoteFocus"] as const);
   // 按压缩放通过 transform 呈现
-  return <Button {...rest} ref={(value: YNode) => { node = value; }} style={[props.style, { transform: [{ scale }] }]}
+  return <Button {...rest} ref={(value: ViewRef) => { node = value; }} style={[props.style, { transform: [{ scale }] }]}
     // 按下开始缩小动画
     onPressDown={() => { animate(true); props.onPressDown?.(); }}
     // 松开恢复动画
@@ -417,7 +417,7 @@ export function CyberNumber(props: CyberNumberProps) {
   // 容器
   return <View testID={props.testID} style={[{ position: "relative" }, props.style]}>
     {/* 新值层，同时测量高度 */}
-    <View onLayout={(bounds) => height.set(bounds.size.height)}
+    <View onLayout={({ bounds }) => height.set(bounds.size.height)}
       // 样式：透明度与纵向位移
       style={{ opacity: inOpacity, transform: [{ translateY: inY.mul(height() / 3) }] }}>
       {/* 渲染新值（可被无障碍读取） */}
@@ -426,7 +426,7 @@ export function CyberNumber(props: CyberNumberProps) {
     {/* 退出中的旧值覆盖在上方，仅为装饰 */}
     {() => outgoing() == null ? null : <View {...decoration}
       // 样式：绝对定位与透明度
-      style={{ position: "absolute", top: 0, left: 0, right: 0, opacity: outOpacity,
+      style={{ pointerEvents: "none", position: "absolute", top: 0, left: 0, right: 0, opacity: outOpacity,
         // 纵向位移
         transform: [{ translateY: outY.mul(height() / 3) }] }}>{props.render(outgoing()!, true)}</View>}
   </View>;

@@ -174,28 +174,15 @@ class StandardBuildInputs(unittest.TestCase):
         device = package.mobile_command('nsh', 'ios', Path('/tmp/output'), ios_device=True)
         self.assertEqual(device[device.index('--target') + 1], 'ios')
 
-    # Android 运行时种子只选出受支持的 ABI，不改动已安装的运行时
-    def test_android_seed_selects_supported_abis_without_editing_installed_runtime(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            source = root / 'installed/android/release'
-            source.mkdir(parents=True)
-            (source / 'classes.dex').write_bytes(b'dex')
-            # 造出四种 ABI 的假运行时库
-            for abi in ['arm64-v8a', 'x86_64', 'armeabi-v7a', 'x86']:
-                leaf = source / 'lib' / abi
-                leaf.mkdir(parents=True)
-                (leaf / 'libnsh.so').write_bytes(abi.encode())
-            stage = root / 'stage'; stage.mkdir()
-            env = {'NSH_RUNTIME': str(root / 'installed')}
-            with patch.object(package, 'ROOT', root):
-                package.android_runtime_seed('/unused/nsh', stage, env)
-            # 种子库目录
-            seed = Path(env['NSH_RUNTIME']) / 'android/release/lib'
-            # 种子里只有 arm64-v8a 与 x86_64
-            self.assertEqual(sorted(path.name for path in seed.iterdir()), ['arm64-v8a', 'x86_64'])
-            # 已安装的运行时原封不动
-            self.assertEqual(len(list((source / 'lib').iterdir())), 4)
+    # 官方 ABI 选项保留 Android 模拟器支持，且不会传到 Apple 目标。
+    def test_android_packaging_explicitly_selects_phone_and_emulator_abis(self):
+        command = package.mobile_command('nsh', 'android', Path('/tmp/output'))
+        self.assertEqual(command[command.index('--abi') + 1], 'arm64-v8a,x86_64')
+        self.assertEqual(command.count('--abi'), 1)
+        for ios_device in [False, True]:
+            with self.subTest(ios_device=ios_device):
+                command = package.mobile_command('nsh', 'ios', Path('/tmp/output'), ios_device=ios_device)
+                self.assertNotIn('--abi', command)
 
     # 签名密码不会出现在进程参数里
     def test_signing_credentials_stay_out_of_process_arguments(self):
@@ -349,7 +336,7 @@ class StandardBuildInputs(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory); cargo = root / 'cargo'
             # 假的 Cargo 注册表目录
-            source = cargo / 'registry/src/index.crates.io-fixture/nsh-platform-android-0.3.0'
+            source = cargo / ('registry/src/index.crates.io-fixture/nsh-platform-android-' + java_tools.NSH_VERSION)
             relative = 'java/com/longbridge/nsh/NshView.java'
             original = b'package com.longbridge.nsh; public class NshView {}'
             path = source / relative; path.parent.mkdir(parents=True); path.write_bytes(original)
@@ -362,7 +349,7 @@ class StandardBuildInputs(unittest.TestCase):
             # 压缩包摘要写进 Cargo.lock
             checksum = hashlib.sha256(archive.read_bytes()).hexdigest()
             (root / 'Cargo.lock').write_text('version = 4\n[[package]]\nname = "nsh-platform-android"\n'
-                'version = "0.3.0"\nsource = "registry+https://github.com/rust-lang/crates.io-index"\n'
+                'version = "' + java_tools.NSH_VERSION + '"\nsource = "registry+https://github.com/rust-lang/crates.io-index"\n'
                 'checksum = "' + checksum + '"\n')
             platform = root / 'sdk/platforms/android-37/android.jar'
             platform.parent.mkdir(parents=True); platform.write_bytes(b'fixture API')

@@ -127,12 +127,6 @@ def build_widget_support(env, *, simulator, sdk_path, developer, deployment, log
                                                deployment=deployment, root=ROOT, run=run, log=log)
 
 
-# 拼出 nsh 打包移动端的命令：目标、应用标识、版本与构建号
-def android_runtime_seed(cli, stage, env):
-    """Let the CLI build the project's supported 64-bit ABIs without global edits."""
-    return package_checks.android_runtime_seed(cli, stage, env, ROOT)
-
-
 def verify_runner(target):
     """Generated runners must include the local application's Rust module."""
     return package_checks.verify_runner(target, ROOT)
@@ -144,11 +138,15 @@ def mobile_command(cli, target, stage, *, ios_device=False, application_id=None)
     # 按平台取苹果或安卓身份
     identity = apple_identity() if target == 'ios' else android_identity()
     # 组装 nsh package 命令
-    return [cli, 'package', '--target', 'android' if target == 'android' else sdk_target,
+    command = [cli, 'package', '--target', 'android' if target == 'android' else sdk_target,
             # 应用标识、应用版本与构建号
             '--id', application_id or identity['bundleId'], '--app-version', identity['version'],
             # 构建号与输出目录
             '--build', str(identity['build']), '--out', stage]
+    # NSH 0.4 默认包含 32 位 ARM；显式选择应用支持的手机与模拟器 ABI。
+    if target == 'android':
+        command.extend(['--abi', 'arm64-v8a,x86_64'])
+    return command
 
 
 
@@ -298,7 +296,7 @@ def package_mobile(target, output, *, ios_device=False, application_id=None, wit
                 env['LIBCLANG_PATH'] = str(Path(developer) / 'Toolchains/XcodeDefault.xctoolchain/usr/lib')
             # 给 bindgen 追加 sysroot 参数
             env['BINDGEN_EXTRA_CLANG_ARGS'] = env.get('BINDGEN_EXTRA_CLANG_ARGS', '') + ' -isysroot ' + shlex.quote(sdk_path)
-        # Android：读取签名，必要时定位 libclang，并限定 ABI
+        # Android：读取签名，必要时定位 libclang
         if target == 'android':
             # 取得 Android 签名参数与环境
             signing, env = android_signing()
@@ -310,8 +308,6 @@ def package_mobile(target, output, *, ios_device=False, application_id=None, wit
                 env['LIBCLANG_PATH'] = str(Path(developer) / 'Toolchains/XcodeDefault.xctoolchain/usr/lib')
             # 把签名参数加入命令
             command.extend(signing)
-            # 准备 Android 运行时种子
-            android_runtime_seed(cli, stage, env)
         # 所有输出写入日志
         with (log_dir / 'package.log').open('wb') as log:
             # iOS：先构建小组件支持，模拟器还要准备权限
@@ -328,10 +324,6 @@ def package_mobile(target, output, *, ios_device=False, application_id=None, wit
             run(command, env=env, log=log)
             # 校验运行器
             verify_runner(target)
-            # 安卓包
-            if target == 'android':
-                # 删除运行时种子
-                shutil.rmtree(stage / 'runtime-seed')
             # 按目标选择包文件后缀
             suffix = '*.apk' if target == 'android' else '*.app'
             # 必须恰好产出一个标准包

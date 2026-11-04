@@ -119,7 +119,7 @@ export function PanelBody(props: PanelBodyProps) {
         // 边框与内边距
         borderWidth: 1, borderColor: cyberAlpha(color.cyan, 0.14), padding: 18 }}
       // 悬停样式
-      hoverStyle={{ borderColor: cyberAlpha(color.cyan, 0.4), shadowColor: color.cyan, shadowOpacity: 0.1, shadowRadius: 7 }}>
+      hoverStyle={{ borderColor: cyberAlpha(color.cyan, 0.4), boxShadow: `0 0 7px ${cyberAlpha(color.cyan, 0.1)}` }}>
       <Scroll contentStyle={{ gap: 14 }} style={{ flex: 1 }}>
         <Text style={{ color: color.ink, fontSize: 16, lineHeight: 24, fontWeight: 500 }}>暂无卡片</Text>
         <CyberPressable testID="go-settings" onPress={props.onSettings} style={{ alignSelf: "flex-start", minHeight: 40, paddingHorizontal: 12, justifyContent: "center", borderRadius: 20 }}>

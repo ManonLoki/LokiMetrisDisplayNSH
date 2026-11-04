@@ -15,7 +15,7 @@ export const outlineButton: ViewStyle = { minHeight: 40, minWidth: 58, borderWid
 // 文字按钮样式
 export const textButton: ViewStyle = { minHeight: 40, minWidth: 58, justifyContent: "center", alignSelf: "flex-start" };
 // 装饰元素的公共属性：不接收事件、对无障碍隐藏
-export const decoration = { pointerEvents: "none" as const, accessible: false, accessibilityElementsHidden: true,
+export const decoration = { accessible: false, accessibilityElementsHidden: true,
   // 对子孙元素隐藏读屏
   importantForAccessibility: "no-hide-descendants" as const };
 // 图标种类
@@ -30,7 +30,7 @@ export function SettingsCard(props: { order?: number; children?: JSX.Element; te
       // 边框与内边距
       borderWidth: 1, borderColor: cyberAlpha(color.cyan, 0.13), padding: 18, gap: 16 }}>
     {/* 背景光层，内缩 1px 以避开边框 */}
-    <Canvas {...decoration} style={{ position: "absolute", top: 1, right: 1, bottom: 1, left: 1 }}
+    <Canvas {...decoration} style={{ pointerEvents: "none", position: "absolute", top: 1, right: 1, bottom: 1, left: 1 }}
       // 自定义绘制回调
       draw={(cx, { width: w, height: h }) => {
         // 尺寸过小不绘制
@@ -87,7 +87,7 @@ export function SettingsSection(props: { title: string; note?: string; children?
 // 渐变分隔线
 export function SettingsDivider() {
   // 分隔线画布
-  return <Canvas {...decoration} style={{ height: 1, width: "100%" }} draw={(cx, { width: w }) => {
+  return <Canvas {...decoration} style={{ pointerEvents: "none", height: 1, width: "100%" }} draw={(cx, { width: w }) => {
     // 宽度为 0 不绘制
     if (w <= 0) return;
     // 横向渐变：青、白、紫
@@ -107,7 +107,7 @@ export function SettingsDivider() {
 // 设置图标：圆角底板加画布图标
 export function SettingsIcon(props: { symbol: Symbol }) {
   // 图标容器
-  return <View {...decoration} style={{ width: 38, height: 38, padding: 10, borderRadius: 11,
+  return <View {...decoration} style={{ pointerEvents: "none", width: 38, height: 38, padding: 10, borderRadius: 11,
     // 背景色与不收缩
     backgroundColor: cyberAlpha(color.cyan, 0.09), flexShrink: 0 }}>
     {/* 图标画布 */}

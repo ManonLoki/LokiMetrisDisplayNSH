@@ -1,11 +1,22 @@
 // 引入 nsh 的图片、视图与响应式原语
-import { Image, View, cleanup, effect, signal, split, untracked, type ImageProps, type Size } from "nsh";
+import { Image, View, cleanup, effect, signal, split, untracked, type ImageProps, type ImageStyle, type PixelSize, type StyleProp } from "nsh";
 // 引入动效许可钩子
 import { useCyberMotion, type MotionProps } from "./effects";
 // 引入图片预处理
 import { ImageFrames } from "loki-metris-mobile-display/native";
 // 引入播放器
 import { ImagePlayback } from "./image-playback";
+
+// NSH 样式列表是只读递归数组，保留该类型以便缩窄列表外的样式对象。
+function isStyleList(style: StyleProp<ImageStyle>): style is readonly StyleProp<ImageStyle>[] {
+  return Array.isArray(style);
+}
+
+// 图片绘制属性属于每个原生 Image；布局、边框与内边距只应用于外层容器。
+function imageStyle(style: StyleProp<ImageStyle>): StyleProp<ImageStyle> {
+  if (isStyleList(style)) return style.map(imageStyle);
+  return style && { objectFit: style.objectFit, objectPosition: style.objectPosition, tintColor: style.tintColor };
+}
 
 // 图片组件：静态图直接显示，动图由播放器逐帧切换
 export function CyberImage(props: ImageProps & MotionProps) {
@@ -103,17 +114,18 @@ export function CyberImage(props: ImageProps & MotionProps) {
   // 组件销毁时使旧结果失效并销毁播放器
   cleanup(() => { clearTimeout(swapTimer); generation += 1; untracked(player)?.dispose(); });
   // 首次加载成功时上报一次
-  const onLoad = (size: Size, slot: number) => {
+  const onLoad = (size: PixelSize, slot: number) => {
     // 隐藏层加载完成，立即切换
     reveal(slot);
     // 首次加载成功时上报尺寸并结束加载
-    if (!loaded && !settled) { loaded = true; settled = true; props.onLoad?.(size); props.onLoadEnd?.(); }
+    if (!loaded && !settled) { loaded = true; settled = true; props.onLoad?.({ size }); props.onLoadEnd?.(); }
   };
   // 等尺寸明确后才挂载原生 Image；放大后重建图片视图以触发官方解码。
   // 等尺寸明确后才挂载原生 Image；尺寸明显变化时重建以触发解码
-  return <View style={props.style} onLayout={(bounds) => {
+  return <View style={props.style} onLayout={(event) => {
+    const { bounds } = event;
     // 先转发外部布局回调
-    props.onLayout?.(bounds);
+    props.onLayout?.(event);
     // 对比旧尺寸与新尺寸
     const old = untracked(frame), next = bounds.size;
     // 有效且变化超过 0.5 才更新
@@ -127,11 +139,11 @@ export function CyberImage(props: ImageProps & MotionProps) {
       <View style={{ width: size().width, height: size().height }}>
         <Each of={[0, 1]} key="index">{(slot) =>
           <Image {...nativeProps} src={slots[slot()]()}
-            style={{ position: "absolute", top: 0, left: 0, width: size().width, height: size().height, opacity: shown() === slot() ? 1 : 0 }}
+            style={[imageStyle(props.style), { position: "absolute", top: 0, left: 0, width: size().width, height: size().height, opacity: shown() === slot() ? 1 : 0 }]}
             // 动图不做淡入
             fadeDuration={animated ? 0 : props.fadeDuration}
             // 加载开始、成功与出错回调
-            onLoadStart={() => { if (!loaded && !settled) props.onLoadStart?.(); }} onLoad={(loadedSize) => onLoad(loadedSize, slot())} onError={onError} />}
+            onLoadStart={() => { if (!loaded && !settled) props.onLoadStart?.(); }} onLoad={({ size: loadedSize }) => onLoad(loadedSize, slot())} onError={onError} />}
         </Each>
       </View>}
     </Each>

@@ -45,7 +45,7 @@ function DeviceNameInput(props: Pick<DeviceSettingsProps, "name" | "nameIssue" |
     // 输入框属性：不自动大写和更正
     autoCapitalize="none" autoCorrect={false} autoComplete="off" multiline={false}
     // 变更回调与样式
-    onChange={props.onNameChange} style={{ width: "100%", minHeight: 56, paddingHorizontal: 16, paddingVertical: 16,
+    onChange={({ value }) => props.onNameChange(value)} style={{ width: "100%", minHeight: 56, paddingHorizontal: 16, paddingVertical: 16,
       // 文字颜色、字号与选区颜色
       color: color.ink, fontSize: 14, lineHeight: 20, selectionColor: color.cyan,
       // 背景、边框与圆角
@@ -108,7 +108,7 @@ export function DeviceSettings(props: DeviceSettingsProps) {
     {/* 展开后显示设备 ID 与产品名 */}
     {expanded() ? <>
       <Text style={{ color: color.muted, fontSize: 11, lineHeight: 16, fontWeight: 500 }}>设备 ID</Text>
-      <Text testID="settings-device-id" selectable style={{ color: color.ink, fontSize: 12, lineHeight: 16, fontFamily: "monospace" }}>
+      <Text testID="settings-device-id" style={{ userSelect: "text", color: color.ink, fontSize: 12, lineHeight: 16, fontFamily: "monospace" }}>
         {props.deviceId() || "身份暂不可用"}
       </Text>
       <Text style={{ color: color.muted, fontSize: 12, lineHeight: 18 }}>LokiMetris</Text>

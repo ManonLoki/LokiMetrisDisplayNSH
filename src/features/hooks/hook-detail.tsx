@@ -40,7 +40,7 @@ export function HookDetail(props: { hook: Accessor<HookItem | null>; connected: 
       {/* 标题行：标题与关闭按钮 */}
       <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
         {/* 标题 */}
-        <Text numberOfLines={1} style={{ flex: 1, color: color.ink, fontSize: 16, lineHeight: 24, fontWeight: 500 }}>Hook 详情</Text>
+        <Text style={{ numberOfLines: 1, flex: 1, color: color.ink, fontSize: 16, lineHeight: 24, fontWeight: 500 }}>Hook 详情</Text>
         {/* 关闭按钮 */}
         <CyberPressable testID="hook-detail-close" onPress={props.onDismiss}
           // 样式：最小高度、内边距与圆角
@@ -55,9 +55,9 @@ export function HookDetail(props: { hook: Accessor<HookItem | null>; connected: 
         {/* 状态徽标 */}
         <HookStatus behavior={hook().behavior} />
         {/* 有正文则显示，否则提示暂无正文 */}
-        {hook().content.length > 0 ? <Text testID="hook-detail-content" selectable
+        {hook().content.length > 0 ? <Text testID="hook-detail-content"
           // 内容文本样式
-          style={{ color: color.ink, fontSize: 16, lineHeight: 25 }}>{hook().content}</Text>
+          style={{ userSelect: "text", color: color.ink, fontSize: 16, lineHeight: 25 }}>{hook().content}</Text>
           // 无内容时的文本样式
           : <Text style={{ color: color.muted, fontSize: 14, lineHeight: 20 }}>暂无正文</Text>}
         {/* 正文被截断时的提示 */}
@@ -69,7 +69,7 @@ export function HookDetail(props: { hook: Accessor<HookItem | null>; connected: 
   // 点遮罩、按 Esc 或状态变为关闭都会退出详情
   return <Dialog testID="hook-detail-dialog" animation="fade" closeOnBackdropPress closeOnEscape
     // 取消回调与展开状态变化回调
-    onCancel={props.onDismiss} onOpenChange={(open) => { if (!open) props.onDismiss(); }}
+    onCancel={props.onDismiss} onOpenChange={({ open }) => { if (!open) props.onDismiss(); }}
     // 背景遮罩的测试标识与样式
     backdropTestID="hook-detail-backdrop" backdropStyle={{ backgroundColor: "#00000099" }} style={surfaceStyle()}>
     {body}

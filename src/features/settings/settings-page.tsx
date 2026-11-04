@@ -1,5 +1,5 @@
 // 引入滚动、文本、视图、信号与字体缩放
-import { Scroll, Text, View, signal, type Accessor, type Signal, type YNode, fontScale } from "nsh";
+import { Scroll, Text, View, signal, type Accessor, type Signal, type ScrollRef, fontScale } from "nsh";
 // 引入遥控器滚动注册
 import { registerRemoteScroller } from "../../shared/ui/remote-focus";
 // 引入连接与设备设置卡片
@@ -64,14 +64,14 @@ export function SettingsPage(props: SettingsPageProps) {
   const wide = () => props.width() >= 720 * Math.max(1, fontScale());
   // 输入仍有焦点时也把第一次点击交给保存按钮；空白点击仍可收起键盘。
   // 滚动视图引用
-  let scroll: YNode | undefined;
+  let scroll: ScrollRef | undefined;
   // 注册遥控器滚动，得到滚动变化回调
   const scrolled = registerRemoteScroller(() => scroll);
   // 滚动容器：滚动与布局变化通知遥控器逻辑，点击输入框外不吞掉按钮点击
   // 滚动容器：滚动与布局变化通知遥控器逻辑，保留键盘下的点击
-  return <Scroll testID="settings-scroll" ref={(node: YNode) => { scroll = node; }}
+  return <Scroll testID="settings-scroll" ref={(node: ScrollRef) => { scroll = node; }}
     // 滚动与布局回调
-    onScroll={(e) => scrolled(e.offset.y, e.size.height)} onLayout={(bounds) => scrolled(null, bounds.size.height)}
+    onScroll={(e) => scrolled(e.offset.y, e.size.height)} onLayout={({ bounds }) => scrolled(null, bounds.size.height)}
     // 点击时保持键盘
     keyboardShouldPersistTaps="handled" style={{ flex: 1, minHeight: 0 }}
     // 内容样式：内边距与间距

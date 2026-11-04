@@ -28,21 +28,21 @@ test("Windows repaint pauses in background and resumes with reduced motion enabl
     expect(initial.reducedMotion).toBe(true);
     expect(initial.foreground).toBe(false);
     expect(initial.value).toBe(0);
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     expect((await sample(app)).value).toBe(0);
 
     await app.press("repaint-toggle-foreground");
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     const moving = await sample(app);
     expect(moving.foreground).toBe(true);
     expect(moving.value).toBeGreaterThan(0);
 
     await app.press("repaint-toggle-foreground");
     expect((await sample(app)).value).toBe(0);
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     expect((await sample(app)).value).toBe(0);
     await app.press("repaint-toggle-foreground");
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     expect((await sample(app)).value).toBeGreaterThan(0);
   } finally { app.dispose(); }
 });
@@ -54,7 +54,7 @@ test("removing a foreground repaint surface stops its animation before a new mou
   try {
     await app.waitFor("repaint-surface");
     await app.press("repaint-toggle-foreground");
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     expect((await sample(app)).value).toBeGreaterThan(0);
     await app.press("repaint-toggle-attachment");
     expect(app.shows("repaint-surface")).toBe(false);
@@ -62,12 +62,12 @@ test("removing a foreground repaint surface stops its animation before a new mou
     expect(removed.attached).toBe(false);
     expect(removed.foreground).toBe(true);
     expect(removed.value).toBe(0);
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     expect((await sample(app)).value).toBe(0);
 
     await app.press("repaint-toggle-attachment");
     await app.waitFor("repaint-surface");
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     expect((await sample(app)).value).toBeGreaterThan(0);
   } finally { app.dispose(); }
 });
@@ -81,10 +81,10 @@ test("other platforms keep a static backdrop through visibility changes", async 
     expect((await sample(app)).platform).toBe("macos");
     expect((await sample(app)).value).toBe(0);
     await app.press("repaint-toggle-foreground");
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     expect((await sample(app)).value).toBe(0);
     await app.press("repaint-toggle-attachment");
-    await app.clock.runFor(250);
+    await app.clock!.runFor(250);
     expect((await sample(app)).value).toBe(0);
   } finally { app.dispose(); }
 });

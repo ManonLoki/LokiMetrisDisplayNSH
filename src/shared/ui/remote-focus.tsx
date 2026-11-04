@@ -1,5 +1,5 @@
 // 引入 nsh 的视图、响应式原语、键位映射与类型
-import { View, cleanup, effect, keymap, signal, untracked, type Accessor, type JSX, type StyleProp, type ViewStyle, type YNode } from "nsh";
+import { View, cleanup, effect, keymap, signal, untracked, type Accessor, type JSX, type StyleProp, type ViewStyle, type ViewRef, type ScrollRef } from "nsh";
 // 引入色板
 import { cyberColors as color } from "./theme";
 
@@ -8,7 +8,7 @@ import { cyberColors as color } from "./theme";
 // 遥控目标
 interface Target {
   // 取得节点用于测量位置
-  node: () => YNode | undefined;
+  node: () => ViewRef | undefined;
   // 确认键触发的动作
   activate: () => void;
   // 是否禁用
@@ -42,7 +42,7 @@ const focused = signal<string | null>(null);
 // 遥控导航是否启用
 const enabled = signal(false);
 // 页面主滚动容器及其当前偏移与可视高度
-let scroller: { node: () => YNode | undefined; offset: number; viewport: number } | null = null;
+let scroller: { node: () => ScrollRef | undefined; offset: number; viewport: number } | null = null;
 
 /** 遥控导航是否启用（电视）。 */
 // 对外暴露：遥控导航是否启用
@@ -68,7 +68,7 @@ export function registerRemoteTarget(id: string, target: Target) {
 
 /** 页面的主滚动容器：焦点移出可见区域时滚动到它。 */
 // 登记主滚动容器，返回同步滚动状态的回调
-export function registerRemoteScroller(node: () => YNode | undefined) {
+export function registerRemoteScroller(node: () => ScrollRef | undefined) {
   // 滚动容器的记录
   const entry = { node, offset: 0, viewport: 0 };
   // 登记滚动容器
@@ -251,7 +251,7 @@ async function reveal(target: Placed) {
 // 遥控焦点框：仅在目标获得焦点时显示，不参与布局和触摸
 export function RemoteRing(props: { id: string | undefined; radius?: number }) {
   // 焦点高亮层
-  return <>{() => props.id && remoteFocus() === props.id ? <View testID={`remote-focus-${props.id}`} pointerEvents="none" style={{ position: "absolute",
+  return <>{() => props.id && remoteFocus() === props.id ? <View testID={`remote-focus-${props.id}`} style={{ pointerEvents: "none", position: "absolute",
     // 位置与圆角
     top: -3, left: -3, right: -3, bottom: -3, borderRadius: (props.radius ?? 13) + 3, borderWidth: 2,
     // 边框颜色
@@ -264,11 +264,11 @@ export function RemoteTarget(props: { id: string; activate: () => void; radius?:
   // 样式与子节点
   style?: StyleProp<ViewStyle>; children: JSX.Element }) {
   // 节点引用
-  let node: YNode | undefined;
+  let node: ViewRef | undefined;
   // 登记为遥控目标
   registerRemoteTarget(props.id, { node: () => node, activate: props.activate, disabled: () => false });
   // 容器节点
-  return <View ref={(value: YNode) => { node = value; }} style={props.style}>
+  return <View ref={(value: ViewRef) => { node = value; }} style={props.style}>
     {/* 被包裹的元素 */}
     {props.children}
     {/* 焦点框 */}

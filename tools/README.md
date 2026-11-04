@@ -17,6 +17,7 @@
 ```sh
 python3 tools/test.py
 python3 tools/test.py --suite watch
+python3 tools/test.py --suite simulator
 python3 tools/build/package_app.py --target android --out output/packages/build-001
 ```
 

@@ -22,9 +22,9 @@ export function HookStatus(props: { behavior: string; compact?: boolean }) {
     // 背景与内边距
     backgroundColor: cyberAlpha(tone(), 0.1), paddingHorizontal: props.compact ? 6 : 9, paddingVertical: props.compact ? 3 : 5 }}>
     {/* 用画布绘制外圈描边，不拦截事件、对无障碍隐藏 */}
-    <Canvas pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+    <Canvas accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
       // 样式：铺满
-      style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} draw={(cx, { width: w, height: h }) => {
+      style={{ pointerEvents: "none", position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} draw={(cx, { width: w, height: h }) => {
         // 尺寸过小时不绘制
         if (w <= 1 || h <= 1) return;
         // 以色调的低透明度画圆角描边
@@ -36,7 +36,7 @@ export function HookStatus(props: { behavior: string; compact?: boolean }) {
     {/* 状态圆点 */}
     <View accessible={false} style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: tone() }} />
     {/* 状态文字 */}
-    <Text numberOfLines={1} style={{ color: tone(), fontSize: props.compact ? 10 : 11,
+    <Text style={{ numberOfLines: 1, color: tone(), fontSize: props.compact ? 10 : 11,
       // 行高与字重
       lineHeight: props.compact ? 14 : 16, fontWeight: 500 }}>{Rules.hooksLabel(props.behavior)}</Text>
   </View>;

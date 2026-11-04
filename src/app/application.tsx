@@ -114,7 +114,7 @@ export function createApp(runtime: AppRuntime): () => JSX.Element {
           // 安全区内边距
           paddingBottom: safeArea().bottom, paddingLeft: safeArea().left }}
         // 布局变化回调
-        onLayout={(bounds) => {
+        onLayout={({ bounds }) => {
           // 更新宽度
           width.set(bounds.size.width);
           // 更新高度
@@ -131,7 +131,7 @@ export function createApp(runtime: AppRuntime): () => JSX.Element {
               {/* 宽屏时侧栏在内容之前 */}
               {() => wideNavigation() ? nav("side") : null}
               {/* 内容区：布局变化时记录尺寸 */}
-              <View style={{ flex: 1, minWidth: 0, minHeight: 0 }} onLayout={(bounds) => {
+              <View style={{ flex: 1, minWidth: 0, minHeight: 0 }} onLayout={({ bounds }) => {
                 // 更新内容区宽度
                 contentWidth.set(bounds.size.width);
                 // 更新内容区高度

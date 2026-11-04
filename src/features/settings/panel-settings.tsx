@@ -22,7 +22,7 @@ function SettingsToggle(props: { title: string; subtitle: string; symbol: Symbol
   checked: Accessor<boolean>; onChange: (value: boolean) => void; testID: string }) {
   // 遥控器确认键等同于切换开关
   return <RemoteTarget id={props.testID} activate={() => props.onChange(!props.checked())} radius={16}>
-    <Switch testID={props.testID} accessibilityLabel={props.title} checked={props.checked()} onChange={props.onChange}
+    <Switch testID={props.testID} accessibilityLabel={props.title} checked={props.checked()} onChange={({ checked }) => props.onChange(checked)}
     // 样式：反向横排，垂直居中
     style={{ minHeight: 52, flexDirection: "row-reverse", alignItems: "center", gap: 12 }}
     // 轨道样式
@@ -145,7 +145,7 @@ function SettingsChoice(props: { title: string; kind: Miniature; selected: Acces
 // 用画布绘制选项缩略图
 function SettingsMiniature(props: { kind: Miniature; selected: Accessor<boolean> }) {
   // 装饰性画布，不参与无障碍
-  return <Canvas {...decoration} style={{ width: 44, height: 26 }} draw={(cx, { width: w, height: h }) => {
+  return <Canvas {...decoration} style={{ pointerEvents: "none", width: 44, height: 26 }} draw={(cx, { width: w, height: h }) => {
     // 选中用高亮色，否则用弱化色
     const tint = props.selected() ? color.cyan : color.muted;
     // 默认线宽与圆角端点

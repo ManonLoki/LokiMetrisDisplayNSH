@@ -1,6 +1,14 @@
 # NSH 运行时来源与应用适配
 
-项目直接使用 crates.io 的 NSH 0.3.0，依赖版本、来源与校验值由 `Cargo.lock` 固定。根 `Cargo.toml` 声明 `nsh-core`，不保留修改后的 SDK，也不使用 Cargo patch 或本机 SDK 路径覆盖。Apache-2.0 许可证保留在 [nsh-LICENSE-APACHE](nsh-LICENSE-APACHE)。
+项目使用官方 NSH 0.4.0 标签对应的 Git 提交 `e626a8dd8f8d8b277b9507cfd5ac74d0e67020f3`，版本和来源由 `Cargo.toml`、`Cargo.lock` 固定。不保留修改后的 SDK，也不在项目中配置 Cargo patch 或本机 SDK 路径覆盖。Apache-2.0 许可证保留在 [nsh-LICENSE-APACHE](nsh-LICENSE-APACHE)。
+
+## 0.4.0 迁移
+
+按[官方 0.4.0 迁移说明](https://github.com/longbridge/nsh/releases/tag/v0.4.0)更新事件对象、组件引用和 CSS 样式：布局读取 `{ bounds }`，输入读取 `{ value }`，开关读取 `{ checked }`，图片读取 `{ size }`，对话框读取 `{ action }`。文字截断、选择、图片适配和触摸穿透进入 `style`，阴影使用 `boxShadow`。图片包装器将绘制样式转发到实际原生 Image。
+
+0.4.0 的 crates.io iOS 包引用兄弟 crate 的 `speech.rs`，但发布包不包含该源码，因此移动构建使用同版本官方 Git 源码。CLI 自动从 Cargo 解析的完整源码生成统一依赖的宿主，避免重复的 `nsh-core` 类型；详见[官方 CLI 源码](https://github.com/longbridge/nsh/blob/v0.4.0/crates/nsh-cli/src/rust_app.rs)。
+
+Android 桥接的官方 crate 校验也使用 0.4.0；保留官方 AAR 的 Java 类。NSH CLI 应与 Cargo 运行时使用同一版本。生成的 `.nsh/` 不进入版本控制。
 
 ## 官方运行时与应用源码
 

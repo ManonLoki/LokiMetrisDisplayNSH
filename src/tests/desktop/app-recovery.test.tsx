@@ -86,7 +86,7 @@ test("incoming snapshots preserve an in-progress device name and removed hook de
   await app.clear("settings-device-name");
   // 输入新名称的一部分
   await app.type("settings-device-name", "工作台");
-  await app.clock.runFor(1000);
+  await app.clock!.runFor(1000);
   // 快照到达后输入内容未被覆盖
   expect(app.value("settings-device-name")).toBe("工作台");
   // 继续输入
@@ -99,9 +99,9 @@ test("incoming snapshots preserve an in-progress device name and removed hook de
   await app.press("hook-card-1");
   expect(app.shows("hook-detail")).toBe(true);
   // 槽位 1 被移除，详情应关闭
-  await app.clock.runFor(1000);
+  await app.clock!.runFor(1000);
   expect(app.shows("hook-detail")).toBe(false);
   // 槽位 1 再次出现，详情不应自动重新打开
-  await app.clock.runFor(1000);
+  await app.clock!.runFor(1000);
   expect(app.shows("hook-detail")).toBe(false);
 }, 60_000);

@@ -30,16 +30,16 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
   // 入场动效容器，order 决定入场先后
   return <CyberArrival order={2 + Math.min(4, props.hook().slot)} active={props.active}
     // 样式：撑满
-    style={{ flex: 1, minWidth: 0, minHeight: 0 }} onLayout={props.onFrame}>
+    style={{ flex: 1, minWidth: 0, minHeight: 0 }} onLayout={({ bounds }) => props.onFrame?.(bounds)}>
     <CyberPressable testID={`hook-card-${props.hook().slot}`} active={props.active} onPress={props.onPress}
       // 远程焦点回调
       onRemoteFocus={props.onRemoteFocus}
       // 读屏标签：查看代理详情
       accessibilityLabel={`查看 ${Rules.agentDisplayName(props.hook().agent)} 的详情`}
       // 悬停样式
-      hoverStyle={{ borderColor: cyberAlpha(tone(), 0.48), shadowColor: tone(), shadowOpacity: 0.1, shadowRadius: 8 }}
+      hoverStyle={{ borderColor: cyberAlpha(tone(), 0.48), boxShadow: `0 0 8px ${cyberAlpha(tone(), 0.1)}` }}
       // 焦点样式
-      focusStyle={{ borderColor: cyberAlpha(tone(), 0.85), shadowColor: tone(), shadowOpacity: 0.18, shadowRadius: 9 }}
+      focusStyle={{ borderColor: cyberAlpha(tone(), 0.85), boxShadow: `0 0 9px ${cyberAlpha(tone(), 0.18)}` }}
       // 样式：相对定位与背景
       style={{ position: "relative", flex: 1, minWidth: 0, minHeight: 0, backgroundColor: color.surface,
         // 卡片圆角、边框、内边距与间距
@@ -49,7 +49,7 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
       {/* 标题行：代理名与状态徽标 */}
       <View style={{ flexDirection: "row", alignItems: "flex-end", gap: small() ? 5 : 10 }}>
         {/* 代理名，单行超出省略 */}
-        <Text numberOfLines={1} ellipsizeMode="tail" style={{ flex: 1, minWidth: 0, color: color.ink,
+        <Text style={{ numberOfLines: 1, textOverflow: "ellipsis", flex: 1, minWidth: 0, color: color.ink,
           // 字号、行高与字重
           fontSize: small() ? 13 : 18, lineHeight: small() ? 18 : 24, fontWeight: 600 }}>{Rules.agentDisplayName(props.hook().agent)}</Text>
         {/* 状态徽标 */}
@@ -65,11 +65,11 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
 // 卡片背景光层：渐变底色、角落辉光与渐变描边
 export function HookCardSurface(props: { tone: string; quiet?: boolean }) {
   // 不接收事件、对无障碍隐藏、内缩 1px 以避开卡片边框
-  return <Canvas pointerEvents="none" accessible={false} accessibilityElementsHidden
+  return <Canvas accessible={false} accessibilityElementsHidden
     // 对子孙元素隐藏读屏
     importantForAccessibility="no-hide-descendants"
     // 样式：铺满
-    style={{ position: "absolute", top: 1, right: 1, bottom: 1, left: 1 }} draw={(cx, { width: w, height: h }) => {
+    style={{ pointerEvents: "none", position: "absolute", top: 1, right: 1, bottom: 1, left: 1 }} draw={(cx, { width: w, height: h }) => {
       // 尺寸过小时不绘制
       if (w <= 2 || h <= 2) return;
       // quiet 模式降低光效强度

@@ -51,6 +51,9 @@ def commands(suite, output):
     # iOS 小组件测试
     if suite == 'ios':
         return [[python, 'platform/ios/Tests/run_tests.py', '--output', str(output)]]
+    if suite == 'simulator':
+        return [['nsh', 'test', 'src/tests/desktop/mobile-native.test.tsx', '--target', 'ios',
+                 '--junit', str(output / 'results.xml')]]
     # 像素级视觉测试
     if suite == 'visual':
         return [[python, 'src/tests/visual/run.py', '--suite', 'all', '--output', str(output)]]
@@ -62,18 +65,38 @@ def commands(suite, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     # 选择套件
-    parser.add_argument('--suite', choices=['unit', 'android', 'ios', 'watch', 'visual', 'integration'], default='unit')
+    parser.add_argument('--suite', choices=['unit', 'android', 'ios', 'simulator', 'watch', 'visual', 'integration'], default='unit')
     # 结果根目录，按套件分子目录
     parser.add_argument('--output', type=Path, default=ROOT / 'output/tests', help='Results root, grouped by suite')
     args = parser.parse_args()
     # 这些套件依赖 macOS 与 Xcode 工具
-    if args.suite in {'ios', 'watch', 'visual', 'integration'} and sys.platform != 'darwin':
+    if args.suite in {'ios', 'simulator', 'watch', 'visual', 'integration'} and sys.platform != 'darwin':
         parser.error('This suite requires the existing macOS/Xcode tools')
     output = args.output.expanduser().resolve() / args.suite
     output.mkdir(parents=True, exist_ok=True)
     environment = os.environ.copy()
     # 避免生成 .pyc 文件
     environment['PYTHONDONTWRITEBYTECODE'] = '1'
+    if args.suite == 'simulator':
+        # 与移动打包器一致：让 bindgen 使用 Xcode 的 Clang 和模拟器 SDK 头文件。
+        developer = subprocess.check_output(['xcode-select', '-p'], text=True).strip()
+        sdk = subprocess.check_output(['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-path'], text=True).strip()
+        clang = Path(environment.get('LIBCLANG_PATH', ''))
+        if not list(clang.glob('libclang*.dylib')):
+            environment['LIBCLANG_PATH'] = str(Path(developer) / 'Toolchains/XcodeDefault.xctoolchain/usr/lib')
+        environment['BINDGEN_EXTRA_CLANG_ARGS'] = environment.get('BINDGEN_EXTRA_CLANG_ARGS', '') + ' -isysroot ' + shlex.quote(sdk)
+        sys.path.insert(0, str(ROOT / 'tools/build'))
+        from apple_project import deployment_target
+        from widget_support import build_widget_support
+        environment['SDKROOT'] = sdk
+        environment['IPHONEOS_DEPLOYMENT_TARGET'] = deployment_target(True, environment.get('IPHONEOS_DEPLOYMENT_TARGET', '15.0'))
+        def run_support(command, *, env, log=None):
+            subprocess.run([str(value) for value in command], cwd=ROOT, env=env, check=True)
+        # 开发宿主与正式应用使用同一份 Swift Widget 接线，保持 Rust FFI 完整。
+        build_widget_support(environment, simulator=True, sdk_path=sdk, developer=developer,
+                             deployment=environment['IPHONEOS_DEPLOYMENT_TARGET'], root=ROOT,
+                             run=run_support, runner_manifest=ROOT / '.nsh/rust/ios-host/Cargo.toml')
+        (ROOT / 'output/tests/nsh-0.4.0/ios').mkdir(parents=True, exist_ok=True)
     # 逐条执行，失败立即停止
     for command in commands(args.suite, output):
         # 先打印命令便于排查

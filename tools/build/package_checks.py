@@ -1,50 +1,8 @@
 """Runner and Android package checks, and the embedded Apple identifier reader."""
 from pathlib import Path
 import plistlib
-import shutil
 import struct
 import zipfile
-
-
-# 让 CLI 只为项目支持的 64 位 ABI 构建，而不修改全局设置
-def android_runtime_seed(cli, stage, env, root):
-    # 文档说明：让 CLI 只构建受支持的 64 位 ABI
-    """Let the CLI build the project's supported 64-bit ABIs without global edits."""
-    # 官方运行时的位置
-    original = Path(env.get('NSH_RUNTIME') or Path(cli).resolve().parent.parent / 'runtime') / 'android/release'
-    # 种子目录
-    seed = stage / 'runtime-seed/android/release'
-    # 创建种子目录
-    seed.mkdir(parents=True)
-    # 复制 classes.dex
-    shutil.copy2(original / 'classes.dex', seed / 'classes.dex')
-    # 只保留两个受支持的 ABI
-    for abi in ['arm64-v8a', 'x86_64']:
-        # 各 ABI 的运行时库
-        source = original / 'lib' / abi / 'libnsh.so'
-        # 库缺失
-        if not source.is_file():
-            # 报错
-            raise RuntimeError('Installed NSH runtime is missing the supported ABI: ' + abi)
-        # 目标 ABI 目录
-        directory = seed / 'lib' / abi
-        # 创建目录
-        directory.mkdir(parents=True)
-        # 复制运行时库
-        shutil.copy2(source, directory / 'libnsh.so')
-    # Cargo 会重新构建这些库;种子只决定存在哪些 ABI。
-    # Cargo 会重新编译这些库；种子只决定存在哪些 ABI
-    env['NSH_RUNTIME'] = str(stage / 'runtime-seed')
-    # CLI 生成的库目录
-    generated = root / '.nsh/rust/android-release/lib'
-    # 清掉生成目录里其余 ABI
-    if generated.is_dir():
-        # 遍历生成的 ABI 目录
-        for path in generated.iterdir():
-            # 只保留受支持的两种 ABI
-            if path.name not in ['arm64-v8a', 'x86_64']:
-                # 删除其他 ABI
-                shutil.rmtree(path)
 
 
 # 生成的运行器必须依赖本应用的 Rust 模块

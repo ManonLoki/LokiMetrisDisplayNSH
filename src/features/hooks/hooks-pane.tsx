@@ -1,5 +1,5 @@
 // 引入滚动、文本、视图、响应式原语与平台信息
-import { Scroll, Text, View, computed, effect, signal, untracked, type Accessor, type Bounds, type Size, type YNode, platform } from "nsh";
+import { Scroll, Text, View, computed, effect, signal, untracked, type Accessor, type Bounds, type Size, type ScrollRef, platform } from "nsh";
 // 引入布局类型
 import type { HookLayout } from "../../shared/contracts/panel";
 // 引入 Hooks 快照类型
@@ -70,7 +70,7 @@ export function HooksPane(props: HooksPaneProps) {
   // 上一次的宽度，用于检测宽度变化
   let lastWidth = untracked(props.width);
   // 翻页滚动视图的引用
-  let pager: YNode | undefined;
+  let pager: ScrollRef | undefined;
   // 桌面平台需要用拖拽手势翻页
   const desktop = ["macos", "windows", "linux", "web"].includes(platform.os);
   // 布局、页数或宽度变化时修正页码与滚动位置
@@ -99,7 +99,7 @@ export function HooksPane(props: HooksPaneProps) {
     if (reposition) requestedOffset.set(next * width);
   });
   // 面板根容器
-  return <View testID="hooks-pane" onLayout={props.onFrame} style={{ flex: 1, minWidth: 0, minHeight: 0, gap: 8 }}>
+  return <View testID="hooks-pane" onLayout={({ bounds }) => props.onFrame?.(bounds)} style={{ flex: 1, minWidth: 0, minHeight: 0, gap: 8 }}>
     {/* 桌面端支持拖拽翻页的包裹层 */}
     <View style={{ flex: 1, minWidth: 0, minHeight: 0 }}
       // 桌面端的拖动手势：横向激活，纵向失败
@@ -107,9 +107,9 @@ export function HooksPane(props: HooksPaneProps) {
       // 桌面端拖动结束的处理
       onPanEnd={desktop ? (event) => {
         // 位移不足或更偏垂直时忽略
-        if (Math.abs(event.translationX) < 45 || Math.abs(event.translationY) > Math.abs(event.translationX)) return;
+        if (Math.abs(event.translation.x) < 45 || Math.abs(event.translation.y) > Math.abs(event.translation.x)) return;
         // 按拖拽方向计算目标页并限制范围
-        const next = Math.max(0, Math.min(pageCount() - 1, currentPage() + (event.translationX < 0 ? 1 : -1)));
+        const next = Math.max(0, Math.min(pageCount() - 1, currentPage() + (event.translation.x < 0 ? 1 : -1)));
         // 动画滚动到目标页
         pager?.scrollTo({ x: next * props.width(), y: 0, animated: true });
       // 否则不处理
@@ -161,7 +161,7 @@ export function HooksPane(props: HooksPaneProps) {
         </View>}</Each>
       </Scroll>
       {/* 多页时显示页码提示 */}
-      {pages().length > 1 ? <View pointerEvents="none" style={{ position: "absolute", bottom: 4, left: 0, right: 0, alignItems: "center" }}>
+      {pages().length > 1 ? <View style={{ pointerEvents: "none", position: "absolute", bottom: 4, left: 0, right: 0, alignItems: "center" }}>
         {/* 页码提示背景 */}
         <View style={{ backgroundColor: cyberAlpha(color.canvas, 0.94), borderRadius: 8,
           // 边框与内边距
@@ -174,7 +174,7 @@ export function HooksPane(props: HooksPaneProps) {
       </View> : null}
     </View>
     {/* 有资源告警时显示可滚动的错误文案 */}
-    {props.assetWarning() ? <Scroll style={{ maxHeight: 72 }} onLayout={(bounds) => {
+    {props.assetWarning() ? <Scroll style={{ maxHeight: 72 }} onLayout={({ bounds }) => {
       // 高度变化才更新
       if (warningHeight() !== bounds.size.height) warningHeight.set(bounds.size.height);
     }}>
