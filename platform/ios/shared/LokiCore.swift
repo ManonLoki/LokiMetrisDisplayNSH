@@ -306,7 +306,7 @@ public struct AgentActivityAttributes: ActivityAttributes {
         public let content: String
         // 接收时间（毫秒）
         public let receivedAtMs: Double
-        // 
+        //
         public init(agent: String, behavior: String, content: String, receivedAtMs: Double) {
             // 逐项赋值
             self.agent = agent; self.behavior = behavior; self.content = content; self.receivedAtMs = receivedAtMs
@@ -314,7 +314,7 @@ public struct AgentActivityAttributes: ActivityAttributes {
     }
     // 来源显示名
     public let sourceName: String
-    // 
+    //
     public init(sourceName: String) { self.sourceName = sourceName }
 }
 #endif

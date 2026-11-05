@@ -94,7 +94,7 @@ public class JSONObject {
         private final String text;
         // 位置
         private int position;
-        // 
+        //
         Parser(String text) { this.text = text; }
         // 解析整个文本为对象
         void parse(JSONObject root) throws JSONException {

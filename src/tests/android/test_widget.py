@@ -168,24 +168,24 @@ public class WidgetCheck {
     private static void awaitUpdate(AppWidgetManager manager, int expected) {
         // 有界轮询，避免固定睡眠
         for (int waited = 0; manager.updated.size() < expected && waited < 100; waited++) {
-            // 
+            //
             try { Thread.sleep(20); } catch (InterruptedException error) { Thread.currentThread().interrupt(); }
         }
         // 超时仍未达到
         if (manager.updated.size() < expected) throw new AssertionError("update not delivered: " + manager.updated.size());
     }
 
-    // 
+    //
     public static void main(String[] ignored) {
         // 场景一：夹具核心 + 中号宽度，渲染摘要与明细
         AppWidgetManager manager = AppWidgetManager.getInstance(null);
-        // 
+        //
         manager.minWidth = 300;
         // 渲染一次
         new LokiWidgetProvider().onUpdate(new android.content.Context(), manager, manager.getAppWidgetIds(null));
-        // 
+        //
         awaitUpdate(manager, 1);
-        // 
+        //
         RemoteViews medium = manager.updated.get(0);
         // 中号布局
         if (medium.layout != R.layout.widget_medium) throw new AssertionError("wide instance uses medium layout");
@@ -204,52 +204,52 @@ public class WidgetCheck {
         // 未用的第二行额度隐藏
         if (!Integer.valueOf(View.GONE).equals(medium.visibility.get(R.id.widget_quota_2))) throw new AssertionError("quota 2 hidden");
         // 场景二：窄宽度选择小号布局，明细区整体隐藏
-        // 
+        //
         manager.updated.clear(); RemoteViews.all.clear();
-        // 
+        //
         manager.minWidth = 200;
         // 渲染
         new LokiWidgetProvider().onUpdate(new android.content.Context(), manager, manager.getAppWidgetIds(null));
-        // 
+        //
         awaitUpdate(manager, 1);
-        // 
+        //
         RemoteViews small = manager.updated.get(0);
         // 小号布局
         if (small.layout != R.layout.widget_small) throw new AssertionError("narrow instance uses small layout");
         // 明细与额度行全部隐藏
         for (int id : new int[] {R.id.widget_agent_1, R.id.widget_agent_2, R.id.widget_agent_3,
                 R.id.widget_quota_1, R.id.widget_quota_2}) {
-            // 
+            //
             if (!Integer.valueOf(View.GONE).equals(small.visibility.get(id))) throw new AssertionError("row " + id + " hidden");
         }
         // 场景三：核心不可用（无目录、调用失败）渲染空态
-        // 
+        //
         manager.updated.clear();
-        // 
+        //
         manager.minWidth = 300;
         // 夹具核心切换为不可用
         com.manonloki.lokimetrisdisplay.widget.WidgetCore.unavailable = true;
         // 渲染
         new LokiWidgetProvider().onUpdate(new android.content.Context(), manager, manager.getAppWidgetIds(null));
-        // 
+        //
         awaitUpdate(manager, 1);
-        // 
+        //
         RemoteViews empty = manager.updated.get(0);
         // 空态文案
         if (!"尚未同步".equals(empty.texts.get(R.id.widget_token))) throw new AssertionError("empty token");
         if (!"打开 App 连接桌面".equals(empty.texts.get(R.id.widget_sync))) throw new AssertionError("empty help");
         if (!"诡秘神谕 · 尚未同步".equals(empty.texts.get(R.id.widget_hooks))) throw new AssertionError("empty inline");
         // 场景四：共享目录缺失时不发请求直接渲染空态
-        // 
+        //
         manager.updated.clear();
-        // 
+        //
         com.manonloki.lokimetrisdisplay.widget.WidgetCore.missingDir = true;
         com.manonloki.lokimetrisdisplay.widget.WidgetCore.unavailable = false;
         // 渲染
         new LokiWidgetProvider().onUpdate(new android.content.Context(), manager, manager.getAppWidgetIds(null));
-        // 
+        //
         awaitUpdate(manager, 1);
-        // 
+        //
         if (manager.updated.get(0).texts.get(R.id.widget_token) == null) throw new AssertionError("missing dir renders empty state");
         System.out.println("widget render: 4 scenarios passed");
     }
