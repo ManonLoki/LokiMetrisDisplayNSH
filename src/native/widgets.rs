@@ -196,12 +196,12 @@ impl ReloadGate {
 }
 
 /// 把首条 Hook 状态推给灵动岛：载荷由连接 owner 组装，平台层决定启停与更新。
-pub(super) fn agent_activity(payload: &str) {
+pub(super) fn agent_activity(_payload: &str) {
     // 仅 iOS 有灵动岛
     #[cfg(target_os = "ios")]
     {
         // SAFETY: 载荷字符串在本调用期间存活；垫片复制后立即归还。
-        let c_payload = match std::ffi::CString::new(payload) {
+        let c_payload = match std::ffi::CString::new(_payload) {
             // 构造成功
             Ok(value) => value,
             // 内部 NUL 不会出现（JSON 文本）

@@ -404,14 +404,10 @@ private final class AgentActivityController {
         } else {
             // 属性固定为产品名
             let attributes = AgentActivityAttributes(sourceName: "诡秘神谕")
-            // 异步请求；系统可能拒绝（额度、设置），失败即无活动
-            Task {
-                // 请求活动
-                let activity = try? Activity.request(attributes: attributes,
-                    content: .init(state: state, staleDate: nil))
-                // 记录活动
-                self.current = activity
-            }
+            // 同步取得并登记活动，后续快照或断开不会越过一次尚未登记的请求。
+            // 系统可能因额度或设置拒绝，失败时不保留活动。
+            current = try? Activity.request(attributes: attributes,
+                content: .init(state: state, staleDate: nil))
         }
     }
 

@@ -58,7 +58,7 @@ GIF 在 Rust 后台工作线程解码为完整画布 PNG 帧。TSX 播放时钟�
 
 小组件通过 App Group 读取最近摘要。认证会话收到 `widgetHttpV1` 与只读端点后，只在原生私有路径记录权限，以实际已认证 TCP 对端为主机地址；端点和密钥不进入 TSX 或 Watch 公共投影。收到认证快照时发布、心跳时续租，断线停止续租并保留摘要；切换或忘记来源撤销相应配置。跨进程锁和请求代次避免旧 HTTP 响应覆盖新来源。WidgetKit 时间线与 BGAppRefreshTask 都申请约 15 分钟后再次刷新，实际执行时机由 iOS 决定。Swift 只经 `loki_core_call` 调用 `store.load`、`view.describe`、`widget.begin/finish` 等少量操作；主应用连接 owner 直接使用 widget-core 的 Rust API。
 
-Android 的同一共享目录与应用内发布路径由系统小组件复用：提供器与主应用同进程，经 JNI 调用同一小组件核心读取摘要并渲染 RemoteViews；应用收到快照即刷新，系统调度（不低于三十分钟）唤醒时由提供器执行一次独立只读 HTTP。目录与凭据只在应用私有存储，不进入 TSX 或 Watch 投影。
+Android 的同一共享目录与应用内发布路径由系统小组件复用：提供器与主应用同进程，经 JNI 调用同一小组件核心读取摘要并渲染 RemoteViews；应用收到快照即刷新，系统调度（不低于三十分钟）唤醒时由提供器执行一次独立只读 HTTP。最终清单显式允许 HTTP 传输，地址只取自已认证的配对对端，载荷由 core 加密且不跟随重定向。目录与凭据只在应用私有存储，不进入 TSX 或 Watch 投影。
 
 iPhone 的灵动岛实时活动走应用内通道：连接 owner 在认证快照落库后把首条 Hook（槽位最小项）经垫片交给主应用，由 ActivityKit 发起或更新；扩展按共享的 AgentActivityAttributes 渲染锁屏与灵动岛。断开、忘记或切换来源时撤下。
 

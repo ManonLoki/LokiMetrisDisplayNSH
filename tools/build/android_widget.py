@@ -93,6 +93,9 @@ def extend_manifest(base_manifest, base_arsc, android_names):
     application = applications[0]
     # 改 Application 类名（幂等：已是目标名则不变）
     application.set(f'{{{ANDROID_NS}}}name', APPLICATION)
+    # 小组件的 LAN HTTP 传输载荷由 core 加密，地址仅取自已认证的配对对端。
+    # targetSdk 28+ 默认拒绝 HTTP，须在最终清单显式开启既有局域网通道。
+    application.set(f'{{{ANDROID_NS}}}usesCleartextTraffic', 'true')
     # 收集活动
     activities = application.findall('activity')
     # 找官方运行器活动

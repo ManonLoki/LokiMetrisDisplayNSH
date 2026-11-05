@@ -194,6 +194,8 @@ class StandardBuildInputs(unittest.TestCase):
                     applications = root.findall('application')
                     self.assertEqual(len(applications), 1)
                     self.assertEqual(applications[0].get(f'{android}name'), APPLICATION)
+                    # LAN 小组件通道的载荷由 core 加密；系统仍须允许 HTTP 传输。
+                    self.assertEqual(applications[0].get(f'{android}usesCleartextTraffic'), 'true')
                     # 运行器类名被替换且启动器契约保留
                     runners = [element for element in applications[0].findall('activity')
                                if element.get(f'{android}name') == ACTIVITY]

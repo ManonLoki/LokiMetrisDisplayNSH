@@ -4,12 +4,26 @@
 import argparse
 import os
 from pathlib import Path
+import platform
 import shlex
+import shutil
 import subprocess
 import sys
+import tempfile
 
 # 仓库根目录
 ROOT = Path(__file__).resolve().parents[1]
+
+
+# 将原样测试二进制移到临时目录，避免 macOS 安全框架遍历庞大的 Cargo 输出目录。
+def run_rust_binary(arguments):
+    if not arguments:
+        raise SystemExit('Missing Rust test executable')
+    source = Path(arguments[0]).resolve(strict=True)
+    with tempfile.TemporaryDirectory(prefix='loki-rust-test-') as directory:
+        executable = Path(directory) / source.name
+        shutil.copy2(source, executable)
+        return subprocess.run([str(executable), *arguments[1:]], cwd=ROOT).returncode
 
 
 # 返回指定测试套件要依次执行的命令
@@ -78,6 +92,12 @@ def main():
     environment = os.environ.copy()
     # 避免生成 .pyc 文件
     environment['PYTHONDONTWRITEBYTECODE'] = '1'
+    if sys.platform == 'darwin':
+        # 保留调用者显式设置的 runner；只为本机测试提供等字节的启动隔离。
+        architecture = 'AARCH64' if platform.machine() == 'arm64' else 'X86_64'
+        runner_key = f'CARGO_TARGET_{architecture}_APPLE_DARWIN_RUNNER'
+        environment.setdefault(runner_key, shlex.join([sys.executable, str(Path(__file__).resolve()),
+                                                      '--rust-runner']))
     if args.suite == 'simulator':
         # 与移动打包器一致：让 bindgen 使用 Xcode 的 Clang 和模拟器 SDK 头文件。
         developer = subprocess.check_output(['xcode-select', '-p'], text=True).strip()
@@ -108,6 +128,8 @@ def main():
 # 脚本入口
 if __name__ == '__main__':
     try:
+        if sys.argv[1:2] == ['--rust-runner']:
+            raise SystemExit(run_rust_binary(sys.argv[2:]))
         main()
     # 子命令失败时沿用其退出码，且不输出多余的堆栈
     except subprocess.CalledProcessError as error:
