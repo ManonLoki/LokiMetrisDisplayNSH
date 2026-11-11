@@ -23,42 +23,28 @@ def verify_runner(target, root):
         raise RuntimeError('NSH runner omitted the local application Rust module')
 
 
-# 校验 APK：包含应用包与各 ABI 的运行时，且 ELF 架构正确
+ANDROID_ABI = 'arm64-v8a'
+
+
 def verify_android(path):
-    # 打开 APK 压缩包
+    """Require the app bundle and an ARM64-only native runtime."""
+    runtime = f'lib/{ANDROID_ABI}/libnsh.so'
     with zipfile.ZipFile(path) as archive:
-        # 列出全部条目
         names = archive.namelist()
-        # 缺少应用 bundle
         if not any(name.endswith('bundle.nshc') for name in names):
-            # 报错
             raise RuntimeError('APK is missing the NSH application bundle')
-        # 收集 NSH 运行时库
-        libraries = [name for name in names if name.startswith('lib/') and name.endswith('/libnsh.so')]
-        # 没有运行时库
-        if not libraries:
-            # 报错
-            raise RuntimeError('APK is missing its NSH Rust runtime')
-        # 架构列表
-        architectures = []
-        # 逐个库
-        for name in libraries:
-            # 取 ABI 目录名
-            abi = name.split('/')[1]
-            # 各 ABI 对应的 ELF 机器码
-            expected = {'arm64-v8a': 183, 'x86_64': 62, 'armeabi-v7a': 40, 'x86': 3}.get(abi)
-            # 打开该库
-            with archive.open(name) as library:
-                # 读取 ELF 头
-                header = library.read(20)
-            # 魔数和机器码都要对
-            if expected is None or header[:4] != b'\x7fELF' or int.from_bytes(header[18:20], 'little') != expected:
-                # 架构与目录名不符则报错
-                raise RuntimeError('Invalid NSH runtime architecture: ' + abi)
-            # 记录该架构
-            architectures.append(abi)
-    # 返回架构列表与 bundle 已校验
-    return {'architectures': architectures, 'bundleVerified': True}
+        abis = {name.split('/')[1] for name in names
+                if name.startswith('lib/') and name.endswith('.so')}
+        if abis != {ANDROID_ABI}:
+            raise RuntimeError(f'Expected only {ANDROID_ABI} libraries in APK, found {sorted(abis)}')
+        if names.count(runtime) != 1:
+            raise RuntimeError(f'APK must contain exactly one {runtime}')
+        with archive.open(runtime) as library:
+            header = library.read(20)
+        # ELF64, little-endian, EM_AARCH64.
+        if header[:6] != b'\x7fELF\x02\x01' or int.from_bytes(header[18:20], 'little') != 183:
+            raise RuntimeError('Invalid NSH runtime architecture: ' + ANDROID_ABI)
+    return {'architectures': [ANDROID_ABI], 'bundleVerified': True}
 
 
 # 从模拟器 Mach-O 的 __TEXT,__entitlements 节读出内嵌的应用标识

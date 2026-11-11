@@ -33,7 +33,7 @@ export interface CyberMotionScopeProps {
 }
 
 /** 没有明确的前台信息时,所有特效都保持其静态的
- * 最终外观。页面选择/详情呈现可以停用该作用域。 */
+ * 最终外观。页面可以停用该作用域。 */
 // 动效作用域：启用、前台且未开启“减少动态效果”时才允许动画
 export function CyberMotionScope(props: CyberMotionScopeProps) {
   // 向后代提供许可读取器
@@ -275,11 +275,7 @@ export function CyberArrival(props: CyberArrivalProps) {
 }
 
 // 可按压属性
-export interface CyberPressableProps extends ButtonProps, MotionProps {
-  /** 获得遥控焦点时调用（电视）。 */
-  // 远程焦点回调
-  onRemoteFocus?: () => void;
-}
+export type CyberPressableProps = ButtonProps & MotionProps;
 /** 保留原生 Button 的语义、键盘激活、悬停/聚焦和禁用
  * 样式;原生手势取消时同样会触发抬起事件。 */
 // 可按压容器：保留原生按钮语义，附加按压缩放与遥控支持
@@ -314,13 +310,13 @@ export function CyberPressable(props: CyberPressableProps) {
   // 有标识才登记为遥控目标
   if (id) registerRemoteTarget(id, { node: () => node, activate: () => props.onPress?.(),
     // 禁用与焦点状态
-    disabled: () => props.disabled === true, focused: () => props.onRemoteFocus?.() });
+    disabled: () => props.disabled === true });
   // 读取圆角，供焦点框使用
   const style = props.style;
   // 取样式里的圆角
   const radius = style && !Array.isArray(style) && typeof style === "object" ? (style as ViewStyle).borderRadius : undefined;
   // 拆出自有属性，其余透传给 Button
-  const [, rest] = split(props, ["active", "style", "children", "onPressDown", "onPressUp", "ref", "onRemoteFocus"] as const);
+  const [, rest] = split(props, ["active", "style", "children", "onPressDown", "onPressUp", "ref"] as const);
   // 按压缩放通过 transform 呈现
   return <Button {...rest} ref={(value: ViewRef) => { node = value; }} style={[props.style, { transform: [{ scale }] }]}
     // 按下开始缩小动画

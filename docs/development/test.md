@@ -24,8 +24,8 @@ macOS 统一入口会把每个原样测试二进制复制到独立临时目录�
 | --- | --- |
 | `src/**/**_test.rs` | 同模块生产实现的 Rust 回归 |
 | `src/tests/packaging/` | 构建与签名工具的输入、输出和失败行为 |
-| `src/tests/desktop/app.test.tsx` | 导航、配对阶段、设置持久化、缓存、翻页和详情 |
-| `src/tests/desktop/app-recovery.test.tsx` | 缓存快照不改写同步时间、损坏的持久化数据、输入中的名称与已移除 Hook 详情 |
+| `src/tests/desktop/app.test.tsx` | 导航、配对阶段、设置持久化、缓存、翻页和卡片点击 |
+| `src/tests/desktop/app-recovery.test.tsx` | 缓存快照不改写同步时间、损坏的持久化数据、输入中的名称和 Hook 卡片随快照更新 |
 | `src/tests/desktop/mobile-app.test.tsx` | 移动身份与偏好迁移、安全区和遥控输入 |
 | `src/tests/desktop/image-playback.test.ts` | 播放时钟、暂停恢复、有限循环和独立播放头 |
 | `src/native/fixture/` | 仅调试构建的 Rust 夹具连接：按存储键（`loki.inject`、`test.staticView`）扮演桌面端的配对、快照、中断和固定投影，时间全部由调用方传入虚拟时钟；产品构建不包含它 |
@@ -80,7 +80,7 @@ nsh test src/tests/desktop/app.test.tsx --target windows
 
 ## iOS 模拟器验收
 
-NSH 0.5.0 的移动原生回归用例不指定虚拟窗口尺寸，由模拟器提供实际屏幕。它们使用隔离的 Rust 连接夹具，验证 UIKit 输入和保存、设置重新打开、GIF 解码后的原生图片尺寸、Hook 详情、配对阶段及取消／确认忘记。无需真实桌面设备，不代表真实网络或 WatchConnectivity 联调。
+NSH 0.5.0 的移动原生回归用例不指定虚拟窗口尺寸，由模拟器提供实际屏幕。它们使用隔离的 Rust 连接夹具，验证 UIKit 输入和保存、设置重新打开、GIF 解码后的原生图片尺寸、Hooks 触屏翻页、配对阶段及取消／确认忘记。无需真实桌面设备，不代表真实网络或 WatchConnectivity 联调。
 
 ```sh
 python3 tools/test.py --suite simulator

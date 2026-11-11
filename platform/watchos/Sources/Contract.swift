@@ -180,7 +180,7 @@ struct TokenAmount: Codable, Equatable {
 }
 
 // 一条 Hook
-struct HookItem: Codable, Equatable, Identifiable {
+struct HookItem: Codable, Equatable {
     // 代理名
     let agent: String
     // 槽位
@@ -193,8 +193,6 @@ struct HookItem: Codable, Equatable, Identifiable {
     let contentTruncated: Bool
     // 图片哈希
     let image: String?
-    // 以槽位作标识
-    var id: Int { slot }
 
     // 槽位 1 到 12、代理名、行为、正文长度与图片摘要
     func validate() throws {

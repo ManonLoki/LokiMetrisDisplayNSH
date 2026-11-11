@@ -43,7 +43,7 @@ python3 tools/build/package_app.py --target android --out output/packages/build-
 adb -s <设备序列号> install -r <生成的APK路径>
 ```
 
-包装器通过官方 `--abi arm64-v8a,x86_64` 选项为手机与模拟器构建两个 64 位 ABI 的应用 runtime，并核对 JNI 导出。应用自有 Java 接线与同版本 NSH Java 源码一同编译，源码从 Cargo 缓存读取并用锁定的 `.crate` 归档核对。局域网 HTTP 由 NSH 读取 `nsh.json` 的 `android.usesCleartextTraffic` 写入清单。包装器保留该声明，补入多播权限、应用入口和小组件接收器，再经 D8、对齐和原证书签名生成 APK。目标 SDK 达到 37 时会因缺少本地网络动态权限支持而拒绝出包。
+包装器通过官方 `--abi arm64-v8a` 选项构建 ARM64 APK，核对架构与 JNI 导出。应用自有 Java 接线与同版本 NSH Java 源码一同编译，源码从 Cargo 缓存读取并用锁定的 `.crate` 归档核对。局域网 HTTP 由 NSH 读取 `nsh.json` 的 `android.usesCleartextTraffic` 写入清单。包装器保留该声明，补入多播权限、应用入口和小组件接收器，再经 D8、对齐和原证书签名生成 APK。目标 SDK 达到 37 时会因缺少本地网络动态权限支持而拒绝出包。
 
 移动标识可用 `--id` 覆盖。已有安装须沿用原标识与证书，才能覆盖升级并保留身份及配对。移动包使用项目入口完成组装。
 

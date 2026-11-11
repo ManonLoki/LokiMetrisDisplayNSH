@@ -3,14 +3,14 @@ import { View, cleanup, effect, keymap, signal, untracked, type Accessor, type J
 // 引入色板
 import { cyberColors as color } from "./theme";
 
-/** 遥控器（D-pad）焦点：电视没有触摸，方向键在可按目标之间按几何位置移动，确认键执行。
+/** 遥控器（D-pad）焦点：电视没有触摸，方向键按几何位置移动焦点，确认键执行当前目标的动作。
  * 只有宿主声明电视形态时启用；手机、平板与桌面的触摸和指针交互不受影响。 */
 // 遥控目标
 interface Target {
   // 取得节点用于测量位置
   node: () => ViewRef | undefined;
   // 确认键触发的动作
-  activate: () => void;
+  activate?: () => void;
   // 是否禁用
   disabled: () => boolean;
   /** 获得遥控焦点时调用：例如把横向分页滚到该目标所在页。 */
@@ -52,7 +52,7 @@ export const remoteActive: Accessor<boolean> = () => enabled();
 // 对外暴露：当前焦点目标，未启用时为 null
 export const remoteFocus: Accessor<string | null> = () => (enabled() ? focused() : null);
 
-/** 可按目标登记自身；组件卸载时自动移除。 */
+/** 可聚焦目标登记自身；组件卸载时自动移除。 */
 // 登记目标，卸载时自动清理
 export function registerRemoteTarget(id: string, target: Target) {
   // 登记目标
@@ -118,7 +118,7 @@ function activate() {
   // 对应的目标
   const target = id ? targets.get(id) : undefined;
   // 目标可用才触发
-  if (target && !target.disabled()) target.activate();
+  if (target && !target.disabled()) target.activate?.();
 }
 
 // 测量所有未禁用目标的位置

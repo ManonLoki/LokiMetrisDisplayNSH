@@ -113,7 +113,7 @@ def widget_group(application_id):
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import package_checks  # noqa: E402
 import widget_support  # noqa: E402
-from package_checks import embedded_apple_identifier, verify_android  # noqa: E402,F401
+from package_checks import ANDROID_ABI, embedded_apple_identifier, verify_android  # noqa: E402,F401
 
 
 def widget_linker(directory, response_file, *, sdk, runner_manifest, linker=None):
@@ -143,9 +143,9 @@ def mobile_command(cli, target, stage, *, ios_device=False, application_id=None)
             '--id', application_id or identity['bundleId'], '--app-version', identity['version'],
             # 构建号与输出目录
             '--build', str(identity['build']), '--out', stage]
-    # 显式选择应用支持的手机与模拟器 ABI。
+    # Android 发布包只支持 ARM64。
     if target == 'android':
-        command.extend(['--abi', 'arm64-v8a,x86_64'])
+        command.extend(['--abi', ANDROID_ABI])
     return command
 
 

@@ -27,8 +27,6 @@ struct ContentView: View {
     @State var glowRevision = 0
     // 当前可见的 Hook 槽位
     @State var visibleHookSlot: Int?
-    // 打开详情的 Hook
-    @State var selectedHook: HookItem?
     // 记住上次所在页面
     @AppStorage("watch.panel.selectedPage") var selectedPage = Page.tokens.rawValue
 
@@ -38,19 +36,8 @@ struct ContentView: View {
         phase == .active && !reduceMotion && !reducedLuminance
     }
 
-    // 视图主体
-    var body: some View {
-        // 仪表盘加详情弹窗
-        dashboard
-            // 点击 Hook 弹出详情
-            .sheet(item: $selectedHook) { hook in
-                // 详情页使用导航栈
-                NavigationStack { HookDetailView(hook: hook, model: model) }
-            }
-    }
-
     // 三页横向分页的主体
-    var dashboard: some View {
+    var body: some View {
         // 以外层页面尺寸为准
         GeometryReader { pageArea in
             // 分页视图，绑定选中页
@@ -310,17 +297,7 @@ struct ContentView: View {
                     LazyVStack(spacing: 0) {
                         // 按槽位排序逐个显示 Hook
                         ForEach(display.hooks.sorted { $0.slot < $1.slot }, id: \.slot) { hook in
-                            // 点击打开详情
-                            Button {
-                                // 点击时选中该 Hook
-                                selectedHook = hook
-                            // 按钮标签
-                            } label: {
-                                // Hook 卡片
-                                hookTile(hook, height: height)
-                            }
-                                // 朴素按钮样式
-                                .buttonStyle(.plain)
+                            hookTile(hook, height: height)
                                 // 以槽位作标识
                                 .id(hook.slot)
                                 // 宽高

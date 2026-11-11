@@ -1,11 +1,11 @@
 // 引入滚动、文本、视图与响应式原语
-import { Scroll, Text, View, computed, effect, untracked, type Bounds, type Size } from "nsh";
+import { Scroll, Text, View, computed, type Bounds, type Size } from "nsh";
 // 引入连接视图类型
 import type { ViewState } from "../connection";
 // 引入面板配置类型
 import type { PanelConfig } from "../../shared/contracts/panel";
-// 引入 Hooks 面板、详情与控制器
-import { HooksPane, HookDetail, createPanelController, type PanelController } from "../hooks";
+// 引入 Hooks 面板与控制器
+import { HooksPane, createPanelController, type PanelController } from "../hooks";
 // 引入用量卡片
 import { UsageCard } from "../usage";
 // 引入入场动效容器与可按压容器
@@ -27,16 +27,11 @@ export interface PanelBodyProps {
   width: PanelValue<number>;
   // 面板高度
   height: PanelValue<number>;
-  /** 完整窗口尺寸:Android 的对话框独立于导航轨。 */
-  // 整个窗口宽度，详情对话框不受导航栏影响
-  viewportWidth?: PanelValue<number>;
-  // 视口高度（可选）
-  viewportHeight?: PanelValue<number>;
   // 连接视图
   state: PanelValue<ViewState>;
   // 面板配置
   config: PanelValue<PanelConfig>;
-  // Hooks 页码与选择控制器，可由外部注入
+  // Hooks 页码控制器，可由外部注入
   controller?: PanelController;
   // 点击前往设置
   onSettings: () => void;
@@ -46,7 +41,7 @@ export interface PanelBodyProps {
   onImageLoad?: (hash: string, size: Size) => void;
 }
 
-/** 仪表盘只组合用量与 Hooks；快照更新通过 accessor 传递，不重置页码和详情。 */
+/** 仪表盘只组合用量与 Hooks；快照更新通过 accessor 传递，保留页码。 */
 // 展示台：按配置组合用量卡片与 Hooks 面板
 export function PanelBody(props: PanelBodyProps) {
   // 宽高至少为 1，避免除零
@@ -73,23 +68,6 @@ export function PanelBody(props: PanelBodyProps) {
   const paneHeight = () => Math.max(1, (height() - 44 - (both() && !horizontal() ? 12 : 0)) / (both() && !horizontal() ? 2 : 1));
   // 使用注入的控制器，否则创建新的
   const controller = props.controller ?? createPanelController();
-  // 当前选中的 Hook 槽位
-  const selectedSlot = controller.selectedSlot;
-  // 没有打开详情时，页面处于活跃状态
-  const active = () => selectedSlot() == null;
-  // 选中的 Hook：需要显示 Hooks 且快照中存在该槽位
-  const selectedHook = computed(() => config().showHooks && state().snapshot?.hooksAvailable
-    // 查找所选槽位的 Hook
-    ? state().snapshot!.hooks.find((hook) => hook.slot === selectedSlot()) ?? null : null);
-  // 是否存在选中的 Hook
-  const hasSelection = computed(() => selectedHook() != null);
-  // 选中的 Hook 消失后自动退出详情
-  effect(() => {
-    // 读取当前选中的 Hook
-    const selected = selectedHook();
-    // 槽位仍被选中但 Hook 已不存在时清空
-    if (untracked(selectedSlot) != null && selected == null) selectedSlot.set(null);
-  });
   // 容器：横向或纵向分割
   return <View testID={horizontal() ? "panel-split-row" : "panel-split-column"}
     // 样式：撑满，按方向横排或竖排
@@ -98,7 +76,7 @@ export function PanelBody(props: PanelBodyProps) {
       paddingHorizontal: padding(), paddingVertical: 22, gap: 12 }}>
     {/* 用量卡片区域 */}
     {showUsage() ? <View testID="usage-pane" style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-      <UsageCard width={paneWidth} height={paneHeight} snapshot={() => state().snapshot} detail={() => config().usageDetail} active={active}
+      <UsageCard width={paneWidth} height={paneHeight} snapshot={() => state().snapshot} detail={() => config().usageDetail}
         // 上报用量区布局
         onFrame={(bounds) => props.onFrame?.("usage", bounds)} />
     </View> : null}
@@ -108,8 +86,6 @@ export function PanelBody(props: PanelBodyProps) {
       connected={() => state().connected} assetWarning={() => state().assetWarning ?? null} layout={() => config().hookLayout}
       // 控制器
       controller={controller}
-      // 所选槽位与选择回调
-      selectedSlot={selectedSlot} onSelect={(slot) => selectedSlot.set(slot)} active={active}
       // 上报 Hook 区布局与图片加载
       onFrame={(bounds) => props.onFrame?.("hook", bounds)} onImageLoad={props.onImageLoad} /> : null}
     {/* 两个面板都关闭时显示空状态与跳转设置的入口 */}
@@ -127,13 +103,5 @@ export function PanelBody(props: PanelBodyProps) {
         </CyberPressable>
       </Scroll>
     </CyberArrival> : null}
-    {/* 选中 Hook 时弹出详情 */}
-    {hasSelection() ? <HookDetail hook={selectedHook} connected={() => state().connected}
-      // 视口宽度
-      width={() => Math.max(1, read(props.viewportWidth ?? props.width))}
-      // 视口高度
-      height={() => Math.max(1, read(props.viewportHeight ?? props.height))}
-      // 关闭回调与图片加载回调
-      onDismiss={() => selectedSlot.set(null)} onImageLoad={props.onImageLoad} /> : null}
   </View>;
 }

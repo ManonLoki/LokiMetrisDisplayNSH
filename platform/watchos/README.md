@@ -4,9 +4,9 @@
 
 ## 界面与图片
 
-主界面横向切换 Hooks、Token、账户额度，首次显示 Token，并保存最后选择的页面。Hooks 使用纵向卡片，详情通过 sheet 展示。Token 同时提供紧凑值与精确值，额度展示剩余条和套餐信息。
+主界面横向切换 Hooks、Token、账户额度，首次显示 Token，并保存最后选择的页面。Hooks 使用纵向滚动卡片，直接展示状态与图片。Token 同时提供紧凑值与精确值，额度展示剩余条和套餐信息。
 
-图片在后台解码，来源上限为 32 MiB，最多 512 帧；缩略图最长边 256px，全部解码帧合计预算为 2 MiB。仅当前可见 Hook 卡片播放，打开详情、离开页面、进入后台、Always On 和 Reduce Motion 都会影响相应播放时钟。超限或无效图片显示占位，不阻塞页面。
+图片在后台解码，来源上限为 32 MiB，最多 512 帧；缩略图最长边 256px，全部解码帧合计预算为 2 MiB。仅当前可见 Hook 卡片播放，离开页面、进入后台、Always On 和 Reduce Motion 都会影响相应播放时钟。超限或无效图片显示占位，不阻塞页面。
 
 ## 源码职责
 
@@ -15,7 +15,7 @@
 | `Sources/LokiMetrisWatchApp.swift`、`Sources/WatchRuntime.swift`、`Sources/WatchModel.swift` | 进程启动、模型通知、前台恢复和后台任务 |
 | `Sources/WatchSession.swift`、`Sources/BackgroundDelivery.swift` | WatchConnectivity 回调、串行写入和一次性完成 |
 | `Sources/Contract.swift`、`Sources/SnapshotCache.swift` | v1 契约、顺序校验、文件验证和冷启动恢复 |
-| `Sources/ContentView.swift`、`Sources/HookDetailView.swift` | 三页面与 Hook 详情 |
+| `Sources/ContentView.swift`、`Sources/ContentViewHooks.swift` | 三个展示页面与 Hook 卡片 |
 | `Sources/WatchImageAsset.swift`、`Sources/WatchHookImage.swift` | 有界解码与可见播放 |
 | `Sources/AmountText.swift`、`Sources/DisplayNames.swift`、`Sources/BehaviorStyle.swift` | 精确数字、Agent 与状态名称（与 Rust 共用 `src/tests/fixtures/display-names.json` 校验）、状态配色 |
 

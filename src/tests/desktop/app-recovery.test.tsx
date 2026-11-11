@@ -59,8 +59,8 @@ test("malformed persisted data cannot crash the stage or become a live connectio
 });
 
 
-// 新快照不会冲掉正在输入的设备名称，被移除的 Hook 详情保持关闭
-test("incoming snapshots preserve an in-progress device name and removed hook details stay closed", async () => {
+// 新快照不会冲掉正在输入的设备名称，Hook 卡片跟随快照变化
+test("incoming snapshots preserve an in-progress device name and Hook cards follow snapshot updates", async () => {
   const first = representativeSnapshot();
   // 去掉槽位 1 的快照
   const removed = { ...first, hooks: first.hooks.filter((hook) => hook.slot !== 1) };
@@ -95,13 +95,9 @@ test("incoming snapshots preserve an in-progress device name and removed hook de
   // 保存的是完整的草稿
   await app.waitUntil(() => JSON.parse(app.storage()[KEY_DEVICE]).name === "工作台终端");
   await app.press("menu-panel");
-  // 打开槽位 1 的详情
-  await app.press("hook-card-1");
-  expect(app.shows("hook-detail")).toBe(true);
-  // 槽位 1 被移除，详情应关闭
+  expect(app.shows("hook-card-1")).toBe(true);
   await app.clock!.runFor(1000);
-  expect(app.shows("hook-detail")).toBe(false);
-  // 槽位 1 再次出现，详情不应自动重新打开
+  expect(app.shows("hook-card-1")).toBe(false);
   await app.clock!.runFor(1000);
-  expect(app.shows("hook-detail")).toBe(false);
+  expect(app.shows("hook-card-1")).toBe(true);
 }, 60_000);

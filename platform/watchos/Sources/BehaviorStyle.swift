@@ -1,8 +1,8 @@
 // 引入 SwiftUI
 import SwiftUI
 
-/// 原版手表配色,分页卡片与详情视图共用。
-// 手表沿用的原始配色，分页卡片与详情共用：运行青色、询问紫色、空闲半透明白、出错橙色
+/// 手表 Hook 卡片沿用原版配色。
+// 手表卡片配色：运行青色、询问紫色、空闲半透明白、出错橙色
 func behaviorColor(_ kind: String) -> Color {
     // 按行为种类取颜色
     switch kind {

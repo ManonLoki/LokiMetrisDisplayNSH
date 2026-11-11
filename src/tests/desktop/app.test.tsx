@@ -1,6 +1,5 @@
 // 引入测试 API
 import { expect, test } from "nsh/test";
-import { pathToFileURL } from "url";
 // 引入打开函数、常量与存储键
 import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_PANEL, KEY_DEVICE, KEY_PAIRED, KEY_CACHE, KEY_INJECT, KEY_FRAMES, safe } from "./app-environment";
 // 引入夹具快照
@@ -259,16 +258,11 @@ test("snapshot numbers, hooks and connection phases", async () => {
   // 第二页有占位
   expect(app.texts()).toContain("暂无活动");
   expect(app.texts()).toContain("2 / 2 · 左右滑动");
-  // 打开第五条 Hook 的详情
-  await app.press("hook-card-5");
-  // 详情显示截断提示与完整正文
-  expect(app.texts()).toContain("正文已截断");
-  expect(app.texts()).toContain("桌面回传的正文");
-  // 图片尚未缓存时的说明
+  // 卡片展示缓存状态，但没有点击动作。
+  expect(app.shows("hook-card-5")).toBe(true);
   expect(app.texts()).toContain("图片尚未缓存");
-  // 关闭详情
-  await app.press("关闭");
-  expect(app.shows("hook-detail")).toBe(false);
+  await expect(app.press("hook-card-5")).rejects.toMatchObject({ code: "ERR_NSH_TEST_NOT_FOUND" });
+  expect(app.texts()).not.toContain("桌面回传的正文");
 
   // 点击“设置”
   await app.press("设置");
@@ -375,13 +369,9 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
   // 给前两条 Hook 绑定图片
   snapshot.hooks[0].image = pngHash;
   snapshot.hooks[1].image = gifHash;
-  snapshot.hooks[0].content = "图片详情正文";
-  // Windows 测试宿主可能给出盘符路径，先转为本地文件 URL。
-  const moduleUrl = import.meta.url;
-  const fileUrl = moduleUrl.startsWith("file:") ? moduleUrl : pathToFileURL(moduleUrl).href;
   const images = {
-    [pngHash]: new URL("../fixtures/assets/hook.png", fileUrl).href,
-    [gifHash]: new URL("../fixtures/assets/hook.gif", fileUrl).href,
+    [pngHash]: new URL("../fixtures/assets/hook.png", import.meta.url).href,
+    [gifHash]: new URL("../fixtures/assets/hook.gif", import.meta.url).href,
   };
   // 已配对的桌面在 1 秒后推送带图片的快照
   const app = await open("./test-app.tsx", {
@@ -431,13 +421,7 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
   // 翻回第一页
   await app.drag("hooks-pager", { x: 260 });
   expect(app.texts()).toContain("1 / 5 · 左右滑动");
-  // 打开详情
-  await app.press("hook-card-1");
-  // 详情里有大图
-  expect(app.shows("hook-detail-image")).toBe(true);
-  expect(app.texts()).toContain("图片详情正文");
-  await app.press("hook-detail-close");
-  await app.waitUntil(() => !app.shows("hook-detail"));
+  expect(app.shows("hook-image-1")).toBe(true);
   // 切到详细用量模式
   await app.press("menu-settings");
   await app.waitFor("settings-usage-detailed");

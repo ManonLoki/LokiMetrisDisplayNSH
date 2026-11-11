@@ -68,46 +68,19 @@ export function createApp(runtime: AppRuntime = {}): () => JSX.Element {
   const panelController = createPanelController();
   // 设置页控制器
   const settingsController = createSettingsController();
-  // 运行时：把信号交给它读写，视图变化时回调 closeMissingHook
+  // 运行时读写界面信号
   const ports = createRuntime({
     // 界面状态与回调集合
     panel, view, nameDraft, nameFeedback, nameIssue, panelIssue, savingName,
-  }, closeMissingHook);
+  });
   // 画布背景色
   const bg = cyberColors.canvas;
-
-  // 若选中的 Hook 已不在最新快照中，则退出详情
-  function closeMissingHook(next: ViewState) {
-    // 当前选中的 Hook 槽位
-    const slot = panelController.selectedSlot();
-    // 所选 Hook 已不存在时
-    if (slot != null && (!next.snapshot?.hooksAvailable || !next.snapshot.hooks.some((hook) => hook.slot === slot))) {
-      // 取消选中
-      panelController.selectedSlot.set(null);
-    }
-  }
-
-  // 选择桌面：先关闭详情，再下发选择命令
-  function chooseDesktop(id: string) {
-    // 取消选中
-    panelController.selectedSlot.set(null);
-    // 发出选择桌面命令
-    ports.command({ op: "select", clientId: id });
-  }
-
-  // 忘记桌面：先关闭详情，再下发忘记命令
-  function forgetDesktopNow(id: string) {
-    // 取消选中
-    panelController.selectedSlot.set(null);
-    // 发出忘记桌面命令
-    ports.command({ op: "forget", clientId: id });
-  }
 
   // 根组件
   function App() {
     // 启动运行时初始化与轮询
     ports.mount();
-    // 电视没有触摸：方向键在可按目标之间移动焦点，确认键执行。
+    // 电视通过方向键移动焦点，确认键执行当前目标提供的动作。
     enableRemoteNavigation(() => runtime.remoteNavigation?.() ?? (platform.idiom === "tv"));
     // 根容器：避开安全区，并把布局尺寸同步到信号
     return (
@@ -144,8 +117,8 @@ export function createApp(runtime: AppRuntime = {}): () => JSX.Element {
               }}>
                 {/* 按当前页面渲染展示台或设置页 */}
                 {() => page() === "panel" ? <PanelBody width={contentWidth} height={contentHeight}
-                  // 视口尺寸、状态、配置与控制器
-                  viewportWidth={width} viewportHeight={height} state={view} config={panel} controller={panelController}
+                  // 状态、配置与控制器
+                  state={view} config={panel} controller={panelController}
                   // 打开设置页
                   onSettings={() => page.set("settings")}
                   // 帧与图片加载回调；否则显示设置页
@@ -176,7 +149,8 @@ export function createApp(runtime: AppRuntime = {}): () => JSX.Element {
       // 名称与面板的编辑、保存回调
       onNameChange={ports.editName} onSaveName={ports.saveName} onPanelChange={ports.savePanel}
       // 重试、选择与忘记桌面回调
-      onRetry={() => ports.command({ op: "refresh" })} onSelect={chooseDesktop} onForget={forgetDesktopNow} />;
+      onRetry={() => ports.command({ op: "refresh" })} onSelect={(id) => ports.command({ op: "select", clientId: id })}
+      onForget={(id) => ports.command({ op: "forget", clientId: id })} />;
   }
 
   // 返回根组件工厂的结果

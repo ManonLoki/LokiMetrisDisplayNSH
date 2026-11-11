@@ -18,9 +18,9 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 | 位置 | 职责 |
 | --- | --- |
 | `src/app/` | 应用工厂、导航、公开投影订阅和名称确认计时 |
-| `src/features/dashboard/` | 展示台布局与详情装配 |
+| `src/features/dashboard/` | 展示台布局与卡片装配 |
 | `src/features/usage/` | Token、额度、排序和格式化规则 |
-| `src/features/hooks/` | Hooks 卡片、分页、状态、正文和图片详情 |
+| `src/features/hooks/` | Hooks 卡片、分页、状态和图片 |
 | `src/features/connection/` | 公开连接视图、快照投影、设备身份与名称规则 |
 | `src/features/settings/` | 设备与面板设置界面，以及身份恢复、名称确认和面板持久化用例 |
 | `src/shared/` | Rust 公开数据形状（`contracts/models.rs`）、共用规则与 TS 共用 UI |
@@ -40,7 +40,7 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 
 | 状态 | 维护者 | 边界 |
 | --- | --- | --- |
-| 页码、草稿、窗口尺寸、导航、详情和动画时钟 | TSX | 界面局部状态 |
+| 页码、草稿、窗口尺寸、导航和动画时钟 | TSX | 界面局部状态 |
 | 身份恢复、名称保存、面板保存和失败处理 | Rust `Shell` 与设置用例 | 普通偏好通过 NSH Storage 保存 |
 | 配对、会话序号、心跳、可信快照和资源接收 | Rust 连接 owner | 同一事件循环串行修改 |
 | 配对秘密与身份安全记录 | Rust 与系统安全存储 | 秘密不进入 TSX 或普通 Storage；设备 UUID 和名称可公开 |

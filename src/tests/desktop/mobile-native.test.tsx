@@ -42,12 +42,11 @@ test("native mobile input saves the name and panel choices survive reopening", a
   await again.screenshot(`${output}/settings-reopened.png`);
 }, 60_000);
 
-test("native mobile Hook images, details and touch paging work in the Carousel", async () => {
+test("native mobile Hook images and touch paging work in the Carousel", async () => {
   const snapshot = representativeSnapshot();
   snapshot.hooks = snapshot.hooks.slice(0, 2);
   const hash = "cd".repeat(32);
   snapshot.hooks[0].image = hash;
-  snapshot.hooks[0].content = "模拟器图片详情正文";
   const app = await open("./test-app.tsx", {
     colorScheme: "dark", reducedMotion: true,
     storage: {
@@ -65,17 +64,10 @@ test("native mobile Hook images, details and touch paging work in the Carousel",
   expect(JSON.parse(app.storage()["loki.imageLoads"])[hash]).toEqual({ width: 64, height: 64 });
   expect(app.texts()).not.toContain("图片无法读取");
   await app.screenshot(`${output}/hook-image.png`);
-  await app.press("hook-card-1");
-  await app.waitFor("hook-detail-image");
-  expect(app.texts()).toContain("模拟器图片详情正文");
-  await app.screenshot(`${output}/hook-detail.png`);
-  await app.press("hook-detail-close");
-  await app.waitUntil(() => !app.shows("hook-detail"));
-  expect(app.shows("hook-card-1")).toBe(true);
-  await app.drag("hooks-pager", { x: -240 });
+  await app.drag("hook-card-1", { x: -240 });
   await app.waitUntil(() => app.texts().includes("2 / 2 · 左右滑动"));
-  await app.press("hook-card-2");
-  await app.waitFor("hook-detail");
+  await app.waitFor("hook-card-2");
+  await app.screenshot(`${output}/hooks-page-2.png`);
 }, 60_000);
 
 test("native mobile pairing waits for a snapshot and forgetting requires confirmation", async () => {

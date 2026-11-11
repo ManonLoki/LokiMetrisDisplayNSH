@@ -30,14 +30,8 @@ export interface HooksPaneProps {
   assetWarning: Accessor<string | null>;
   // 布局：1x1 或 2x2
   layout: Accessor<HookLayout>;
-  // 页码与选择控制器
+  // 页码控制器
   controller: PanelController;
-  // 当前选中槽位
-  selectedSlot: Accessor<number | null>;
-  // 选中某个槽位
-  onSelect: (slot: number) => void;
-  // 面板是否活跃
-  active: Accessor<boolean>;
   // 测试用：上报面板边界
   onFrame?: (bounds: Bounds) => void;
   // 测试用：上报图片加载尺寸
@@ -108,7 +102,7 @@ export function HooksPane(props: HooksPaneProps) {
             {/* 每页按行渲染，每行一排卡片 */}
             <Each of={Array.from({ length: columns() }, (_, row) => row)} key="index">{(row) =>
               <View style={{ flex: 1, minHeight: 0, flexDirection: "row", gap: 8 }}>
-                {/* 渲染这一行的卡片：有 Hook 则为卡片，否则为占位；详情打开时隐藏图片，仅当前页活跃，聚焦时滚到所在页 */}
+                {/* 渲染这一行的卡片：仅当前页播放图片动画，遥控焦点移动时翻到所在页 */}
                 <Each of={cells().slice(row() * columns(), (row() + 1) * columns())}
                   // 以槽位作键，空位用占位键
                   key={(hook, column) => hook?.slot ?? `empty-${column}`}>{(hook, column) =>
@@ -116,12 +110,8 @@ export function HooksPane(props: HooksPaneProps) {
                     // 卡片在页内的位置
                     position={page() * columns() * columns() + row() * columns() + column()} />}>
                     {(item) => <HookCard hook={item} connected={() => props.connected()} width={cardWidth} height={cardHeight}
-                      // 非所选槽位才显示图片
-                      showImage={() => props.selectedSlot() !== item().slot}
-                      // 面板活动且在当前页才播放
-                      active={() => props.active() && currentPage() === page()}
-                      // 点击选中该槽位
-                      onPress={() => props.onSelect(item().slot)}
+                      // 只在当前页播放
+                      active={() => currentPage() === page()}
                       // 远程焦点移动时滚动到所在页
                       onRemoteFocus={() => currentPage.set(page())}
                       // 图片加载回调

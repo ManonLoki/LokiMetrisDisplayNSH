@@ -1,11 +1,11 @@
 // 引入画布、文本、视图及类型
-import { Canvas, Text, View, type Accessor, type Bounds, type Size } from "nsh";
+import { Canvas, Text, View, type Accessor, type Size, type ViewRef } from "nsh";
 // 引入 Hook 条目类型
 import type { HookItem } from "../../shared/contracts/snapshot";
 // 引入代理显示名
 import { Rules } from "loki-metris-mobile-display/native";
-// 引入入场动效与可按压容器
-import { CyberArrival, CyberPressable } from "../../shared/ui/effects";
+import { CyberArrival } from "../../shared/ui/effects";
+import { registerRemoteTarget, RemoteRing } from "../../shared/ui/remote-focus";
 // 引入透明度函数与色板
 import { cyberAlpha, cyberColors as color } from "../../shared/ui/theme";
 // 引入状态徽标与色调函数
@@ -13,12 +13,10 @@ import { HookStatus, hookStatusTone } from "./hook-status";
 // 引入图片视口
 import { HookImageViewport } from "./hook-image";
 
-// Hook 卡片：显示代理名、状态与图片，点击查看详情
+// Hook 卡片：显示代理名、状态与图片
 export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<boolean>; width: Accessor<number>; height: Accessor<number>;
-  // 显示图片、活动状态与点击回调
-  showImage: Accessor<boolean>; active: Accessor<boolean>; onPress: () => void; onRemoteFocus?: () => void;
-  // 布局与图片加载回调
-  onFrame?: (bounds: Bounds) => void; onImageLoad?: (hash: string, size: Size) => void }) {
+  active: Accessor<boolean>; onRemoteFocus: () => void;
+  onImageLoad?: (hash: string, size: Size) => void }) {
   // 卡片较小时使用紧凑样式
   const small = () => props.width() < 260 || props.height() < 220;
   // 内边距随卡片尺寸收缩
@@ -27,19 +25,15 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
   const gap = () => Math.min(small() ? 6 : 10, props.height() * 0.04);
   // 根据行为状态得到色调
   const tone = () => hookStatusTone(props.hook().behavior);
+  // 遥控器可将焦点移到卡片并翻页，卡片本身没有确认动作。
+  const id = `hook-card-${props.hook().slot}`;
+  let node: ViewRef | undefined;
+  registerRemoteTarget(id, { node: () => node, disabled: () => false, focused: props.onRemoteFocus });
   // 入场动效容器，order 决定入场先后
   return <CyberArrival order={2 + Math.min(4, props.hook().slot)} active={props.active}
     // 样式：撑满
-    style={{ flex: 1, minWidth: 0, minHeight: 0 }} onLayout={({ bounds }) => props.onFrame?.(bounds)}>
-    <CyberPressable testID={`hook-card-${props.hook().slot}`} active={props.active} onPress={props.onPress}
-      // 远程焦点回调
-      onRemoteFocus={props.onRemoteFocus}
-      // 读屏标签：查看代理详情
-      accessibilityLabel={`查看 ${Rules.agentDisplayName(props.hook().agent)} 的详情`}
-      // 悬停样式
-      hoverStyle={{ borderColor: cyberAlpha(tone(), 0.48), boxShadow: `0 0 8px ${cyberAlpha(tone(), 0.1)}` }}
-      // 焦点样式
-      focusStyle={{ borderColor: cyberAlpha(tone(), 0.85), boxShadow: `0 0 9px ${cyberAlpha(tone(), 0.18)}` }}
+    style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+    <View testID={id} ref={(value: ViewRef) => { node = value; }}
       // 样式：相对定位与背景
       style={{ position: "relative", flex: 1, minWidth: 0, minHeight: 0, backgroundColor: color.surface,
         // 卡片圆角、边框、内边距与间距
@@ -56,8 +50,9 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
         <HookStatus behavior={props.hook().behavior} compact={small()} />
       </View>
       {/* 图片区域 */}
-      <HookImageViewport hook={props.hook} connected={props.connected} showImage={props.showImage} active={props.active} onImageLoad={props.onImageLoad} />
-    </CyberPressable>
+      <HookImageViewport hook={props.hook} connected={props.connected} active={props.active} onImageLoad={props.onImageLoad} />
+      <RemoteRing id={id} radius={18} />
+    </View>
   </CyberArrival>;
 }
 

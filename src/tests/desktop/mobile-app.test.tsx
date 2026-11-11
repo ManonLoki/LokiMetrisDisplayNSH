@@ -34,8 +34,8 @@ test("mobile identity and previous panel choices are adopted into NSH storage", 
   await app.waitUntil(() => JSON.parse(app.storage()["loki.panel"]).hookLayout === "1x1");
 });
 
-// 移动端 Hook 详情使用共享对话框
-test("mobile Hook details use the shared NSH dialog", async () => {
+// 移动端 Hook 卡片没有点击动作
+test("mobile Hook cards have no press action", async () => {
   const value = fixture();
   // 填入快照并标记已连接
   value.projection.snapshot = representativeSnapshot();
@@ -43,18 +43,8 @@ test("mobile Hook details use the shared NSH dialog", async () => {
   value.projection.connected = true;
   const app = await open("./mobile-app.tsx", { width: 390, height: 844, safeArea: safe,
     storage: { "test.mobileApp": JSON.stringify(value) } });
-  // 点开第一张卡片
-  await app.press("hook-card-1");
-  // 详情对话框应出现
-  await app.waitFor("hook-detail-dialog");
-  // 正文可见
-  expect(app.shows("hook-detail-content")).toBe(true);
-  // 关闭详情
-  await app.press("hook-detail-close");
-  // 详情应消失
-  await app.waitUntil(() => !app.shows("hook-detail"));
-  // 卡片仍在
-  expect(app.shows("hook-card-1")).toBe(true);
+  await app.waitFor("hook-card-1");
+  await expect(app.press("hook-card-1")).rejects.toMatchObject({ code: "ERR_NSH_TEST_NOT_FOUND" });
 });
 
 // 电视形态保留遥控导航
@@ -94,7 +84,8 @@ test("television focus reveals a Hook on the next Carousel page", async () => {
   await app.waitFor("remote-focus-hook-card-2");
   await app.waitUntil(() => app.texts().includes("2 / 2 · 方向键翻页"));
   await app.keyboard.press("enter");
-  await app.waitFor("hook-detail-dialog");
+  expect(app.shows("remote-focus-hook-card-2")).toBe(true);
+  expect(app.texts()).toContain("2 / 2 · 方向键翻页");
 });
 
 // 手机与平板忽略遥控按键

@@ -12,7 +12,7 @@ const CLIENT = "f0f0f0f0-f0f0-40f0-80f0-f0f0f0f0f0f0";
 test("normal macOS app receives an animated GIF over authenticated TCP", async () => {
   // 使用真实网络，空设备 ID 让应用自行生成
   const app = await open("__APP_ENTRY__", {
-    width: 1120, height: 900, network: "live",
+    width: 1120, height: 900, network: "live", reducedMotion: false,
     storage: {
       // 设备名称
       "loki.device": JSON.stringify({ id: "", name: "macOS 动图链路验证" }),
@@ -21,7 +21,7 @@ test("normal macOS app receives an animated GIF over authenticated TCP", async (
     },
   });
   // 确认没有注入夹具
-  expect(app.storage()["loki.inject"]).toBeNull();
+  expect("loki.inject" in app.storage()).toBe(false);
   // 进入设置页
   await app.press("menu-settings");
   // 等待发现夹具桌面
@@ -42,9 +42,6 @@ test("normal macOS app receives an animated GIF over authenticated TCP", async (
   // 等待图片解码完成
   await app.waitUntil(() => Object.keys(JSON.parse(app.storage()["loki.imageLoads"] ?? "{}")).length > 0,
     { timeout: 20_000 });
-  // 打开详情
-  await app.press("hook-card-1");
-  await app.waitFor("hook-detail-image");
   // 通知脚本开始观察
   console.log("ANIMATION_OBSERVE_READY=true");
   // 等待外部观察动图
@@ -56,8 +53,6 @@ test("normal macOS app receives an animated GIF over authenticated TCP", async (
   }
   // 输出解码记录
   console.log(`ANIMATION_DECODED=${app.storage()["loki.imageLoads"]}`);
-  // 关闭详情
-  await app.press("hook-detail-close");
   // 回到设置页
   await app.press("menu-settings");
   await app.scroll("settings-scroll", 800);

@@ -33,7 +33,7 @@ interface UiState {
  * 连接变化由 Rust 通知。界面按 Rust 给出的截止时间触发名称确认超时。
  * TS 唯一的判断是：异步结果返回时用户若又改了草稿，就不覆盖名称相关字段。
  */
-export function createRuntime(state: UiState, onView: (view: ViewState) => void) {
+export function createRuntime(state: UiState) {
   // 是否已挂载，避免重复启动
   let mounted = false;
   // 是否已释放
@@ -59,10 +59,7 @@ export function createRuntime(state: UiState, onView: (view: ViewState) => void)
     }
     state.panelIssue.set(result.panelIssue ?? null);
     if (result.panel) state.panel.set(result.panel);
-    if (result.view) {
-      onView(result.view);
-      state.view.set(result.view);
-    }
+    if (result.view) state.view.set(result.view);
   }
 
   // 调用外壳并应用结果

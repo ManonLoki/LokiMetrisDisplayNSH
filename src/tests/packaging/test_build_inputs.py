@@ -175,6 +175,20 @@ def elf_runtime(*, defined=True, visibility=0, function=True, named=True):
 
 
 class StandardBuildInputs(unittest.TestCase):
+    def test_android_release_rejects_non_arm64_native_libraries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            apk = Path(directory) / 'App.apk'
+            command = package.mobile_command('nsh', 'android', apk.parent)
+            self.assertEqual(command[command.index('--abi') + 1], 'arm64-v8a')
+            with zipfile.ZipFile(apk, 'w') as archive:
+                archive.writestr('assets/nsh/bundle.nshc', b'app')
+                archive.writestr('lib/arm64-v8a/libnsh.so', elf_runtime())
+            self.assertEqual(package.verify_android(apk)['architectures'], ['arm64-v8a'])
+            with zipfile.ZipFile(apk, 'a') as archive:
+                archive.writestr('lib/x86_64/libextra.so', b'foreign native library')
+            with self.assertRaisesRegex(RuntimeError, 'Expected only arm64-v8a'):
+                package.verify_android(apk)
+
     # 清单还原与扩展：类名替换、权限与小组件接收器一次到位，输出确定
     def test_widget_manifest_extension_preserves_launcher_contract(self):
         # 覆盖两种字符串编码与有无 Application 名称

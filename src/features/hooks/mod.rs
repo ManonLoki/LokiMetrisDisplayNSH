@@ -1,4 +1,4 @@
-//! Hook 状态属于业务事实；页码、单元格和详情展开仍由 UI 控制。
+//! 提供 Hook 状态文案和分页规则，当前页由界面维护。
 // 把行为状态映射为中文文案
 pub(crate) fn label(behavior: &str) -> &'static str {
     match behavior {

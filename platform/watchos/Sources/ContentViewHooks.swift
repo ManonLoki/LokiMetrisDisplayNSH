@@ -151,8 +151,8 @@ extension ContentView {
             Group {
                 // 有图则显示，满足所有条件才允许播放
                 if let image {
-                    // 图片视图，仅在选中页且无详情时播放
-                    WatchHookImage(url: image, playbackEnabled: selectedHook == nil && selectedPage == Page.hooks.rawValue && allowsMotion && hook.slot == visibleSlot)
+                    // 图片视图，仅在当前可见卡片上播放
+                    WatchHookImage(url: image, playbackEnabled: selectedPage == Page.hooks.rawValue && allowsMotion && hook.slot == visibleSlot)
                 // 否则显示占位
                 } else {
                     // 无图时的占位，纵向排列
