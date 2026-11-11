@@ -88,59 +88,6 @@ fn identity(env: &mut JNIEnv<'_>, context: &JObject<'_>) -> Result<(String, Stri
     Ok((id, name))
 }
 
-// 判断设备形态：电视、平板（最小宽度 ≥ 600dp）或手机
-fn read_device_form(env: &mut JNIEnv<'_>, context: &JObject<'_>) -> Result<&'static str> {
-    // 取界面模式服务
-    let manager = jni_support::system_service(env, context, "uimode")?;
-    // 读取当前界面模式
-    let mode = env
-        // 读取当前界面模式类型
-        .call_method(manager, "getCurrentModeType", "()I", &[])?
-        // 取回返回值
-        .i()?;
-    // UI_MODE_TYPE_TELEVISION:电视模式
-    if mode == 4 {
-        // 电视模式
-        return Ok("tv");
-    }
-    // 取得资源对象
-    let resources = env
-        // 调用方法
-        .call_method(
-            // 上下文
-            context,
-            // Java 类名或方法名参数
-            "getResources",
-            // JNI 方法签名
-            "()Landroid/content/res/Resources;",
-            // 传给 Java 方法的参数
-            &[],
-            // 参数结束
-        )?
-        // 取回返回值
-        .l()?;
-    // 取得配置对象
-    let config = env
-        // 调用方法
-        .call_method(
-            // 资源对象
-            resources,
-            // Java 类名或方法名参数
-            "getConfiguration",
-            // JNI 方法签名
-            "()Landroid/content/res/Configuration;",
-            // 传给 Java 方法的参数
-            &[],
-            // 参数结束
-        )?
-        // 取回返回值
-        .l()?;
-    // 最小屏幕宽度（dp）
-    let width = env.get_field(config, "smallestScreenWidthDp", "I")?.i()?;
-    // 不小于 600 为平板，否则为手机
-    Ok(if width >= 600 { "tablet" } else { "phone" })
-}
-
 // 读取旧版面板偏好
 fn legacy_panel(env: &mut JNIEnv<'_>, context: &JObject<'_>) -> Result<serde_json::Value> {
     // 读取 mdns_identity 偏好
@@ -241,16 +188,12 @@ pub(super) fn configure(
         key.fill(0);
         // 失败转为错误
         result.map_err(Failure)?;
-        // 读取设备形态
-        let form = read_device_form(env, context)?;
         // 组装配置：宿主提供身份与生命周期，不保留离线快照
         serde_json::from_value(json!({
             // 根目录、设备标识、名称与宿主标识
             "root":root, "deviceId":device_id, "name":name, "hostIdentity":true,
             // 宿主管理生命周期、平台与不保留快照
             "hostLifecycle":true, "platform":"android", "keepSnapshot":false,
-            // 电视不上报设备形态
-            "formFactor":(form != "tv").then_some(form),
             // 旧版面板配置
             "legacyPanel":legacy_panel(env, context)?,
             // 小组件共享目录：files/widget
@@ -431,14 +374,8 @@ pub(super) fn observe(link: std::sync::Weak<crate::native::connection::Handle>) 
                         release_multicast(&lock);
                     }
                     // 状态变化才推送；推送成功才记录
-                    if previous != Some(visible) {
-                        // 生命周期事件
-                        let event = json!({"op":"lifecycle", "visible":visible, "permitted":true});
-                        // 发送给宿主成功
-                        if link.host_command(&event.to_string()).is_ok() {
-                            // 记下已上报的状态
-                            previous = Some(visible);
-                        }
+                    if previous != Some(visible) && link.set_host_lifecycle(visible, true).is_ok() {
+                        previous = Some(visible);
                     }
                 }
                 // 每 500 毫秒检查一次

@@ -84,6 +84,7 @@ impl Link {
     pub(crate) fn initialize(
         device_id: &str,
         name: &str,
+        idiom: &str,
         sys: &System,
     ) -> Result<ViewState, String> {
         // 取连接运行时
@@ -111,7 +112,15 @@ impl Link {
                 None => root,
             };
             // 生成各平台的连接配置
-            let config = bootstrap::configure(&root, device_id, name)?;
+            let mut config = bootstrap::configure(&root, device_id, name)?;
+            if config.platform == "android" {
+                // NSH 将平板称为 pad，连接协议使用 tablet。只上报手机和平板。
+                config.form_factor = match idiom {
+                    "phone" => Some("phone".into()),
+                    "pad" => Some("tablet".into()),
+                    _ => None,
+                };
+            }
             // 读取旧版面板文件，没有则用配置里带的
             let legacy_panel = std::fs::read(config.root.join("panel-v1.json"))
                 // 读取成功

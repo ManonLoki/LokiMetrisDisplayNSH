@@ -22,21 +22,19 @@ NSH 提供 TSX 组件、布局、渐变、动效、原生模块注册与生成 r
 | `src/native/image/` | 有界 GIF/LZW 解码、画布合成与异步 PNG 帧准备 |
 | `src/shared/ui/image*.ts*` | 标准 Image 显示帧，各控件独立管理播放时钟 |
 
-UI 通过 NSH 的 `lifecycle()` 和 `platform.idiom` 获取前后台与设备形态，Hooks 面板由 `nsh/base` 的 Carousel 管理吸附和翻页。Android 在 NSH 视图首次布局后启动应用，让设备形态在模块加载前可用。
+UI 通过 NSH 的 `lifecycle()` 和 `platform.idiom` 获取前后台与设备形态。Android 的连接也使用 `platform.idiom`，按现有协议只上报手机和平板。iOS 继续按 UIKit 的设备类型上报，遇到未知类型时省略该消息。Hooks 面板由 `nsh/base` 的 Carousel 管理吸附和翻页。Android 在 NSH 视图首次布局后加载 TSX bundle，让设备形态在模块加载前可用。
 
 iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访问 UIApplication 并启动 Watch 会话。前后台来自公开 UIScene 通知，聚合多窗口可见状态；短暂 inactive 不直接视为隐藏。Android 从 Application.onCreate 初始化应用上下文，不保存 Activity；可见性结合进程、亮屏及锁屏状态判断。
 
-## Windows 重绘兼容
+## Windows 局部重绘
 
-`src/shared/ui/windows-repaint.ts` 在 Windows 前台为全窗口背景绑定原生动画参数，使背景每帧参与重绘，绕开多个局部更新区域留下旧像素的候选路径。参数用于画布外的绘制操作，外观保持不变；静态背景命令仍可缓存，不逐帧执行 JS。切到后台或释放组件时停止，其他平台不启用。此处理增加前台重绘面积，是针对间歇花屏的应用侧兼容措施，上游根因尚未确认，未修改 SDK 或显卡设置。
-
-生命周期回归见 `src/tests/desktop/windows-repaint.test.tsx`。无界面测试不能证明 Windows 实际呈现，需要额外检查真机动画、页面切换、缩放及恢复。
+NSH 0.5.0 将 Canvas 动画的重绘区域裁剪到画布内。为 NSH 0.3 添加的画布外动画因此无法再触发整窗重绘。应用已在原设备完成启用与停用补丁的对照验收，并移除补丁。 [NSH 0.5.0 裁剪实现](https://github.com/longbridge/nsh/blob/v0.5.0/crates/nsh-platform-windows/src/canvas.rs#L346-L357) · [Windows 局部重绘验收](../development/test.md#windows-局部重绘验收)
 
 ## Android SDK 输入
 
 构建器默认依据生成 runner 的锁文件校验缓存中的官方 `.crate`，核对 Java 文件清单和内容后编译。单独构建 Java 桥时也可以用 `--aar` 显式提供 0.5.0 的官方嵌入 SDK，应用桥接类与 AAR 中的类合并时检查同名冲突。
 
-包标识、清单权限、应用入口和签名是本项目的组装职责。构建脚本位于 `tools/build/`，参数及平台要求见 [构建说明](../development/build.md)。
+本地 HTTP 所需的明文传输声明由 NSH 从 `nsh.json` 写入。包标识、多播权限、应用入口、小组件资源和签名由应用包装器组装。构建脚本位于 `tools/build/`，参数及平台要求见 [构建说明](../development/build.md)。
 
 ## GIF 与播放边界
 

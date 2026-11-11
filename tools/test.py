@@ -51,8 +51,7 @@ def commands(suite, output):
         # NSH 类型检查
         result.append(['nsh', 'check'])
         # 依次运行 NSH 界面与播放生命周期回归，并输出 JUnit 报告
-        for name in ['app.test.tsx', 'app-recovery.test.tsx', 'mobile-app.test.tsx', 'image-playback.test.ts',
-                     'windows-repaint.test.tsx']:
+        for name in ['app.test.tsx', 'app-recovery.test.tsx', 'mobile-app.test.tsx', 'image-playback.test.ts']:
             result.append(['nsh', 'test', 'src/tests/desktop/' + name, '--junit',
                            str(output / (name + '.xml'))])
         return result

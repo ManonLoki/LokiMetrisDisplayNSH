@@ -83,10 +83,7 @@ pub(super) fn observe(handle: Weak<connection::Handle>) -> lifecycle::ActivityOb
             // 返回
             return;
         };
-        // 向 owner 推送前后台
-        let command = json!({"op":"lifecycle","visible":visible,"permitted":true});
-        // 把生命周期命令交给连接，失败忽略
-        let _ = handle.host_command(&command.to_string());
+        let _ = handle.set_host_lifecycle(visible, true);
     })
 }
 

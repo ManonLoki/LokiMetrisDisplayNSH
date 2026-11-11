@@ -1284,7 +1284,6 @@ dependencies = [
  "block2",
  "chacha20poly1305",
  "dispatch2",
- "icu_normalizer",
  "jni 0.21.1",
  "loki_metris_pairing",
  "loki_widget_core",

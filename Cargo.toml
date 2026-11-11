@@ -25,9 +25,6 @@ nsh-core = "=0.5.0"
 serde = { version = "1", features = ["derive"] }
 # JSON 序列化
 serde_json = "1"
-# 复用 NSH/URL 已锁定的 ICU 版本,以沿用现有的 NFC 规则。
-# 复用 NSH 与 URL 已锁定的 ICU 版本来做 NFC 规则
-icu_normalizer = "=2.4.0"
 
 # 一个由 NSH 持有的连接运行时,负责配对、会话、发现和凭据。
 # 配对、会话与资源传输的共享库，固定到具体提交
@@ -70,11 +67,6 @@ objc2-ui-kit = { version = "0.3.2", default-features = false, features = ["std",
 [[example]]
 name = "protocol_host"
 path = "src/tests/fixtures/protocol_host.rs"
-
-# 仅测试依赖
-[dev-dependencies]
-# 测试中构造加密数据
-chacha20poly1305 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 
 # 工作区
 [workspace]

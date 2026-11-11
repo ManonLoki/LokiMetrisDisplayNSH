@@ -1,12 +1,13 @@
 {
   "name": "诡秘神谕",
   "id": "com.manonloki.lokimetrisdisplay.desktop",
-  "version": "1.0.19",
-  "build": 28,
+  "version": "1.0.20",
+  "build": 29,
   "appearance": "dark",
   "statusBar": { "foreground": "light" },
   "icon": "src/assets/branding/app-icon.png",
   "rust": ".",
+  "android": { "usesCleartextTraffic": true },
   "ios": {
     "infoPlist": {
       "NSLocalNetworkUsageDescription": "连接同一局域网内已配对的电脑，接收 Token 用量、账户额度与 Agent 活动。",

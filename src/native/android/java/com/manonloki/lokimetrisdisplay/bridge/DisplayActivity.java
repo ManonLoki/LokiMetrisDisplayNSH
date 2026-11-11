@@ -1,12 +1,8 @@
 // 桥接包：窗口与输入适配
 package com.manonloki.lokimetrisdisplay.bridge;
 
-// 引入 Android 的活动、权限、窗口与按键相关类型
+// 引入 Android 的活动、窗口与按键相关类型
 import android.app.Activity;
-// 应用信息
-import android.content.pm.ApplicationInfo;
-// 包管理器
-import android.content.pm.PackageManager;
 // 配置
 import android.content.res.Configuration;
 // 颜色
@@ -49,27 +45,10 @@ public final class DisplayActivity extends Activity {
                     int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 if (right <= left || bottom <= top) return;
                 node.removeOnLayoutChangeListener(this);
-                if (rustApp()) view.runRustApp("nsh");
-                else view.loadAssetBundle("nsh");
+                view.loadAssetBundle("nsh");
             }
         });
         setContentView(view);
-    }
-
-    /** TSX 应用可以注册 Rust 模块,而不必是纯 Rust UI 应用。 */
-    // TSX 应用可以注册 Rust 模块而不必是纯 Rust 界面应用
-    private boolean rustApp() {
-        // 从清单元数据读取标志
-        try {
-            // 读取应用元数据
-            ApplicationInfo info = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-            // 元数据声明使用 Rust 入口则为真
-            return info.metaData != null && info.metaData.getBoolean("com.longbridge.nsh.RUST", false);
-        // 找不到包信息则视为非 Rust 应用
-        } catch (PackageManager.NameNotFoundException error) {
-            // 找不到包信息则按否处理
-            return false;
-        }
     }
 
     // 重写父类方法

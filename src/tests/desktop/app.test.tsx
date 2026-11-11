@@ -1,5 +1,6 @@
 // 引入测试 API
 import { expect, test } from "nsh/test";
+import { pathToFileURL } from "url";
 // 引入打开函数、常量与存储键
 import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_PANEL, KEY_DEVICE, KEY_PAIRED, KEY_CACHE, KEY_INJECT, KEY_FRAMES, safe } from "./app-environment";
 // 引入夹具快照
@@ -375,10 +376,12 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
   snapshot.hooks[0].image = pngHash;
   snapshot.hooks[1].image = gifHash;
   snapshot.hooks[0].content = "图片详情正文";
-  // 夹具模拟已缓存的文件，使用测试模块旁的原始图片路径。
+  // Windows 测试宿主可能给出盘符路径，先转为本地文件 URL。
+  const moduleUrl = import.meta.url;
+  const fileUrl = moduleUrl.startsWith("file:") ? moduleUrl : pathToFileURL(moduleUrl).href;
   const images = {
-    [pngHash]: new URL("../fixtures/assets/hook.png", import.meta.url).href,
-    [gifHash]: new URL("../fixtures/assets/hook.gif", import.meta.url).href,
+    [pngHash]: new URL("../fixtures/assets/hook.png", fileUrl).href,
+    [gifHash]: new URL("../fixtures/assets/hook.gif", fileUrl).href,
   };
   // 已配对的桌面在 1 秒后推送带图片的快照
   const app = await open("./test-app.tsx", {

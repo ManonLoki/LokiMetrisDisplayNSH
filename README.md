@@ -43,7 +43,7 @@
 
 ## 从源码运行
 
-所有命令在项目根目录执行。准备 Rust/Cargo、Python 3.11+、NSH 0.4.0 与目标平台工具链；本项目没有 Node.js 项目依赖。
+所有命令在项目根目录执行。准备 Rust/Cargo、Python 3.11+、NSH 0.5.0 与目标平台工具链；本项目没有 Node.js 项目依赖。
 
 ```sh
 nsh check

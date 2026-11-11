@@ -14,7 +14,7 @@ python3 tools/test.py
 2. Python 打包回归，检查 Android Manifest、官方 Java 字节码合并、移动身份、Apple 签名、Watch 嵌入和桌面包格式。
 3. POSIX 上的 Linux 凭据适配回归，使用隔离的 `secret-tool` 替身验证大凭据、回滚和进程超时。
 4. macOS 上编译并执行 Widget 后台执行器与取消／提交竞态的 Swift 回归。
-5. `nsh check` 及五个 NSH 用例文件，检查应用交互、移动偏好迁移、安全区、电视遥控和图片播放时钟。
+5. `nsh check` 及四个 NSH 用例文件，检查应用交互、移动偏好迁移、安全区、电视遥控和图片播放时钟。
 
 Rust workspace 测试同时覆盖主应用和 `crates/widget-core/`，负责格式化、快照校验、配对认证、缓存、GIF 解码、生命周期和设置状态机；小组件另覆盖租约、读取凭据、加密 HTTP、来源撤销及旧响应竞态。NSH 测试负责页面和交互，避免重复穷举 Rust 已覆盖的纯业务规则。
 
@@ -28,7 +28,6 @@ macOS 统一入口会把每个原样测试二进制复制到独立临时目录�
 | `src/tests/desktop/app-recovery.test.tsx` | 缓存快照不改写同步时间、损坏的持久化数据、输入中的名称与已移除 Hook 详情 |
 | `src/tests/desktop/mobile-app.test.tsx` | 移动身份与偏好迁移、安全区和遥控输入 |
 | `src/tests/desktop/image-playback.test.ts` | 播放时钟、暂停恢复、有限循环和独立播放头 |
-| `src/tests/desktop/windows-repaint.test.tsx` | Windows 重绘兼容的前后台暂停恢复、减少动态效果、卸载清理和非 Windows 静态行为 |
 | `src/native/fixture/` | 仅调试构建的 Rust 夹具连接：按存储键（`loki.inject`、`test.staticView`）扮演桌面端的配对、快照、中断和固定投影，时间全部由调用方传入虚拟时钟；产品构建不包含它 |
 
 可直接运行某组测试：
@@ -73,17 +72,11 @@ nsh test src/tests/desktop/app.test.tsx --target linux
 nsh test src/tests/desktop/app.test.tsx --target windows
 ```
 
-### Windows 局部重绘对照
+### Windows 局部重绘验收
 
-在同一台 Windows 机器上使用相同的 NSH 0.5.0、窗口尺寸、缩放比例和面板设置。基线使用当前代码。候选使用工作区的临时副本，将 `src/shared/ui/windows-repaint.ts` 替换为以下实现：
+2026-11-11 在 Windows 10 LTSC build 19044.7807、Intel UHD 730（驱动 31.0.101.4369）上对照了启用和停用重绘补丁的 NSH 0.5.0 版本。两版使用相同的测试数据、窗口尺寸和面板设置。仅在测试中将 `reduceMotion` 设为 `false`，以观察完整动效。
 
-```ts
-export function useWindowsRepaint(_foreground: () => boolean): number {
-  return 0;
-}
-```
-
-分别运行 `nsh run --target windows`。在两个版本中播放 Hook GIF、反复切换展示台与设置、调整窗口尺寸、最小化后恢复，并用屏幕录像记录是否出现旧像素或残影。记录 Windows 版本、显卡和驱动版本。若候选出现基线没有的花屏，继续使用补丁。若原先出现花屏的环境中两版均通过同一组操作，再移除补丁及其专用回归用例。
+每版采集 30 张原生窗口截图，覆盖 620×510、900×580、750×700 和 1100×760 像素画面，四轮展示台与设置切换、Hook 详情和三次最小化恢复。另录制每版约 8 秒的窗口内容。两版都观察到 GIF 红蓝换帧、边缘光带旋转和扫光移动，采样画面未见整窗闪烁、错位或异常色块。验收结论限于该设备、驱动和采样场景。
 
 ## iOS 模拟器验收
 

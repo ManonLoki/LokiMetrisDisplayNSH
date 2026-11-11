@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[3]
 # 让测试能导入构建脚本
 sys.path.insert(0, str(ROOT / 'tools/build'))
 # 引入小组件扩展管线与常量
-from android_widget import (APPLICATION, ACTIVITY, PERMISSIONS, RUNNER_ACTIVITY, WIDGET_PROVIDER,
+from android_widget import (APPLICATION, ACTIVITY, RUNNER_ACTIVITY, WIDGET_PROVIDER,
     WIDGET_META_NAME, WIDGET_UPDATE_ACTION, android_resource_names, extend_manifest)
 from android_binary_xml import NO_INDEX, to_text
 from android_arsc import entries as arsc_entries
@@ -66,12 +66,12 @@ def string_pool(values, utf8):
 
 
 # 构造一份编译后风格的二进制清单：含启动器、导出标记、Rust 元数据和一个无关 Activity
-def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY):
+def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY, cleartext=True):
     """A compiled-style manifest with launcher/exported/Rust metadata and an unrelated activity."""
     namespace = 'http://schemas.android.com/apk/res/android'
     values = ['manifest', 'application', 'activity', 'uses-sdk', 'meta-data', 'intent-filter',
               'action', 'category', 'uses-permission', 'name', 'package', 'targetSdkVersion',
-              'exported', 'value', 'theme', 'label', 'icon', 'android', namespace, runner,
+              'exported', 'value', 'theme', 'label', 'icon', 'usesCleartextTraffic', 'android', namespace, runner,
               'org.example.product', 'org.example.OriginalApplication', 'org.example.HelpActivity',
               'com.longbridge.nsh.RUST', 'android.intent.action.MAIN',
               'android.intent.category.LAUNCHER', 'android.permission.INTERNET', '诡秘神谕']
@@ -89,7 +89,7 @@ def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY):
     resources = [0] * len(values)
     for name, resource in {'theme': 0x01010000, 'label': 0x01010001, 'name': 0x01010003, 'icon': 0x01010002,
                            'exported': 0x01010010, 'value': 0x01010024,
-                           'targetSdkVersion': 0x01010270}.items():
+                           'targetSdkVersion': 0x01010270, 'usesCleartextTraffic': 0x010104ec}.items():
         resources[index(name)] = resource
     body = string_pool(values, utf8)
     body += struct.pack('<HHI', 0x180, 8, 8 + 4 * len(resources)) + struct.pack('<' + 'I' * len(resources), *resources)
@@ -99,6 +99,8 @@ def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY):
     body += start('uses-permission', attribute('name', 'android.permission.INTERNET')) + end('uses-permission')
     # 主题指向系统资源，图标指向应用资源，与真实基线一致
     application = [attribute('theme', 0x0103022e, 1), attribute('icon', 0x7f010000, 1), attribute('label', '诡秘神谕')]
+    if cleartext is not None:
+        application.append(attribute('usesCleartextTraffic', 0xffffffff if cleartext else 0, 0x12))
     if named_application:
         application.append(attribute('name', 'org.example.OriginalApplication'))
     body += start('application', *application)
@@ -203,9 +205,10 @@ class StandardBuildInputs(unittest.TestCase):
                     self.assertIn('android.intent.category.LAUNCHER', text)
                     # 无关 Activity 不被改动
                     self.assertIn('org.example.HelpActivity', text)
-                    # 权限：原有的加新增的两个
+                    # 保留 NSH 网络权限，补入 mDNS 多播权限。
                     permissions = [element.get(f'{android}name') for element in root.findall('uses-permission')]
-                    self.assertCountEqual(permissions, ['android.permission.INTERNET'] + PERMISSIONS)
+                    self.assertCountEqual(permissions, ['android.permission.INTERNET',
+                                                        'android.permission.CHANGE_WIFI_MULTICAST_STATE'])
                     # 小组件接收器：不导出、产品名、只接收系统更新广播，元数据指向小组件信息资源
                     receivers = [element for element in applications[0].findall('receiver')
                                  if element.get(f'{android}name') == WIDGET_PROVIDER]
@@ -224,6 +227,16 @@ class StandardBuildInputs(unittest.TestCase):
                     self.assertEqual(applications[0].get(f'{android}icon'), '@mipmap/ic_launcher')
                     # Rust 应用标记保留
                     self.assertIn('com.longbridge.nsh.RUST', text)
+
+    def test_widget_manifest_requires_nsh_cleartext_configuration(self):
+        config = json.loads((ROOT / 'nsh.json').read_text(encoding='utf-8'))
+        self.assertIs(config['android']['usesCleartextTraffic'], True)
+        android_names = {0x0103022e: 'style/Theme.Material.NoActionBar'}
+        for cleartext in (None, False):
+            with self.subTest(cleartext=cleartext):
+                manifest = manifest_fixture(utf8=True, named_application=False, cleartext=cleartext)
+                with self.assertRaisesRegex(RuntimeError, r'android\.usesCleartextTraffic'):
+                    extend_manifest(manifest, arsc_fixture(), android_names)
 
     # 无法识别的运行器会被拒绝
     def test_widget_manifest_rejects_an_unrecognized_runner(self):
@@ -287,8 +300,8 @@ class StandardBuildInputs(unittest.TestCase):
                             self.assertEqual(merged[name], bytecode)
                         self.assertEqual(len(merged), len(original) + 1)
 
-    # Java 源码回退路径：不依赖旧式校验文件，直接核对锁定的发布包
-    def test_java_source_fallback_checks_locked_archive_without_legacy_checksum_file(self):
+    # Java 源码回退路径核对 Cargo.lock 中锁定的发布包。
+    def test_java_source_fallback_checks_locked_archive(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory); cargo = root / 'cargo'
             # 假的 Cargo 注册表目录
@@ -325,8 +338,6 @@ class StandardBuildInputs(unittest.TestCase):
                  patch.object(java_tools, 'java_compiler', return_value=Path('/fixture/javac')), \
                  patch.object(java_tools.subprocess, 'check_output', return_value='javac fixture'), \
                  patch.object(java_tools.subprocess, 'run', side_effect=javac) as compile_java, redirect_stdout(io.StringIO()):
-                # 确认没有旧式校验文件
-                self.assertFalse((source / '.cargo-checksum.json').exists())
                 report = java_tools.build(args)
                 self.assertEqual(report['officialSdk']['kind'], 'official-crates-io-java')
                 self.assertEqual(report['officialSdk']['crateChecksum'], checksum)
@@ -342,6 +353,10 @@ class StandardBuildInputs(unittest.TestCase):
                 path.write_bytes(original)
                 archive.write_bytes(archive.read_bytes() + b'corrupt cache')
                 with self.assertRaisesRegex(RuntimeError, 'archive checksum differs'):
+                    java_tools.build(args)
+                compile_java.assert_not_called()
+                archive.unlink()
+                with self.assertRaisesRegex(RuntimeError, r'Java sources with their \.crate archive are required'):
                     java_tools.build(args)
                 compile_java.assert_not_called()
 

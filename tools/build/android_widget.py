@@ -57,8 +57,8 @@ APPLICATION = 'com.manonloki.lokimetrisdisplay.bridge.DisplayApplication'
 ACTIVITY = 'com.manonloki.lokimetrisdisplay.bridge.DisplayActivity'
 # 官方运行器的 Activity 类名
 RUNNER_ACTIVITY = 'com.longbridge.nsh.AppActivity'
-# 需要补充的局域网相关权限（沿用既有清单）
-PERMISSIONS = ['android.permission.ACCESS_NETWORK_STATE', 'android.permission.CHANGE_WIFI_MULTICAST_STATE']
+# mDNS 发现需要 Android 多播锁
+MULTICAST_PERMISSION = 'android.permission.CHANGE_WIFI_MULTICAST_STATE'
 # 小组件提供器与元数据
 WIDGET_PROVIDER = 'com.manonloki.lokimetrisdisplay.widget.LokiWidgetProvider'
 WIDGET_META_NAME = 'android.appwidget.provider'
@@ -91,11 +91,11 @@ def extend_manifest(base_manifest, base_arsc, android_names):
         raise RuntimeError('Expected exactly one application element')
     # 取 application
     application = applications[0]
+    # 小组件的 LAN HTTP 通道由 nsh.json 声明，载荷由共享核心加密。
+    if application.get(f'{{{ANDROID_NS}}}usesCleartextTraffic') != 'true':
+        raise RuntimeError('NSH package must enable android.usesCleartextTraffic for widget refresh')
     # 改 Application 类名（幂等：已是目标名则不变）
     application.set(f'{{{ANDROID_NS}}}name', APPLICATION)
-    # 小组件的 LAN HTTP 传输载荷由 core 加密，地址仅取自已认证的配对对端。
-    # targetSdk 28+ 默认拒绝 HTTP，须在最终清单显式开启既有局域网通道。
-    application.set(f'{{{ANDROID_NS}}}usesCleartextTraffic', 'true')
     # 收集活动
     activities = application.findall('activity')
     # 找官方运行器活动
@@ -107,19 +107,11 @@ def extend_manifest(base_manifest, base_arsc, android_names):
         raise RuntimeError('Expected one standard NSH application and runner activity')
     # 改运行器类名
     runner[0].set(f'{{{ANDROID_NS}}}name', ACTIVITY)
-    # 权限集合：已有的
+    # 在 Application 前补入缺失的多播权限。
     existing = {element.get(f'{{{ANDROID_NS}}}name') for element in root.findall('uses-permission')}
-    # 补充缺失的局域网权限
-    for permission in PERMISSIONS:
-        # 已声明则跳过
-        if permission in existing:
-            # 跳过
-            continue
-        # 新权限元素
+    if MULTICAST_PERMISSION not in existing:
         element = ET.Element('uses-permission')
-        # 权限名
-        element.set(f'{{{ANDROID_NS}}}name', permission)
-        # 插到 application 之前，与既有顺序一致
+        element.set(f'{{{ANDROID_NS}}}name', MULTICAST_PERMISSION)
         root.insert(list(root).index(application), element)
     # 已有小组件接收器则幂等移除后重建
     for element in list(application):

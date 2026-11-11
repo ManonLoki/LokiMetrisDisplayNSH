@@ -6,11 +6,12 @@
 
 ## 运行时边界
 
-`src/app/runtime.ts` 只保留 250ms 的 UI 时钟和信号赋值；启动、轮询、保存名称/面板和命令转发都由 Rust 的 `Shell` 模块（`src/native/shell.rs`）完成，它在内部驱动真实连接。`Shell` 注册的接口为：
+`src/app/runtime.ts` 等待 Rust 发布新的连接状态，并按 Rust 返回的截止时间安排名称确认。250 ms 的定时器只用于调试夹具。`src/native/shell.rs` 管理启动、状态读取、设置保存和命令转发。
 
 | 接口 | 职责 |
 | --- | --- |
-| `Shell.start()` | 恢复身份和偏好，按平台初始化私有目录和当前 VM 的连接 owner，返回首个公开状态 |
+| `Shell.start(nowMs, idiom)` | 恢复身份和偏好，初始化当前 VM 的连接 owner，返回首个公开状态。Android 使用 NSH 提供的设备形态 |
+| `Shell.waitForViewChange()` | 等待连接 owner 发布新视图或关闭 |
 | `Shell.tick(draft, nowMs)` | 轮询最近提交的公开连接状态与已验证图片 URI，并推进名称确认的时钟 |
 | `Shell.command(command, …)` | 将用户意图（选择、遗忘、刷新等）加入有界队列并立即轮询 |
 | `Shell.editName` / `saveName` / `savePanel` | 编辑名称草稿、保存名称与面板偏好；需要连接执行的命令由 `Shell` 自己下发 |
@@ -27,7 +28,7 @@ owner 串行管理发现结果、选中来源、配对、认证恢复、会话�
 | `active` | `value` | 提交界面活动状态；移动端忽略此命令，改用系统观察结果 |
 | `refresh` | 无 | 已连接且桌面支持时请求快照，否则重试连接 |
 
-移动端的生命周期和网络事实走原生宿主接口，不能由 JavaScript 伪造。面板偏好由 Rust 设置用例（`src/features/settings`）经 NSH Storage 保存；配对秘密留在 Rust 与系统安全存储，公开投影不包含秘密或读取凭据的能力。
+移动端由原生宿主向 owner 提交应用可见性和局域网权限。面板偏好由 Rust 设置用例（`src/features/settings`）经 NSH Storage 保存。配对秘密留在 Rust 与系统安全存储。
 
 ## 发现与配对
 

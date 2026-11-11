@@ -1,5 +1,5 @@
 // 引入响应式原语
-import { cleanup, effect, untracked, type Bounds, type Signal, type Size } from "nsh";
+import { cleanup, effect, platform, untracked, type Bounds, type Signal, type Size } from "nsh";
 // 引入 Rust 外壳与它返回的公开状态类型
 import { Shell, type LinkCommand, type SettingsResult } from "loki-metris-mobile-display/native";
 // 引入视图与面板类型
@@ -83,7 +83,7 @@ export function createRuntime(state: UiState, onView: (view: ViewState) => void)
 
   async function start() {
     const startedAt = Date.now();
-    await run(() => Shell.start(startedAt));
+    await run(() => Shell.start(startedAt, platform.idiom));
     while (!disposed) {
       const changed = await Shell.waitForViewChange();
       if (disposed || changed == null) return;

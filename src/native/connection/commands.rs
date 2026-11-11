@@ -211,8 +211,7 @@ impl Owner {
                     }
                 }
             }
-            // 宿主命令
-            Command::Host(command) => self.host(command)?,
+            Command::HostLifecycle(lifecycle) => self.set_lifecycle(lifecycle),
             // 停止由 owner 主循环处理
             Command::Stop => {}
         }

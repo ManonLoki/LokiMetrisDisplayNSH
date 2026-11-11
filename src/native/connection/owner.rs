@@ -10,8 +10,6 @@ use super::{
     Endpoint,
     // 事件
     Event,
-    // 宿主命令
-    HostCommand,
     // 密钥材料
     Material,
     // 已发布状态
@@ -319,7 +317,7 @@ pub(super) fn publish_initial(setup: &Setup) {
 pub(super) fn run(setup: &mut Setup, rx: Receiver<Event>) {
     // 存储不可用期间到达的最新生命周期事实，在 owner 就绪后补上。
     // 存储不可用期间最新的生命周期事实，owner 就绪后补上
-    let mut lifecycle: Option<HostCommand> = None;
+    let mut lifecycle: Option<Lifecycle> = None;
     // 外层循环：构造 owner，失败则等待重试
     loop {
         // 已停止
@@ -331,10 +329,8 @@ pub(super) fn run(setup: &mut Setup, rx: Receiver<Event>) {
         match Owner::new(setup) {
             // 构造成功：补上生命周期后进入事件循环
             Ok(mut owner) => {
-                // 有等待中的生命周期命令
-                if let Some(command) = lifecycle.take() {
-                    // 先交给宿主处理
-                    let _ = owner.host(command);
+                if let Some(lifecycle) = lifecycle.take() {
+                    owner.set_lifecycle(lifecycle);
                 }
                 // 进入主循环
                 owner.run(rx);
@@ -364,13 +360,13 @@ pub(super) fn run(setup: &mut Setup, rx: Receiver<Event>) {
                 // 收到命令
                 Ok(Event::Command(QueuedCommand {
                     // 生命周期命令
-                    command: Command::Host(command @ HostCommand::Lifecycle { .. }),
+                    command: Command::HostLifecycle(state),
                     // 其余字段忽略
                     ..
                 // 收到生命周期命令
                 })) => {
                     // 记下该命令
-                    lifecycle = Some(command);
+                    lifecycle = Some(state);
                     // 跳出等待
                     break;
                 }

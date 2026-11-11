@@ -2,12 +2,12 @@
 #[cfg(target_os = "macos")]
 use super::super::persistence;
 use super::super::{
-    Command, Endpoint, Event, HANDSHAKE_FRAME, HostCommand, MAX_FRAME, Material,
+    Command, Endpoint, Event, HANDSHAKE_FRAME, MAX_FRAME, Material,
     connection_test::{
         CLIENT, TestFiles, command, configured, files, owner_for_test, server_recv, server_send,
         snapshot, until,
     },
-    owner::Owner,
+    owner::{Lifecycle, Owner},
 };
 // 引入配对会话类型
 use loki_metris_pairing::session::AwaitingDeviceProof;
@@ -130,7 +130,7 @@ fn leaving_the_foreground_sends_pause_then_closes_and_reports_form_factor_once()
     // 等待已连接
     until(&published, |v| v["connected"] == true);
     // 应用离开前台
-    tx.send(command(Command::Host(HostCommand::Lifecycle {
+    tx.send(command(Command::HostLifecycle(Lifecycle {
         visible: false,
         permitted: true,
     })))

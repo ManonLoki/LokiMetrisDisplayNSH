@@ -160,42 +160,17 @@ def official_sources():
         if not sources:
             # 跳过
             continue
-        # 压缩包与旧式校验文件，两者择一核对
+        # 用锁定的 crates.io 发布包核对解压后的 Java 源码。
         archive = source.parents[2] / 'cache' / source.parent.name / (source.name + '.crate')
-        # 旧式校验和文件
-        legacy = source / '.cargo-checksum.json'
-        # 压缩包存在：先核对其 SHA-256，再逐个文件算摘要
-        if archive.is_file():
-            # 发布包摘要与锁定校验和不符
-            if hashlib.sha256(archive.read_bytes()).hexdigest() != checksum:
-                # 报错
-                raise RuntimeError('Official Cargo archive checksum differs: ' + source.name)
-            # 打开发布包
-            with tarfile.open(archive, 'r:gz') as release:
-                # 包内路径前缀
-                prefix = source.name + '/'
-                # 期望的 Java 文件摘要表
-                expected = {member.name[len(prefix):]: hashlib.sha256(release.extractfile(member).read()).hexdigest()
-                            # 只取 java/ 下的 .java 文件
-                            for member in release.getmembers() if member.isfile()
-                            # （续）筛选条件
-                            and member.name.startswith(prefix + 'java/') and member.name.endswith('.java')}
-        # 旧式校验文件：核对包摘要并取出文件摘要
-        elif legacy.is_file():
-            # 读取旧式校验和
-            checksums = json.loads(legacy.read_text())
-            # 包校验和不符
-            if checksums.get('package') != checksum:
-                # 报错
-                raise RuntimeError('Official Cargo package checksum differs: ' + source.name)
-            # 期望的 Java 文件摘要表
-            expected = {name: digest for name, digest in checksums.get('files', {}).items()
-                        # （续）只取 java/ 下的 .java 文件
-                        if name.startswith('java/') and name.endswith('.java')}
-        # 两种来源都没有
-        else:
-            # 跳过该候选
+        if not archive.is_file():
             continue
+        if hashlib.sha256(archive.read_bytes()).hexdigest() != checksum:
+            raise RuntimeError('Official Cargo archive checksum differs: ' + source.name)
+        with tarfile.open(archive, 'r:gz') as release:
+            prefix = source.name + '/'
+            expected = {member.name[len(prefix):]: hashlib.sha256(release.extractfile(member).read()).hexdigest()
+                        for member in release.getmembers() if member.isfile()
+                        and member.name.startswith(prefix + 'java/') and member.name.endswith('.java')}
         # 文件清单必须与官方完全一致
         if {path.relative_to(source).as_posix() for path in sources} != set(expected):
             # 报错：Java 源文件清单不一致
@@ -211,7 +186,8 @@ def official_sources():
         # 返回源码目录、源文件与校验和
         return source, sources, checksum
     # 找不到官方 AAR 也没有缓存的 crates.io 源码
-    raise RuntimeError('Official NSH AAR or cached crates.io NSH ' + NSH_VERSION + ' Java sources are required')
+    raise RuntimeError('Official NSH AAR or cached crates.io NSH ' + NSH_VERSION
+                       + ' Java sources with their .crate archive are required')
 
 
 # 读出 jar 中的全部文件
@@ -366,7 +342,7 @@ def main():
     # javac 路径
     parser.add_argument("--javac", type=Path)
     # 官方 AAR 路径
-    parser.add_argument('--aar', type=Path, help='Official installed NSH release AAR (default: beside the nsh executable)')
+    parser.add_argument('--aar', type=Path, help='Official NSH release AAR (default: verified Cargo cache sources)')
     # 解析参数
     args = parser.parse_args()
     # Android 后端至少需要 API 28

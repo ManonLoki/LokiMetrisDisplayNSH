@@ -86,10 +86,9 @@ fn err(_: impl std::fmt::Display) -> String {
     "本地连接或存储操作失败，请重试。".into()
 }
 
-/// 界面可提交的连接操作；宿主专用操作另见 [`HostCommand`]。
+/// 连接 owner 的命令。宿主和停止命令仅在 Rust 内部构造。
 #[derive(Deserialize)]
 #[serde(tag = "op", rename_all = "camelCase", deny_unknown_fields)]
-// 界面可提交的连接操作；宿主专用操作另见 HostCommand
 enum Command {
     // 重新发现
     Discover,
@@ -118,33 +117,14 @@ enum Command {
     Refresh,
     // 宿主命令只能由原生侧构造，JS 无法提交
     #[serde(skip)]
-    #[cfg_attr(not(any(target_os = "android", target_os = "ios")), allow(dead_code))]
-    Host(HostCommand),
+    #[cfg_attr(
+        not(any(target_os = "android", target_os = "ios", test)),
+        allow(dead_code)
+    )]
+    HostLifecycle(owner::Lifecycle),
     #[serde(skip)]
     // 停止 owner
     Stop,
-}
-
-/// 来自 NSH 运行时适配器的系统事实,JavaScript 命令无法获得。
-#[derive(Deserialize)]
-#[serde(
-    // 用 op 字段区分命令
-    tag = "op",
-    // 变体名用驼峰
-    rename_all = "camelCase",
-    // 变体字段名用驼峰
-    rename_all_fields = "camelCase",
-    // 拒绝未知字段
-    deny_unknown_fields
-)]
-// 来自 NSH 运行时适配层的系统事实，JS 不能提交
-pub(crate) enum HostCommand {
-    /// 应用可见性与本地网络权限。
-    // 应用可见性与本地网络权限
-    Lifecycle { visible: bool, permitted: bool },
-    /// 系统网络路径变化后重新发现。
-    // 系统网络路径变化后重新发现
-    Network,
 }
 
 /// NSH 运行时配置,在移动目标上使用系统身份。
@@ -425,21 +405,13 @@ impl Handle {
         // 入队
         self.enqueue(command)
     }
-    /// 宿主命令：前后台、网络变化、后台刷新与配套设备状态。
-    #[cfg_attr(not(any(target_os = "android", target_os = "ios")), allow(dead_code))]
-    // 宿主命令：前后台、网络变化、后台刷新与配套设备状态
-    pub fn host_command(&self, input: &str) -> Result<(), String> {
-        // 命令过大
-        if input.len() > 16 * 1024 {
-            // 宿主命令过大
-            return Err("宿主命令过大".into());
-        }
-        // 解析为宿主命令
-        let command: HostCommand =
-            // 解析失败报无效宿主命令
-            serde_json::from_str(input).map_err(|_| "无效宿主命令".to_owned())?;
-        // 作为宿主命令入队
-        self.enqueue(Command::Host(command))
+    /// 由移动宿主提交应用可见性与局域网权限。
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    pub fn set_host_lifecycle(&self, visible: bool, permitted: bool) -> Result<(), String> {
+        self.enqueue(Command::HostLifecycle(owner::Lifecycle {
+            visible,
+            permitted,
+        }))
     }
     pub(super) fn publications(&self) -> Arc<Published> {
         self.published.clone()

@@ -1,8 +1,5 @@
-//! NSH 应用可见性与网络变化驱动唯一的连接所有者。
-// 引入宿主命令、套接字阶段与 owner
+//! 应用可见性和局域网权限驱动连接所有者。
 use super::{
-    // 宿主命令
-    HostCommand,
     // 传输阶段
     framed_socket::Phase,
     // 生命周期与所有者
@@ -113,43 +110,6 @@ impl Owner {
             .as_ref()
             // 选中项在配对记录里
             .is_some_and(|id| self.records.contains_key(id))
-    }
-
-    // 处理宿主命令
-    pub(super) fn host(&mut self, command: HostCommand) -> Result<(), String> {
-        // 按宿主命令处理
-        match command {
-            // 前后台与权限
-            HostCommand::Lifecycle { visible, permitted } => {
-                // 更新生命周期
-                self.set_lifecycle(Lifecycle { visible, permitted })
-            }
-            // 网络变化：清空端点、停止发现
-            HostCommand::Network => {
-                // 清空端点
-                self.endpoints.clear();
-                // 停止发现
-                self.discovery.stop();
-                // 尚未进入推送阶段的连接视为失败，重新发现
-                if self
-                    // 套接字
-                    .socket
-                    // 取引用
-                    .as_ref()
-                    // 不处于传输阶段
-                    .is_some_and(|socket| socket.phase != Phase::Streaming)
-                {
-                    // 网络已变化，重新发现
-                    self.failed("网络已变化，正在重新发现桌面端…".into());
-                }
-                // 更新发现状态
-                self.update_discovery();
-                // 发布视图
-                self.publish();
-            }
-        }
-        // 完成
-        Ok(())
     }
 
     // 按需启停发现：活跃且（可见或未在推送）才需要

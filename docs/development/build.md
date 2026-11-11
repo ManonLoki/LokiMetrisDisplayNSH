@@ -43,7 +43,7 @@ python3 tools/build/package_app.py --target android --out output/packages/build-
 adb -s <设备序列号> install -r <生成的APK路径>
 ```
 
-包装器通过官方 `--abi arm64-v8a,x86_64` 选项为手机与模拟器构建两个 64 位 ABI 的应用 runtime，核对 JNI 导出，以同版本官方 NSH Java 源码和应用自有 Application/Activity 接线编译，经 D8、对齐和原证书签名后生成 APK。清单补入网络、多播权限与应用入口。编译 SDK 与目标 SDK 分别核对；目前目标 SDK 达到 37 时会因缺少本地网络动态权限支持而拒绝出包。
+包装器通过官方 `--abi arm64-v8a,x86_64` 选项为手机与模拟器构建两个 64 位 ABI 的应用 runtime，并核对 JNI 导出。应用自有 Java 接线与同版本 NSH Java 源码一同编译，源码从 Cargo 缓存读取并用锁定的 `.crate` 归档核对。局域网 HTTP 由 NSH 读取 `nsh.json` 的 `android.usesCleartextTraffic` 写入清单。包装器保留该声明，补入多播权限、应用入口和小组件接收器，再经 D8、对齐和原证书签名生成 APK。目标 SDK 达到 37 时会因缺少本地网络动态权限支持而拒绝出包。
 
 移动标识可用 `--id` 覆盖。已有安装须沿用原标识与证书，才能覆盖升级并保留身份及配对。移动包使用项目入口完成组装。
 
@@ -76,6 +76,6 @@ python3 tools/build/package_app.py --target linux --out output/packages/build-li
 python3 tools/build/package_app.py --target windows --out output/packages/build-windows-001
 ```
 
-原生打包在对应系统执行。macOS 上指定 Windows 时自动转交 `package_windows_cross.py`，使用 `cargo-xwin`、Xcode/libclang 和 `x86_64-w64-mingw32-windres` 构建真实 x86-64 MSVC PE，再重建 ZIP。结果仍需在 Windows 验证启动、WebView2、Credential Manager 和配对。Windows 包须保留可执行文件旁的 `nsh` 目录。
+原生打包在对应系统执行。NSH 0.5.0 已支持通过 `cargo-xwin` 交叉构建 Windows 运行器，并生成窗口使用的 `nsh/icon.ico`。官方 CLI 在 Windows 上打包时才将图标写入 `.exe` 资源。项目的 macOS 交叉包装器仍使用 `cargo-xwin`、Xcode/libclang 和 `x86_64-w64-mingw32-windres` 嵌入资源管理器所需的图标，再重建 ZIP。交叉包的启动、Credential Manager 和配对须在 Windows 验证。Windows 包须保留可执行文件旁的 `nsh` 目录。
 
 移动构建日志位于 `output/build/<目标>/package.log`。工具职责见 [tools](../../tools/README.md)，安装与使用见 [移动说明](../mobile/usage.md)。
