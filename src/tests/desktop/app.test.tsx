@@ -4,10 +4,6 @@ import { expect, test } from "nsh/test";
 import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_PANEL, KEY_DEVICE, KEY_PAIRED, KEY_CACHE, KEY_INJECT, KEY_FRAMES, safe } from "./app-environment";
 // 引入夹具快照
 import { representativeSnapshot } from "./app-fixtures";
-// 引入测试用 PNG 资源
-import hookPNG from "../fixtures/assets/hook.png";
-// 引入测试用 GIF 资源
-import hookGIF from "../fixtures/assets/hook.gif";
 // 引入配对规则
 import { PAIRING_WINDOW_MS, formatSyncTime, makePairingCode } from "./support/fixture-rules";
 
@@ -379,6 +375,11 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
   snapshot.hooks[0].image = pngHash;
   snapshot.hooks[1].image = gifHash;
   snapshot.hooks[0].content = "图片详情正文";
+  // 夹具模拟已缓存的文件，使用测试模块旁的原始图片路径。
+  const images = {
+    [pngHash]: new URL("../fixtures/assets/hook.png", import.meta.url).href,
+    [gifHash]: new URL("../fixtures/assets/hook.gif", import.meta.url).href,
+  };
   // 已配对的桌面在 1 秒后推送带图片的快照
   const app = await open("./test-app.tsx", {
     clock: { time: T0 }, width: 390, height: 844, safeArea: safe,
@@ -386,7 +387,7 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
       [KEY_DEVICE]: JSON.stringify({ id: PHONE, name: "手机" }),
       [KEY_PAIRED]: JSON.stringify({ [DESKTOP]: { clientId: DESKTOP, savedAtMs: T0 } }),
       [KEY_INJECT]: JSON.stringify({ discovered: [{ id: DESKTOP, name: "桌面" }], events: [
-        { atMs: T0 + 1000, kind: "snapshot", snapshot, receivedAtMs: RECEIVED, images: { [pngHash]: hookPNG.url.replace(/^asset:\/*/, "file:///"), [gifHash]: hookGIF.url.replace(/^asset:\/*/, "file:///") } },
+        { atMs: T0 + 1000, kind: "snapshot", snapshot, receivedAtMs: RECEIVED, images },
       ] }),
     },
   });

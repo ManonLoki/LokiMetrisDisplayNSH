@@ -6,8 +6,8 @@ mod native;
 // 跨模块共享的契约与领域工具
 mod shared;
 
-// 对外导出三个原生模块入口
-pub use native::{Rules, Shell, UiLifecycle};
+// 对外导出应用的原生模块入口
+pub use native::{Rules, Shell};
 // 引入 nsh 原生模块宏与注册表
 use nsh_core::prelude::*;
 
@@ -21,8 +21,6 @@ fn register_bindings(registry: &mut Registry) {
     native::widgets::install();
     // 注册连接模块
     registry.module::<Shell>();
-    // 注册界面生命周期模块
-    registry.module::<UiLifecycle>();
     // 注册规则查询模块
     registry.module::<Rules>();
     // 注册图片帧解码模块

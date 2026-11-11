@@ -261,7 +261,25 @@ impl Shell {
         Ok(merged)
     }
 
-    /// 每个 UI 时钟周期调用:轮询连接并推进名称确认。初始化完成前不做任何事。
+    /// 等待连接 owner 发布新视图。调试夹具由测试时钟驱动，返回 false。
+    /// 连接关闭或初始化失败时返回 null。
+    pub async fn wait_for_view_change(sys: System) -> Option<bool> {
+        if !with(&sys, |state| state.ready && !state.disposed) {
+            return None;
+        }
+        #[cfg(debug_assertions)]
+        if with(&sys, |state| matches!(state.backend, Backend::Fixture(_))) {
+            return Some(false);
+        }
+        Link::wait_for_view_change(&sys).await.then_some(true)
+    }
+
+    /// 名称保存需要等待连接确认时，返回当前请求的截止时间。
+    pub fn name_confirmation_deadline(sys: System) -> Option<u64> {
+        Settings::name_confirmation_deadline(&sys)
+    }
+
+    /// 读取最新连接视图并推进名称确认。初始化完成前不做任何事。
     pub async fn tick(
         draft: String,
         now_ms: u64,
@@ -373,6 +391,7 @@ impl Shell {
             };
             let _ = link_command(&sys, &backend, &inactive, 0);
         }
+        Link::close(&sys);
         Ok(())
     }
 }

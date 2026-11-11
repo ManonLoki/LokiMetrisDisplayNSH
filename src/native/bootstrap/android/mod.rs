@@ -299,7 +299,7 @@ pub(super) fn widget_changed() {
 
 /// 查询操作系统的进程重要性,但不把后台应用当作可见。
 // 查询进程重要性，不把后台应用当作可见
-pub(super) fn foreground() -> Option<bool> {
+fn foreground() -> Option<bool> {
     // 取得应用上下文并执行
     context::with_context(|env, context| -> Result<_> {
         // 新建进程信息对象
@@ -344,15 +344,6 @@ pub(super) fn foreground() -> Option<bool> {
     })
     // 出错忽略
     .ok()
-}
-
-/// 独立于连接协议的手机/平板字段,单独报告系统形态。
-// 系统设备形态，独立于连接协议里的手机/平板字段
-pub(super) fn device_form() -> String {
-    // 读取设备形态并转为自有字符串
-    context::with_context(|env, context| read_device_form(env, context).map(str::to_owned))
-        // 失败默认手机
-        .unwrap_or_else(|_| "phone".into())
 }
 
 // 获取多播锁，发现期间需要持有

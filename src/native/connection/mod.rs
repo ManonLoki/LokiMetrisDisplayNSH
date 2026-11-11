@@ -263,7 +263,7 @@ enum Event {
 /// NSH 应用读取的最新公开投影。
 #[derive(Default)]
 // 最近一次公开投影，供 NSH 应用读取
-struct Published {
+pub(super) struct Published {
     // 已发布状态（加锁）
     state: Mutex<PublishedState>,
 }
@@ -271,6 +271,52 @@ struct Published {
 struct PublishedState {
     // 视图 JSON 文本
     view: String,
+    // Shell 每个连接只有一个等待下一份视图的任务。
+    waiter: Option<std::task::Waker>,
+    closed: bool,
+}
+
+impl Published {
+    fn update(&self, view: String) {
+        let waiter = {
+            let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
+            if state.view == view {
+                return;
+            }
+            state.view = view;
+            state.waiter.take()
+        };
+        if let Some(waiter) = waiter {
+            waiter.wake();
+        }
+    }
+
+    pub(super) async fn wait_for_change(&self, previous: &str) -> bool {
+        use std::task::Poll;
+        std::future::poll_fn(|cx| {
+            let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
+            if state.closed {
+                return Poll::Ready(false);
+            }
+            if state.view != previous {
+                return Poll::Ready(true);
+            }
+            state.waiter = Some(cx.waker().clone());
+            Poll::Pending
+        })
+        .await
+    }
+
+    fn close(&self) {
+        let waiter = {
+            let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
+            state.closed = true;
+            state.waiter.take()
+        };
+        if let Some(waiter) = waiter {
+            waiter.wake();
+        }
+    }
 }
 
 // 连接句柄：向 owner 投递命令并读取公开状态
@@ -395,6 +441,10 @@ impl Handle {
         // 作为宿主命令入队
         self.enqueue(Command::Host(command))
     }
+    pub(super) fn publications(&self) -> Arc<Published> {
+        self.published.clone()
+    }
+
     // 返回最近一次公开投影；锁中毒时仍取内部值
     pub fn poll(&self) -> String {
         // 已发布状态
@@ -449,6 +499,7 @@ impl Drop for Handle {
     fn drop(&mut self) {
         // 标记已停止
         self.stopped.store(true, Ordering::SeqCst);
+        self.published.close();
         // 入队停止命令
         let _ = self.enqueue(Command::Stop);
     }

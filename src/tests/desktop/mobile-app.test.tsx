@@ -74,6 +74,29 @@ test("televisions keep remote navigation in the shared NSH application", async (
   await app.waitFor("settings-panel-card");
 });
 
+test("television focus reveals a Hook on the next Carousel page", async () => {
+  const value = fixture("tv");
+  const snapshot = representativeSnapshot();
+  snapshot.hooks = snapshot.hooks.slice(0, 2);
+  value.projection.snapshot = snapshot;
+  value.projection.receivedAtMs = 1_720_111_000_000;
+  value.projection.connected = true;
+  value.projection.panelConfig = { ...oldPanel, showUsage: false, hookLayout: "1x1" };
+  const app = await open("./mobile-app.tsx", { width: 960, height: 540, safeArea: safe,
+    reducedMotion: true, storage: { "test.mobileApp": JSON.stringify(value) } });
+
+  await app.waitFor("hook-card-1");
+  await app.keyboard.press("down");
+  await app.waitUntil(() => app.shows("remote-focus-menu-panel") || app.shows("remote-focus-hook-card-1"));
+  if (app.shows("remote-focus-menu-panel")) await app.keyboard.press("right");
+  await app.waitFor("remote-focus-hook-card-1");
+  await app.keyboard.press("right");
+  await app.waitFor("remote-focus-hook-card-2");
+  await app.waitUntil(() => app.texts().includes("2 / 2 · 方向键翻页"));
+  await app.keyboard.press("enter");
+  await app.waitFor("hook-detail-dialog");
+});
+
 // 手机与平板忽略遥控按键
 test("phones and tablets ignore remote navigation keys", async () => {
   const app = await open("./mobile-app.tsx", { width: 960, height: 540, safeArea: safe,

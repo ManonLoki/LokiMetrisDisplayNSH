@@ -18,20 +18,15 @@ mod lifecycle;
 mod link;
 // 对 JS 暴露的规则模块
 mod rules;
-// 对 JS 暴露的界面生命周期模块
-mod ui_lifecycle;
 // 系统小组件
 pub(crate) mod widgets;
 
-// 对外导出三个模块
 // 真实连接的操作，由 Shell 调用
 pub(crate) use link::Link;
 // 导出规则
 pub use rules::Rules;
 // 导出外壳
 pub use shell::Shell;
-// 导出界面生命周期
-pub use ui_lifecycle::UiLifecycle;
 
 // 应用外壳控制器
 mod shell;

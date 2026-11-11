@@ -3,7 +3,7 @@ import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_DEVICE, KEY_PANEL, KEY_PAIRED, 
 import { representativeSnapshot } from "./app-fixtures";
 
 // 用 --target ios 运行：不指定虚拟视口，截图与输入均来自模拟器的真实 UIKit 宿主。
-const output = "output/tests/nsh-0.4.0/ios";
+const output = "output/tests/nsh-0.5.0/ios";
 const device = JSON.stringify({ id: PHONE, name: "Simulator" });
 // 与 fixtures/assets/two-frame.gif 相同的 64×64 两帧资源；内联后不依赖宿主电脑的文件路径。
 const image = "data:image/gif;base64,R0lGODdhQABAAKIAAAAAAP8mAAQz/////wAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFZAAEACwAAAAAQABAAAADRxi63P4wykmrvTjrzbv/YCiOZGmeaKqubOu+cCzPdG3feK7vfO//wKBwSCwaj8ikcslsOp/QqHRKrVqv2Kx2y+16v+CwOJAAACH5BAVkAAQALAAAAABAAEAAAANHKLrc/jDKSau9OOvNu/9gKI5kaZ5oqq5s675wLM90bd94ru987//AoHBILBqPyKRyyWw6n9CodEqtWq/YrHbL7Xq/4LBYkAAAOw==";
@@ -42,9 +42,9 @@ test("native mobile input saves the name and panel choices survive reopening", a
   await again.screenshot(`${output}/settings-reopened.png`);
 }, 60_000);
 
-test("native mobile Hook image decodes and its shared detail dialog opens and closes", async () => {
+test("native mobile Hook images, details and touch paging work in the Carousel", async () => {
   const snapshot = representativeSnapshot();
-  snapshot.hooks = [snapshot.hooks[0]];
+  snapshot.hooks = snapshot.hooks.slice(0, 2);
   const hash = "cd".repeat(32);
   snapshot.hooks[0].image = hash;
   snapshot.hooks[0].content = "模拟器图片详情正文";
@@ -72,6 +72,10 @@ test("native mobile Hook image decodes and its shared detail dialog opens and cl
   await app.press("hook-detail-close");
   await app.waitUntil(() => !app.shows("hook-detail"));
   expect(app.shows("hook-card-1")).toBe(true);
+  await app.drag("hooks-pager", { x: -240 });
+  await app.waitUntil(() => app.texts().includes("2 / 2 · 左右滑动"));
+  await app.press("hook-card-2");
+  await app.waitFor("hook-detail");
 }, 60_000);
 
 test("native mobile pairing waits for a snapshot and forgetting requires confirmation", async () => {

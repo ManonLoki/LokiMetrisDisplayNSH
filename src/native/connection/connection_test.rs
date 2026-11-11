@@ -475,3 +475,44 @@ fn native_and_projected_snapshot_share_agent_identity_rules() {
     bad["enabledAgents"] = json!(["claudeCode", "claude-code"]);
     assert!(validate_snapshot(&bad).is_err());
 }
+
+#[test]
+fn a_view_subscription_wakes_only_for_new_publications_or_close() {
+    use std::{
+        future::Future,
+        sync::{
+            Arc,
+            atomic::{AtomicUsize, Ordering},
+        },
+        task::{Context, Poll, Wake, Waker},
+    };
+
+    #[derive(Default)]
+    struct Notifications(AtomicUsize);
+
+    impl Wake for Notifications {
+        fn wake(self: Arc<Self>) {
+            self.0.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    let published = super::Published::default();
+    published.update("initial".into());
+    let notifications = Arc::new(Notifications::default());
+    let waker = Waker::from(notifications.clone());
+    let mut cx = Context::from_waker(&waker);
+    let mut change = std::pin::pin!(published.wait_for_change("initial"));
+    assert_eq!(change.as_mut().poll(&mut cx), Poll::Pending);
+
+    published.update("initial".into());
+    assert_eq!(notifications.0.load(Ordering::Relaxed), 0);
+    published.update("next".into());
+    assert_eq!(notifications.0.load(Ordering::Relaxed), 1);
+    assert_eq!(change.as_mut().poll(&mut cx), Poll::Ready(true));
+
+    let mut close = std::pin::pin!(published.wait_for_change("next"));
+    assert_eq!(close.as_mut().poll(&mut cx), Poll::Pending);
+    published.close();
+    assert_eq!(notifications.0.load(Ordering::Relaxed), 2);
+    assert_eq!(close.as_mut().poll(&mut cx), Poll::Ready(false));
+}

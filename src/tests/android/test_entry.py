@@ -26,6 +26,7 @@ SOURCES = {
 // 最小的 Activity 替身：记录窗口，其余方法为空实现
 public class Activity {
     // 
+    public static android.view.View content;
     public static final android.view.Window window = new android.view.Window();
     // 
     protected void onCreate(android.os.Bundle state) {}
@@ -38,7 +39,7 @@ public class Activity {
     // 
     protected void onDestroy() {}
     // 
-    public void setContentView(Object view) {}
+    public void setContentView(android.view.View view) { content = view; }
     // 
     public android.view.Window getWindow() { return window; }
     // 
@@ -90,6 +91,18 @@ public class View {
         SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR = 16;
     // 初始带有两个“浅色栏”标志
     public int flags = 24;
+    public interface OnLayoutChangeListener {
+        void onLayoutChange(View view, int left, int top, int right, int bottom,
+                int oldLeft, int oldTop, int oldRight, int oldBottom);
+    }
+    private OnLayoutChangeListener layoutListener;
+    public void addOnLayoutChangeListener(OnLayoutChangeListener listener) { layoutListener = listener; }
+    public void removeOnLayoutChangeListener(OnLayoutChangeListener listener) {
+        if (layoutListener == listener) layoutListener = null;
+    }
+    public void layoutForTest(int width, int height) {
+        if (layoutListener != null) layoutListener.onLayoutChange(this, 0, 0, width, height, 0, 0, 0, 0);
+    }
     // 
     public void setSystemUiVisibility(int value) { flags = value; }
     // 
@@ -139,7 +152,7 @@ public class KeyEvent {
     public int getFlags() { return 0; } public int getSource() { return 0; }
 }''',
     'com/longbridge/nsh/NshView.java': '''package com.longbridge.nsh;
-public class NshView {
+public class NshView extends android.view.View {
     // NshView 替身：记录两种入口各被调用几次
     public static int rustCalls, bundleCalls;
     // 
@@ -196,6 +209,11 @@ public class EntryCheck {
         Activity.window.decor.flags = 24; Activity.window.controller.appearance = 3;
         // 创建生产环境的 Activity
         new DisplayActivity().onCreate(new Bundle());
+        Activity.content.layoutForTest(0, 0);
+        if (NshView.rustCalls + NshView.bundleCalls != 0)
+            throw new AssertionError("runner started before the view had its first layout");
+        Activity.content.layoutForTest(1280, 720);
+        Activity.content.layoutForTest(720, 1280);
         // 只有标志为真且找得到包信息才走 Rust 入口
         boolean rust = Boolean.TRUE.equals(marker) && !missing;
         // 入口必须符合预期

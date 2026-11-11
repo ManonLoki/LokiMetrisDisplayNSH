@@ -147,6 +147,24 @@ impl Link {
         with_handle(sys, |handle| handle.command(&text))?
     }
 
+    pub(crate) async fn wait_for_view_change(sys: &System) -> bool {
+        let runtime = sys.locals.get::<LinkRuntime>();
+        let (publications, previous) = {
+            let attached = runtime.0.borrow();
+            let Some(attached) = attached.as_ref() else {
+                return false;
+            };
+            (attached.handle.publications(), attached.last_view.clone())
+        };
+        publications
+            .wait_for_change(previous.as_deref().unwrap_or_default())
+            .await
+    }
+
+    pub(crate) fn close(sys: &System) {
+        sys.locals.get::<LinkRuntime>().close();
+    }
+
     /// 返回已验证的公开连接视图;自上次返回以来没有变化时返回 null。
     // 只在投影变化时校验并返回新视图
     pub(crate) fn poll(sys: &System) -> Result<Option<ViewState>, String> {
@@ -162,9 +180,8 @@ impl Link {
         if attached.last_view.as_deref() == Some(raw.as_str()) {
             return Ok(None);
         }
-        // 先校验，再记录；无效投影不会被记为已交付
-        let view = typed(view_state::native_view(&raw)?)?;
-        attached.last_view = Some(raw);
-        Ok(Some(view))
+        // 记录已读取的发布，解析失败时也等待下一次变化。
+        let raw = attached.last_view.insert(raw);
+        typed(view_state::native_view(raw)?).map(Some)
     }
 }

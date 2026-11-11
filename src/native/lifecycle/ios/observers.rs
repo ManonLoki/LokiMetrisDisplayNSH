@@ -97,6 +97,7 @@ impl ActivityObserver {
 // 观察者集合的方法
 impl ActivityObservers {
     // 当前前台状态；未知为 None
+    #[cfg(test)]
     pub(super) fn foreground(&self) -> Option<bool> {
         // 读取当前值
         match self.current.load(Ordering::Acquire) {

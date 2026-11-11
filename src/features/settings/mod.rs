@@ -61,6 +61,11 @@ fn json<T: serde::Serialize>(value: &T) -> Result<JsonValue, String> {
 }
 
 impl Settings {
+    pub(crate) fn name_confirmation_deadline(sys: &System) -> Option<u64> {
+        let runtime = sys.locals.get::<SettingsRuntime>();
+        runtime.0.borrow().name_confirmation_deadline()
+    }
+
     /// 启动:恢复设备身份和面板偏好,开启新会话。
     pub(crate) fn boot(sys: &System) -> Result<SettingsResult, String> {
         apply(engine::Request::Boot, sys)

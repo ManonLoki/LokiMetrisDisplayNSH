@@ -9,7 +9,7 @@ import type { PanelConfig } from "../shared/contracts/panel";
 /** 应用运行时：前台事实与观测回调由宿主注入；连接由 Rust 的 Shell 持有。 */
 export interface AppRuntime {
   // 当前是否在前台，未知为 null
-  foreground: () => boolean | null;
+  foreground?: () => boolean | null;
   // 是否启用遥控导航
   remoteNavigation?: () => boolean;
   // 测试用：上报面板边界
@@ -27,23 +27,30 @@ interface UiState {
   nameIssue: Signal<string | null>;
   panelIssue: Signal<string | null>;
   savingName: Signal<boolean>;
-  foreground: Signal<boolean>;
 }
 
 /**
- * 这里只有 UI 时钟和信号赋值：启动、轮询、保存、命令转发、回滚和超时都由 Rust 的 Shell 决定。
+ * 连接变化由 Rust 通知。界面按 Rust 给出的截止时间触发名称确认超时。
  * TS 唯一的判断是：异步结果返回时用户若又改了草稿，就不覆盖名称相关字段。
  */
-export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view: ViewState) => void) {
+export function createRuntime(state: UiState, onView: (view: ViewState) => void) {
   // 是否已挂载，避免重复启动
   let mounted = false;
   // 是否已释放
   let disposed = false;
+  let nameTimer: ReturnType<typeof setTimeout> | undefined;
+  let fixtureTimer: ReturnType<typeof setTimeout> | undefined;
 
   // 把 Rust 返回的公开状态赋给信号
   function accept(result: SettingsResult | null | undefined, draftAtRequest?: string) {
     if (disposed || !result) return;
     state.savingName.set(result.savingName);
+    if (nameTimer !== undefined) clearTimeout(nameTimer);
+    nameTimer = undefined;
+    const deadline = result.savingName ? Shell.nameConfirmationDeadline() : null;
+    if (deadline != null) {
+      nameTimer = setTimeout(() => void refresh(), Math.max(0, deadline - Date.now()));
+    }
     // 请求期间用户又改了草稿，就不覆盖名称相关字段
     if (draftAtRequest === undefined || state.nameDraft() === draftAtRequest) {
       state.nameIssue.set(result.nameIssue ?? null);
@@ -64,29 +71,39 @@ export function createRuntime(runtime: AppRuntime, state: UiState, onView: (view
     accept(await call(), draft);
   }
 
-  // 挂载：启动外壳并开始 250ms 的 UI 时钟
+  const refresh = () => run(() => Shell.tick(state.nameDraft(), Date.now()));
+
+  // 调试夹具按 NSH 测试时钟推进模拟的桌面事件。
+  function tickFixture(startedAt: number) {
+    if (disposed) return;
+    void refresh();
+    const delay = 250 - (Date.now() - startedAt) % 250;
+    fixtureTimer = setTimeout(() => tickFixture(startedAt), delay);
+  }
+
+  async function start() {
+    const startedAt = Date.now();
+    await run(() => Shell.start(startedAt));
+    while (!disposed) {
+      const changed = await Shell.waitForViewChange();
+      if (disposed || changed == null) return;
+      if (!changed) {
+        tickFixture(startedAt);
+        return;
+      }
+      await refresh();
+    }
+  }
+
   function mount() {
     if (mounted) return;
     mounted = true;
     effect(() => {
-      let timer: ReturnType<typeof setTimeout> | null = null;
-      untracked(() => {
-        // 启动：Rust 恢复身份、初始化连接（调试构建下测试夹具由 Rust 扮演桌面端）
-        void run(() => Shell.start(Date.now()));
-        // 时钟：读前台事实，并让 Rust 轮询、推进名称确认
-        const tick = () => {
-          if (disposed) return;
-          try { state.foreground.set(runtime.foreground() === true); }
-          catch { state.foreground.set(false); }
-          void run(() => Shell.tick(state.nameDraft(), Date.now()));
-          timer = setTimeout(tick, 250);
-        };
-        tick();
-      });
+      untracked(() => void start());
       cleanup(() => {
         disposed = true;
-        if (timer != null) clearTimeout(timer);
-        state.foreground.set(false);
+        if (nameTimer !== undefined) clearTimeout(nameTimer);
+        if (fixtureTimer !== undefined) clearTimeout(fixtureTimer);
         void Shell.dispose().catch(() => { /* VM 可能已开始关闭。 */ });
       });
     });

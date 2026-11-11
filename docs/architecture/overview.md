@@ -8,16 +8,16 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 
 ## 从入口到展示台
 
-1. `App.tsx` 将 `UiLifecycle` 注入 `createApp`（连接由 Rust 的 `Shell` 驱动），装配展示台、设置与导航。
-2. `src/app/runtime.ts` 调用 Rust `Shell.start` 恢复身份和偏好并创建连接实例，之后每 250ms 调用 `Shell.tick` 读取公开投影；TS 只做 UI 时钟和信号赋值。
-3. `src/native/shell.rs` 是 Rust 控制器：启动、轮询、保存名称/面板、失败回滚和命令转发都在这里。它内部调用 `src/native/link.rs`（把连接实例绑定到 NSH `System.locals` 和应用私有目录，VM 关闭时释放）和设置用例。连接 owner 串行处理发现、配对、认证、快照与资源事件。
+1. `App.tsx` 挂载 `createApp`，由 NSH 提供界面生命周期、设备形态和安全区。
+2. `src/app/runtime.ts` 调用 Rust `Shell.start` 恢复身份和偏好并创建连接实例，连接发布变化时唤醒 NSH 异步任务，界面再读取最新投影。名称确认由单独的截止时间驱动。
+3. `src/native/shell.rs` 是 Rust 控制器：启动、公开投影、保存名称/面板、失败回滚和命令转发都在这里。它内部调用 `src/native/link.rs`（把连接实例绑定到 NSH `System.locals` 和应用私有目录，VM 关闭时释放）和设置用例。连接 owner 串行处理发现、配对、认证、快照与资源事件。
 4. Rust 校验桌面输入并生成公开快照。TSX 根据窗口尺寸、面板偏好和导航状态渲染，纯展示规则通过 `#[module]` 类型化的 `Rules` 方法（`src/native/rules.rs`）直接调用。`Shell`、`ImageFrames` 同样是类型化的 `#[module]`，收发的面板、视图、快照、卡片投影等结构定义在 `src/shared/contracts/models.rs`（`#[derive(JsObject)]`），TS 类型由 `nsh check` 据此生成到 `.nsh/types`，TSX 不再手写这些类型，也不拼装或解析 JSON。
 
 ## 目录与职责
 
 | 位置 | 职责 |
 | --- | --- |
-| `src/app/` | 应用工厂、导航与运行时（运行时只有 UI 时钟和信号赋值） |
+| `src/app/` | 应用工厂、导航、公开投影订阅和名称确认计时 |
 | `src/features/dashboard/` | 展示台布局与详情装配 |
 | `src/features/usage/` | Token、额度、排序和格式化规则 |
 | `src/features/hooks/` | Hooks 卡片、分页、状态、正文和图片详情 |
@@ -28,7 +28,7 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 | `src/native/fixture/` | 仅调试构建的测试夹具连接，按存储键扮演桌面端；产品构建不含 |
 | `src/native/connection/` | 连接 owner、发现、认证会话与验证后的资源缓存 |
 | `src/native/credentials/` | Keychain、Credential Manager、Secret Service 与 Android 密钥保护存储 |
-| `src/native/lifecycle/`、`src/native/bootstrap/`（平台文件多时放入 `android/`、`ios/` 子目录） | 系统前台事实、身份初始化、JNI 与 UIKit 接线 |
+| `src/native/lifecycle/`、`src/native/bootstrap/`（平台文件多时放入 `android/`、`ios/` 子目录） | 移动端连接可见性、身份初始化、JNI 与 UIKit 接线 |
 | `src/native/android/` | Android Application／Activity 与电视确认键转换 |
 | `src/native/image/` | 有界 GIF 解码、异步帧准备和 PNG 帧数据 |
 | `src/native/companion/` | iPhone 公开缓存与进程级 WatchConnectivity 投递 |

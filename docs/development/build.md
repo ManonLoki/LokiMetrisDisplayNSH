@@ -1,8 +1,8 @@
 # 构建与打包
 
-主应用使用 NSH 0.4.0、共享 TSX 与 Rust，支持 macOS、Windows、Linux、Android 和 iOS/iPadOS。iOS 默认包含独立 WidgetKit 扩展，Apple Watch 通过选项配套打包。小组件的纯 Rust 核心只复用项目已锁定的依赖，无需 KMP。
+主应用使用 NSH 0.5.0、共享 TSX 与 Rust，支持 macOS、Windows、Linux、Android 和 iOS/iPadOS。iOS 默认包含独立 WidgetKit 扩展，Apple Watch 通过选项配套打包。小组件的纯 Rust 核心只复用项目已锁定的依赖，无需 KMP。
 
-所有命令在项目根目录执行。先准备已安装的 `nsh`、Rust/Cargo、Python 3.11+ 与目标平台工具链。脚本复用现有工具，Rust 依赖由 `Cargo.toml` 和 `Cargo.lock` 管理。
+所有命令在项目根目录执行。先准备 NSH CLI 0.5.0、Rust/Cargo 1.97+、Python 3.11+ 与目标平台工具链。Rust 依赖由 `Cargo.toml` 和 `Cargo.lock` 管理。
 
 ## 日常开发
 
@@ -36,14 +36,14 @@ python3 tools/build/package_app.py --target macos --out output/packages/build-00
 
 ## Android
 
-设置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`，准备 API 37 的 `android.jar` 与带 D8、zipalign、apksigner 的 build-tools。NSH 安装需包含 ARM64、x86-64 Android runtime。签名文件见 [Android 签名说明](../../signing/android/README.md)。
+设置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`，准备 API 37 的 `android.jar` 与带 D8、zipalign、apksigner 的 build-tools。NSH 0.5 按需安装 Android runtime，离线构建前可运行 `nsh component add android`。签名文件见 [Android 签名说明](../../signing/android/README.md)。
 
 ```sh
 python3 tools/build/package_app.py --target android --out output/packages/build-android-001
 adb -s <设备序列号> install -r <生成的APK路径>
 ```
 
-包装器通过 NSH 0.4 的官方 `--abi arm64-v8a,x86_64` 选项为手机与模拟器构建两个 64 位 ABI 的应用 runtime，核对 JNI 导出，保留官方 NSH Java 类，再编译自有 Application/Activity 接线，经 D8、对齐和原证书签名后生成 APK。清单补入网络、多播权限与应用入口。编译 SDK 与目标 SDK 分别核对；目前目标 SDK 达到 37 时会因缺少本地网络动态权限支持而拒绝出包。
+包装器通过官方 `--abi arm64-v8a,x86_64` 选项为手机与模拟器构建两个 64 位 ABI 的应用 runtime，核对 JNI 导出，以同版本官方 NSH Java 源码和应用自有 Application/Activity 接线编译，经 D8、对齐和原证书签名后生成 APK。清单补入网络、多播权限与应用入口。编译 SDK 与目标 SDK 分别核对；目前目标 SDK 达到 37 时会因缺少本地网络动态权限支持而拒绝出包。
 
 移动标识可用 `--id` 覆盖。已有安装须沿用原标识与证书，才能覆盖升级并保留身份及配对。移动包使用项目入口完成组装。
 
@@ -59,7 +59,7 @@ xcrun simctl install <模拟器UDID> <生成的.app路径>
 xcrun simctl launch <模拟器UDID> <包元数据中的applicationId>
 ```
 
-包装器加入本地网络用途、`_loki-host._tcp` Bonjour 声明及后台刷新任务声明。手机与 Widget 共用 `LokiWidgetAppGroup`；模拟器 runner 的 `__TEXT,__entitlements` 携带匹配的 application-identifier 和共享组。身份值来自 [Apple 身份配置](../../signing/apple/README.md)，自定义 `--id` 时也必须有匹配配置。
+NSH 从 `nsh.json` 的 `ios.infoPlist` 写入本地网络用途、`_loki-host._tcp` Bonjour、后台刷新及实时活动声明。手机与 Widget 共用 `LokiWidgetAppGroup`；模拟器 runner 的 `__TEXT,__entitlements` 携带匹配的 application-identifier 和共享组。身份值来自 [Apple 身份配置](../../signing/apple/README.md)，自定义 `--id` 时也必须有匹配配置。
 
 ```sh
 python3 tools/build/package_app.py --target ios --ios-device --with-watch --out output/packages/build-device-001

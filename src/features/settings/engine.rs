@@ -197,6 +197,10 @@ pub(super) struct Response {
 
 // 引擎的方法
 impl Engine {
+    pub(super) fn name_confirmation_deadline(&self) -> Option<u64> {
+        self.pending.as_ref().map(|name| name.deadline_ms)
+    }
+
     // 构造一个只带当前状态的响应
     fn response(&self) -> Response {
         // 构造响应

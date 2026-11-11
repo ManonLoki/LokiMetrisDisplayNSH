@@ -42,12 +42,18 @@ public final class DisplayActivity extends Activity {
         configureWindow();
         // 创建 NSH 视图
         view = new NshView(this);
-        // 设为内容视图
+        // NshView 在首次布局时发布设备形态，应用随后读取 platform.idiom。
+        view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View node, int left, int top, int right, int bottom,
+                    int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                if (right <= left || bottom <= top) return;
+                node.removeOnLayoutChangeListener(this);
+                if (rustApp()) view.runRustApp("nsh");
+                else view.loadAssetBundle("nsh");
+            }
+        });
         setContentView(view);
-        // 带 Rust 模块的应用从原生入口启动，否则加载资源包
-        if (rustApp()) view.runRustApp("nsh");
-        // 否则加载资源包
-        else view.loadAssetBundle("nsh");
     }
 
     /** TSX 应用可以注册 Rust 模块,而不必是纯 Rust UI 应用。 */

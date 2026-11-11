@@ -219,14 +219,7 @@ pub(in crate::native) fn install(on_launch: fn()) {
     });
 }
 
-// 读取当前前台状态
-pub(super) fn foreground() -> Option<bool> {
-    // 当前是否前台
-    observers().foreground()
-}
-
-/// 初始事实与后续通知都由主队列交付；关闭 VM 后排队的初始回调不再触发。
-// 初始事实与后续通知都由主队列交付；关闭 VM 后排队的初始回调不再触发
+// 观察连接可见状态
 pub(in crate::native) fn observe(
     // 回调
     callback: impl Fn(bool) + Send + Sync + 'static,

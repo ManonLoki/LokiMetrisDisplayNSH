@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 # 应用自有的 Java 适配层源码目录
 SOURCE = ROOT / "src/native/android/java"
 # 官方 NSH 版本
-NSH_VERSION = '0.4.0'
+NSH_VERSION = '0.5.0'
 
 
 # 定位 Android SDK：命令行参数、环境变量，然后是常见安装位置
@@ -101,7 +101,7 @@ def platform_jar(sdk, api):
     return path
 
 
-# 定位官方 NSH 的 AAR：参数或 nsh 可执行文件旁边；必须在应用源码树之外
+# 0.5 的嵌入 SDK 独立发布；只使用显式提供的 AAR
 def official_aar(explicit=None):
     # 显式指定了 AAR
     if explicit:
@@ -113,17 +113,6 @@ def official_aar(explicit=None):
             raise RuntimeError('NSH AAR must come from the official installed SDK outside the app source tree')
         # 返回路径
         return path
-    # 查找已安装的 nsh
-    cli = shutil.which('nsh')
-    # 找到则据此推出 AAR 位置
-    if cli:
-        # 由命令行位置推出 AAR 路径
-        path = Path(cli).resolve().parent.parent / 'embed/android/nsh.aar'
-        # 存在则采用
-        if path.is_file():
-            # 返回路径
-            return path
-    # 否则无官方 AAR
     return None
 
 

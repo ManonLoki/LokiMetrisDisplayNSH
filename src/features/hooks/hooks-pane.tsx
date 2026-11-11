@@ -1,5 +1,6 @@
 // 引入滚动、文本、视图、响应式原语与平台信息
-import { Scroll, Text, View, computed, effect, signal, untracked, type Accessor, type Bounds, type Size, type ScrollRef, platform } from "nsh";
+import { Scroll, Text, View, computed, effect, signal, untracked, type Accessor, type Bounds, type Size, platform } from "nsh";
+import { Carousel, CarouselContent, CarouselItem } from "nsh/base";
 // 引入布局类型
 import type { HookLayout } from "../../shared/contracts/panel";
 // 引入 Hooks 快照类型
@@ -55,8 +56,6 @@ export function HooksPane(props: HooksPaneProps) {
   const currentPage = props.controller.hookPage;
   // 页数
   const pageCount = computed(() => pages().length);
-  // 期望的横向滚动位置，初值按当前页恢复
-  const requestedOffset = signal(untracked(() => currentPage() * props.width()));
   // 告警区域实际高度
   const warningHeight = signal(0);
   // 2x2 为两列，其余一列
@@ -67,36 +66,24 @@ export function HooksPane(props: HooksPaneProps) {
   const cardWidth = () => Math.max(1, (props.width() - (columns() - 1) * 8) / columns());
   // 卡片高度：扣除行间距后均分
   const cardHeight = () => Math.max(1, (pagerHeight() - (columns() - 1) * 8) / columns());
-  // 上一次的宽度，用于检测宽度变化
-  let lastWidth = untracked(props.width);
-  // 翻页滚动视图的引用
-  let pager: ScrollRef | undefined;
   // 桌面平台需要用拖拽手势翻页
   const desktop = ["macos", "windows", "linux", "web"].includes(platform.os);
-  // 布局、页数或宽度变化时修正页码与滚动位置
+  // 布局改变时回到第一页，页数减少时保留最近的一页
   effect(() => {
-    // 读取布局、页数与宽度
+    // 读取布局和页数
     const layout = props.layout();
     // 页数
     const count = pageCount();
-    // 面板宽度
-    const width = props.width();
     // 以当前页码为起点
     let next = untracked(currentPage);
-    // 宽度变化时需要重新定位滚动
-    let reposition = width !== lastWidth;
     // 布局切换时回到第一页
-    if (props.controller.layout != null && layout !== props.controller.layout) { next = 0; reposition = true; }
+    if (props.controller.layout != null && layout !== props.controller.layout) next = 0;
     // 页码越界时夹到最后一页
-    if (next >= count) { next = Math.max(0, count - 1); reposition = true; }
+    if (next >= count) next = Math.max(0, count - 1);
     // 记录本次布局
     props.controller.layout = layout;
-    // 记录本次宽度
-    lastWidth = width;
     // 页码变化才写回
     if (next !== untracked(currentPage)) currentPage.set(next);
-    // 需要时更新期望滚动位置
-    if (reposition) requestedOffset.set(next * width);
   });
   // 面板根容器
   return <View testID="hooks-pane" onLayout={({ bounds }) => props.onFrame?.(bounds)} style={{ flex: 1, minWidth: 0, minHeight: 0, gap: 8 }}>
@@ -110,56 +97,42 @@ export function HooksPane(props: HooksPaneProps) {
         if (Math.abs(event.translation.x) < 45 || Math.abs(event.translation.y) > Math.abs(event.translation.x)) return;
         // 按拖拽方向计算目标页并限制范围
         const next = Math.max(0, Math.min(pageCount() - 1, currentPage() + (event.translation.x < 0 ? 1 : -1)));
-        // 动画滚动到目标页
-        pager?.scrollTo({ x: next * props.width(), y: 0, animated: true });
+        currentPage.set(next);
       // 否则不处理
       } : undefined}>
-      {/* 横向分页滚动视图 */}
-      <Scroll testID="hooks-pager" horizontal pagingEnabled scrollbar={false} bounces={false}
-        // 保存滚动视图引用
-        ref={(node) => { pager = node; }}
-        // 样式：撑满
-        style={{ flex: 1, minWidth: 0, minHeight: 0 }}
-        // 内容样式：横向排列，高度为分页高度
-        contentStyle={{ flexDirection: "row", height: pagerHeight() }}
-        // 内容偏移：目标页的横向位置
-        contentOffset={{ x: requestedOffset(), y: 0 }}
-        // 滚动回调
-        onScroll={(event) => {
-          // 根据滚动偏移推算当前页
-          const page = Math.max(0, Math.min(pages().length - 1, Math.round(event.offset.x / props.width())));
-          // 页码变化才写回
-          if (page !== currentPage()) currentPage.set(page);
-        }}>
-        {/* 逐页渲染 */}
-        <Each of={pages()} key="index">{(cells, page) => <View style={{ width: props.width(), height: pagerHeight(), gap: 8 }}>
-          {/* 每页按行渲染，每行一排卡片 */}
-          <Each of={Array.from({ length: columns() }, (_, row) => row)} key="index">{(row) =>
-            <View style={{ flex: 1, minHeight: 0, flexDirection: "row", gap: 8 }}>
-              {/* 渲染这一行的卡片：有 Hook 则为卡片，否则为占位；详情打开时隐藏图片，仅当前页活跃，聚焦时滚到所在页 */}
-              <Each of={cells().slice(row() * columns(), (row() + 1) * columns())}
-                // 以槽位作键，空位用占位键
-                key={(hook, column) => hook?.slot ?? `empty-${column}`}>{(hook, column) =>
-                <If when={hook()} else={<HookPlaceholder snapshot={() => props.snapshot()}
-                  // 卡片在页内的位置
-                  position={page() * columns() * columns() + row() * columns() + column()} />}>
-                  {(item) => <HookCard hook={item} connected={() => props.connected()} width={cardWidth} height={cardHeight}
-                    // 非所选槽位才显示图片
-                    showImage={() => props.selectedSlot() !== item().slot}
-                    // 面板活动且在当前页才播放
-                    active={() => props.active() && currentPage() === page()}
-                    // 点击选中该槽位
-                    onPress={() => props.onSelect(item().slot)}
-                    // 远程焦点移动时滚动到所在页
-                    onRemoteFocus={() => pager?.scrollTo({ x: page() * props.width(), y: 0, animated: true })}
-                    // 图片加载回调
-                    onImageLoad={props.onImageLoad} />}
-                </If>}
-              </Each>
-            </View>}
-          </Each>
-        </View>}</Each>
-      </Scroll>
+      <Carousel index={currentPage()} onChange={({ index }) => currentPage.set(index)}
+        accessibilityLabel="Hooks" style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+        <CarouselContent testID="hooks-pager" style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+          {/* 逐页渲染 */}
+          <Each of={pages()} key="index">{(cells, page) => <CarouselItem style={{ width: props.width(), height: pagerHeight(), gap: 8 }}>
+            {/* 每页按行渲染，每行一排卡片 */}
+            <Each of={Array.from({ length: columns() }, (_, row) => row)} key="index">{(row) =>
+              <View style={{ flex: 1, minHeight: 0, flexDirection: "row", gap: 8 }}>
+                {/* 渲染这一行的卡片：有 Hook 则为卡片，否则为占位；详情打开时隐藏图片，仅当前页活跃，聚焦时滚到所在页 */}
+                <Each of={cells().slice(row() * columns(), (row() + 1) * columns())}
+                  // 以槽位作键，空位用占位键
+                  key={(hook, column) => hook?.slot ?? `empty-${column}`}>{(hook, column) =>
+                  <If when={hook()} else={<HookPlaceholder snapshot={() => props.snapshot()}
+                    // 卡片在页内的位置
+                    position={page() * columns() * columns() + row() * columns() + column()} />}>
+                    {(item) => <HookCard hook={item} connected={() => props.connected()} width={cardWidth} height={cardHeight}
+                      // 非所选槽位才显示图片
+                      showImage={() => props.selectedSlot() !== item().slot}
+                      // 面板活动且在当前页才播放
+                      active={() => props.active() && currentPage() === page()}
+                      // 点击选中该槽位
+                      onPress={() => props.onSelect(item().slot)}
+                      // 远程焦点移动时滚动到所在页
+                      onRemoteFocus={() => currentPage.set(page())}
+                      // 图片加载回调
+                      onImageLoad={props.onImageLoad} />}
+                  </If>}
+                </Each>
+              </View>}
+            </Each>
+          </CarouselItem>}</Each>
+        </CarouselContent>
+      </Carousel>
       {/* 多页时显示页码提示 */}
       {pages().length > 1 ? <View style={{ pointerEvents: "none", position: "absolute", bottom: 4, left: 0, right: 0, alignItems: "center" }}>
         {/* 页码提示背景 */}

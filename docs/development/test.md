@@ -73,15 +73,27 @@ nsh test src/tests/desktop/app.test.tsx --target linux
 nsh test src/tests/desktop/app.test.tsx --target windows
 ```
 
+### Windows 局部重绘对照
+
+在同一台 Windows 机器上使用相同的 NSH 0.5.0、窗口尺寸、缩放比例和面板设置。基线使用当前代码。候选使用工作区的临时副本，将 `src/shared/ui/windows-repaint.ts` 替换为以下实现：
+
+```ts
+export function useWindowsRepaint(_foreground: () => boolean): number {
+  return 0;
+}
+```
+
+分别运行 `nsh run --target windows`。在两个版本中播放 Hook GIF、反复切换展示台与设置、调整窗口尺寸、最小化后恢复，并用屏幕录像记录是否出现旧像素或残影。记录 Windows 版本、显卡和驱动版本。若候选出现基线没有的花屏，继续使用补丁。若原先出现花屏的环境中两版均通过同一组操作，再移除补丁及其专用回归用例。
+
 ## iOS 模拟器验收
 
-NSH 0.4.0 的移动原生回归用例不指定虚拟窗口尺寸，由模拟器提供实际屏幕。它们使用隔离的 Rust 连接夹具，验证 UIKit 输入和保存、设置重新打开、GIF 解码后的原生图片尺寸、Hook 详情、配对阶段及取消／确认忘记。无需真实桌面设备，不代表真实网络或 WatchConnectivity 联调。
+NSH 0.5.0 的移动原生回归用例不指定虚拟窗口尺寸，由模拟器提供实际屏幕。它们使用隔离的 Rust 连接夹具，验证 UIKit 输入和保存、设置重新打开、GIF 解码后的原生图片尺寸、Hook 详情、配对阶段及取消／确认忘记。无需真实桌面设备，不代表真实网络或 WatchConnectivity 联调。
 
 ```sh
 python3 tools/test.py --suite simulator
 ```
 
-NSH 使用已启动的 iOS 模拟器，若没有则选择并启动可用 iPhone。入口沿用移动打包器的 Xcode Clang／SDK 配置，并把正式 Widget Swift 宿主桥接链接到测试宿主，避免缺少 iOS 系统头文件或 Rust FFI 符号。截图保存在 `output/tests/nsh-0.4.0/ios/`，JUnit 报告在 `output/tests/simulator/`（可由 `--output` 改变）；需要 Xcode 与对应 Rust target。测试和打包共用 `.nsh/`，继续保持串行。
+NSH 使用已启动的 iOS 模拟器，若没有则选择并启动可用 iPhone。入口沿用移动打包器的 Xcode Clang／SDK 配置，并把正式 Widget Swift 宿主桥接链接到测试宿主，避免缺少 iOS 系统头文件或 Rust FFI 符号。截图保存在 `output/tests/nsh-0.5.0/ios/`，JUnit 报告在 `output/tests/simulator/`（可由 `--output` 改变）；需要 Xcode 与对应 Rust target。测试和打包共用 `.nsh/`，继续保持串行。
 
 ## 设备验收
 

@@ -23,14 +23,6 @@ pub(super) fn configure(root: &Path, device_id: &str, name: &str) -> Result<Conf
         .map_err(|error| error.to_string())
 }
 
-// 输入形态：Android 可能是电视，其余为桌面
-pub(super) fn form_factor() -> String {
-    #[cfg(target_os = "android")]
-    return android::device_form();
-    #[cfg(not(target_os = "android"))]
-    "desktop".into()
-}
-
 /// 只要 Link 持有它,就让系统活动观察一直保持存活。
 #[cfg(target_os = "ios")]
 // 守卫类型：iOS 持有观察者，其余平台无需持有
@@ -47,13 +39,6 @@ pub(super) fn observe(handle: std::sync::Weak<super::connection::Handle>) -> Act
     return android::observe(handle);
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     drop(handle)
-}
-
-#[cfg(target_os = "android")]
-// Android 的前台状态
-pub(super) fn foreground() -> Option<bool> {
-    // 取 Android 前台状态
-    android::foreground()
 }
 
 #[cfg(target_os = "android")]

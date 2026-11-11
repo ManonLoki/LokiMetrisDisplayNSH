@@ -1,14 +1,12 @@
 # NSH 运行时来源与应用适配
 
-项目使用官方 NSH 0.4.0 标签对应的 Git 提交 `e626a8dd8f8d8b277b9507cfd5ac74d0e67020f3`，版本和来源由 `Cargo.toml`、`Cargo.lock` 固定。不保留修改后的 SDK，也不在项目中配置 Cargo patch 或本机 SDK 路径覆盖。Apache-2.0 许可证保留在 [nsh-LICENSE-APACHE](nsh-LICENSE-APACHE)。
+项目使用 crates.io 发布的官方 NSH 0.5.0，版本和来源由 `Cargo.toml`、`Cargo.lock` 固定。NSH CLI 与 Cargo 运行时使用同一版本，CLI 生成的 `.nsh/` 不进入版本控制。Apache-2.0 许可证保留在 [nsh-LICENSE-APACHE](nsh-LICENSE-APACHE)。
 
-## 0.4.0 迁移
+## 0.5.0 迁移
 
-按[官方 0.4.0 迁移说明](https://github.com/longbridge/nsh/releases/tag/v0.4.0)更新事件对象、组件引用和 CSS 样式：布局读取 `{ bounds }`，输入读取 `{ value }`，开关读取 `{ checked }`，图片读取 `{ size }`，对话框读取 `{ action }`。文字截断、选择、图片适配和触摸穿透进入 `style`，阴影使用 `boxShadow`。图片包装器将绘制样式转发到实际原生 Image。
+0.5.0 的 iOS crate 通过独立发布的 `nsh-platform-apple` 引用共享语音实现，项目恢复使用官方模板的 crates.io 来源。固定的 iOS 应用声明由 `nsh.json` 的 `ios.infoPlist` 交给 NSH 打包。
 
-0.4.0 的 crates.io iOS 包引用兄弟 crate 的 `speech.rs`，但发布包不包含该源码，因此移动构建使用同版本官方 Git 源码。CLI 自动从 Cargo 解析的完整源码生成统一依赖的宿主，避免重复的 `nsh-core` 类型；详见[官方 CLI 源码](https://github.com/longbridge/nsh/blob/v0.4.0/crates/nsh-cli/src/rust_app.rs)。
-
-Android 桥接的官方 crate 校验也使用 0.4.0；保留官方 AAR 的 Java 类。NSH CLI 应与 Cargo 运行时使用同一版本。生成的 `.nsh/` 不进入版本控制。
+[NSH 0.5.0 发布说明](https://github.com/longbridge/nsh/releases/tag/v0.5.0)
 
 ## 官方运行时与应用源码
 
@@ -17,12 +15,14 @@ NSH 提供 TSX 组件、布局、渐变、动效、原生模块注册与生成 r
 | 位置 | 应用职责 |
 | --- | --- |
 | `src/lib.rs`、`src/native/link.rs` | 注册本项目模块，连接 TSX 与 Rust |
-| `src/native/lifecycle/` | 平台可见状态、iOS 启动与 scene 通知 |
+| `src/native/lifecycle/` | iOS 连接可见性、启动与 scene 通知 |
 | `src/native/companion/` | Watch 公开缓存与 WatchConnectivity 投递 |
 | `src/native/bootstrap/android/context.rs` | 接收应用自己的 JavaVM/application context |
 | `src/native/android/java/` | 自有 Application/Activity、电视确认键与官方 NshView 接线 |
 | `src/native/image/` | 有界 GIF/LZW 解码、画布合成与异步 PNG 帧准备 |
 | `src/shared/ui/image*.ts*` | 标准 Image 显示帧，各控件独立管理播放时钟 |
+
+UI 通过 NSH 的 `lifecycle()` 和 `platform.idiom` 获取前后台与设备形态，Hooks 面板由 `nsh/base` 的 Carousel 管理吸附和翻页。Android 在 NSH 视图首次布局后启动应用，让设备形态在模块加载前可用。
 
 iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访问 UIApplication 并启动 Watch 会话。前后台来自公开 UIScene 通知，聚合多窗口可见状态；短暂 inactive 不直接视为隐藏。Android 从 Application.onCreate 初始化应用上下文，不保存 Activity；可见性结合进程、亮屏及锁屏状态判断。
 
@@ -34,7 +34,7 @@ iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访�
 
 ## Android SDK 输入
 
-构建器优先读取已安装官方 `nsh.aar`，核对 SDK Java 类未被覆盖，只加入应用桥接类。没有 AAR 时，依据锁文件校验缓存中的原始 `.crate`，核对 Java 文件清单和内容后编译。两条路径都不修改 Cargo 缓存或保存另一份 SDK。
+构建器默认依据生成 runner 的锁文件校验缓存中的官方 `.crate`，核对 Java 文件清单和内容后编译。单独构建 Java 桥时也可以用 `--aar` 显式提供 0.5.0 的官方嵌入 SDK，应用桥接类与 AAR 中的类合并时检查同名冲突。
 
 包标识、清单权限、应用入口和签名是本项目的组装职责。构建脚本位于 `tools/build/`，参数及平台要求见 [构建说明](../development/build.md)。
 
@@ -50,4 +50,4 @@ iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访�
 | 编码清单 | 24 MiB |
 | 共享缓存 | 32 MiB，最多 4 项 |
 
-标准 Image 显示静态 PNG，应用时钟决定切帧；控件隐藏、后台或减少动态效果时暂停，恢复时从当前帧继续，有限循环停在末帧。输入、排队及输出分别有界，错误显式返回。测试入口和像素验证范围见 [测试说明](../development/test.md)。
+标准 Image 显示静态 PNG，应用时钟决定切帧。NSH 0.5 的原生 GIF 播放没有公开的暂停和续播控制，当前实现继续在控件隐藏、应用退到后台或启用减少动态效果时暂停，恢复时从当前帧继续，有限循环停在末帧。输入、排队及输出分别有界，错误显式返回。测试入口和像素验证范围见 [测试说明](../development/test.md)。

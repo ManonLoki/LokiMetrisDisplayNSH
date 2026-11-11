@@ -143,7 +143,7 @@ def mobile_command(cli, target, stage, *, ios_device=False, application_id=None)
             '--id', application_id or identity['bundleId'], '--app-version', identity['version'],
             # 构建号与输出目录
             '--build', str(identity['build']), '--out', stage]
-    # NSH 0.4 默认包含 32 位 ARM；显式选择应用支持的手机与模拟器 ABI。
+    # 显式选择应用支持的手机与模拟器 ABI。
     if target == 'android':
         command.extend(['--abi', 'arm64-v8a,x86_64'])
     return command
@@ -186,10 +186,9 @@ def simulator_link_permissions(env, application_id):
 
 
 
-# 在最终签名之前补上发现相关的声明
+# 在最终签名之前补上取决于构建身份与目标的设置
 def configure_apple(app, *, simulator, application_id, minimum_os=None):
-    # 文档说明：最终签名前补上发现声明
-    """Supply discovery declarations before final signing of the NSH runner."""
+    """Apply the selected Widget App Group and deployment target before signing."""
     # Info.plist 路径
     info = app / 'Info.plist'
     # 解析 plist
@@ -202,20 +201,8 @@ def configure_apple(app, *, simulator, application_id, minimum_os=None):
     if minimum_os:
         # 写入最低系统版本
         value['MinimumOSVersion'] = minimum_os
-    # 本地网络用途说明
-    value['NSLocalNetworkUsageDescription'] = '连接同一局域网内已配对的电脑，接收 Token 用量、账户额度与 Agent 活动。'
-    # 允许发现的 Bonjour 服务
-    value['NSBonjourServices'] = ['_loki-host._tcp']
     # 小组件 App Group
     value['LokiWidgetAppGroup'] = widget_group(application_id)
-    # 后台刷新任务标识
-    value['BGTaskSchedulerPermittedIdentifiers'] = ['com.manonloki.lokimetrisdisplay.widget-refresh']
-    # 后台模式：获取
-    value['UIBackgroundModes'] = sorted(set(value.get('UIBackgroundModes', []) + ['fetch']))
-    # 允许访问本地网络的 HTTP
-    value['NSAppTransportSecurity'] = dict(value.get('NSAppTransportSecurity', {}), NSAllowsLocalNetworking=True)
-    # 支持灵动岛/锁屏的实时活动
-    value['NSSupportsLiveActivities'] = True
     # 写回二进制 plist
     info.write_bytes(plistlib.dumps(value, fmt=plistlib.FMT_BINARY))
     # 模拟器：核对内嵌标识并做临时签名
@@ -239,7 +226,8 @@ def configure_apple(app, *, simulator, application_id, minimum_os=None):
             # 钥匙串应用标识是否已声明
             'keychainApplicationIdentifierDeclared': simulator,
             # 本地网络权限与 Bonjour 服务
-            'localNetworkDeclared': True, 'bonjourServices': value['NSBonjourServices'],
+            'localNetworkDeclared': bool(value.get('NSLocalNetworkUsageDescription')),
+            'bonjourServices': value['NSBonjourServices'],
             # 最低系统版本
             'minimumOsVersion': value.get('MinimumOSVersion')}
 

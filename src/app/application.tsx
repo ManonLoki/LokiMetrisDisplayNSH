@@ -1,5 +1,5 @@
-// 引入响应式原语、视图组件与窗口/安全区读取
-import { computed, signal, untracked, View, type JSX, windowSize, safeArea } from "nsh";
+// 引入响应式原语、视图组件与窗口读取
+import { computed, signal, untracked, View, type JSX, windowSize, lifecycle, platform } from "nsh";
 // 引入背景特效与动效作用域
 import { CyberBackdrop, CyberMotionScope } from "../shared/ui/effects";
 // 引入电视遥控器焦点导航
@@ -30,7 +30,7 @@ export type { AppRuntime } from "./runtime";
 
 /** 应用层只持有导航、输入草稿、可见状态和布局控制器。 */
 // 创建应用：返回根组件函数
-export function createApp(runtime: AppRuntime): () => JSX.Element {
+export function createApp(runtime: AppRuntime = {}): () => JSX.Element {
   // 当前页面
   const page = signal<"panel" | "settings">("panel");
   // 窗口宽度，初始值用非追踪读取
@@ -58,15 +58,20 @@ export function createApp(runtime: AppRuntime): () => JSX.Element {
   // 名称是否保存中
   const savingName = signal(false);
   // 应用是否在前台
-  const appForeground = signal(false);
+  const appForeground = computed(() => {
+    const state = lifecycle();
+    // iOS 的场景短暂失焦时仍可见，例如控制中心覆盖时。
+    const foreground = platform.os === "ios" ? state !== "background" : state === "active";
+    return runtime.foreground?.() ?? foreground;
+  });
   // Hooks 面板控制器
   const panelController = createPanelController();
   // 设置页控制器
   const settingsController = createSettingsController();
   // 运行时：把信号交给它读写，视图变化时回调 closeMissingHook
-  const ports = createRuntime(runtime, {
+  const ports = createRuntime({
     // 界面状态与回调集合
-    panel, view, nameDraft, nameFeedback, nameIssue, panelIssue, savingName, foreground: appForeground,
+    panel, view, nameDraft, nameFeedback, nameIssue, panelIssue, savingName,
   }, closeMissingHook);
   // 画布背景色
   const bg = cyberColors.canvas;
@@ -103,16 +108,16 @@ export function createApp(runtime: AppRuntime): () => JSX.Element {
     // 启动运行时初始化与轮询
     ports.mount();
     // 电视没有触摸：方向键在可按目标之间移动焦点，确认键执行。
-    enableRemoteNavigation(() => runtime.remoteNavigation?.() === true);
+    enableRemoteNavigation(() => runtime.remoteNavigation?.() ?? (platform.idiom === "tv"));
     // 根容器：避开安全区，并把布局尺寸同步到信号
     return (
       <View
         // 测试标识
         testID="app-root"
         // 样式：撑满与背景
-        style={{ flex: 1, backgroundColor: bg, paddingTop: safeArea().top, paddingRight: safeArea().right,
+        style={{ flex: 1, backgroundColor: bg, paddingTop: "env(safe-area-inset-top)", paddingRight: "env(safe-area-inset-right)",
           // 安全区内边距
-          paddingBottom: safeArea().bottom, paddingLeft: safeArea().left }}
+          paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)" }}
         // 布局变化回调
         onLayout={({ bounds }) => {
           // 更新宽度

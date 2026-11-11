@@ -302,25 +302,7 @@ impl Owner {
                 self.view["receivedAtMs"].as_u64(),
             );
         }
-        // 与上一次相同则不更新
-        let mut state = self
-            // 已发布状态
-            .published
-            // 内部状态
-            .state
-            // 加锁
-            .lock()
-            // 锁中毒时仍取出内部值
-            .unwrap_or_else(|p| p.into_inner());
-        // 视图没有变化
-        if state.view == view {
-            // 不重复发布
-            return;
-        }
-        // 更新视图
-        state.view = view;
-        // 释放锁
-        drop(state);
+        self.published.update(view);
     }
 }
 
@@ -329,18 +311,7 @@ impl Owner {
 pub(super) fn publish_initial(setup: &Setup) {
     // 构造空视图
     let view = empty_view(&setup.id, &setup.name);
-    // 取已发布状态
-    let mut state = setup
-        // 已发布状态
-        .published
-        // 内部状态
-        .state
-        // 加锁
-        .lock()
-        // 锁中毒时仍取出内部值
-        .unwrap_or_else(|p| p.into_inner());
-    // 写入空视图
-    state.view = view.to_string();
+    setup.published.update(view.to_string());
 }
 
 /// owner 线程入口。安全存储不可用时保留错误投影，等待用户重试或宿主恢复前台。
@@ -378,20 +349,7 @@ pub(super) fn run(setup: &mut Setup, rx: Receiver<Event>) {
                 view["error"] = json!(error);
                 // 状态：安全存储或连接不可用
                 view["status"] = json!("安全存储或连接不可用，请解锁后重试");
-                // 取已发布状态
-                let mut state = setup
-                    // 已发布状态
-                    .published
-                    // 内部状态
-                    .state
-                    // 加锁
-                    .lock()
-                    // 锁中毒时仍取出内部值
-                    .unwrap_or_else(|p| p.into_inner());
-                // 写入新视图
-                state.view = view.to_string();
-                // 释放锁
-                drop(state);
+                setup.published.update(view.to_string());
             }
         }
         // 内层循环：等待重试信号
