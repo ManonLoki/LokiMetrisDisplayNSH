@@ -82,9 +82,9 @@ pub(super) struct Setup {
     pub stopped: Arc<AtomicBool>,
 }
 
-/// 宿主提供的生命周期事实。桌面仅以窗口可见性驱动。
+/// 界面报告的生命周期事实。
 #[derive(Clone, Copy)]
-// 宿主提供的生命周期事实；桌面仅以窗口可见性驱动
+// 界面报告的生命周期事实
 pub(super) struct Lifecycle {
     // 是否可见
     pub visible: bool,
@@ -215,12 +215,12 @@ impl Owner {
             socket: None,
             // 连接代次从 0 开始
             generation: 0,
-            // 宿主提供生命周期时，等其推送前保持不可见
+            // 界面报告可见性之前按可见处理
             lifecycle: Lifecycle {
-                // 由宿主生命周期决定初始可见性
-                visible: !config.host_lifecycle,
-                // 由宿主生命周期决定是否允许
-                permitted: !config.host_lifecycle,
+                // 初始可见
+                visible: true,
+                // 初始允许
+                permitted: true,
             },
             // 无配对邀请
             pairing_offer: None,
@@ -359,14 +359,17 @@ pub(super) fn run(setup: &mut Setup, rx: Receiver<Event>) {
             match rx.recv() {
                 // 收到命令
                 Ok(Event::Command(QueuedCommand {
-                    // 生命周期命令
-                    command: Command::HostLifecycle(state),
+                    // 界面可见性命令
+                    command: Command::Active { value },
                     // 其余字段忽略
                     ..
                 // 收到生命周期命令
                 })) => {
                     // 记下该命令
-                    lifecycle = Some(state);
+                    lifecycle = Some(Lifecycle {
+                        visible: value,
+                        permitted: true,
+                    });
                     // 跳出等待
                     break;
                 }

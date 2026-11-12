@@ -5,7 +5,7 @@ use crate::features::connection::identity::{DEFAULT_NAME, apple_name_error};
 use crate::native::{connection, identity, lifecycle};
 // 引入 JSON
 use serde_json::{Value, json};
-// 引入 FFI、路径与弱引用
+// 引入 FFI 与路径
 use std::{
     // C 指针类型
     ffi::c_void,
@@ -13,8 +13,6 @@ use std::{
     path::{Path, PathBuf},
     // 指针
     ptr,
-    // 弱引用
-    sync::Weak,
 };
 
 /// 无需 Swift 宿主,恢复相同的 iOS 身份与文件。
@@ -56,12 +54,12 @@ pub(super) fn configure(
         .unwrap_or_else(|| DEFAULT_NAME.into());
     // 读取旧版面板偏好
     let legacy_panel = legacy_panel(&root);
-    // 组装配置：移动端身份与生命周期由宿主提供，并为手表和小组件开启共享
+    // 组装配置：移动端身份由宿主提供，并为手表和小组件开启共享
     serde_json::from_value(json!({
         // 根目录、设备标识与名称
         "root": root, "deviceId": device_id, "name": name,
-        // 宿主身份、宿主生命周期、平台与手表配套
-        "hostIdentity": true, "hostLifecycle": true, "platform": "ios", "watchCompanion": true,
+        // 宿主身份、平台与手表配套
+        "hostIdentity": true, "platform": "ios", "watchCompanion": true,
         // 从UIKit启动阶段已采样的系统事实读取，不根据设备名称或UI窗口尺寸猜测。
         "formFactor": lifecycle::form_factor(),
         // 应用版本
@@ -71,20 +69,6 @@ pub(super) fn configure(
     }))
     // 配置无效
     .map_err(|error| format!("iOS连接配置无效: {error}"))
-}
-
-/// 观察者只持有弱引用;关闭 VM 即关闭其连接。
-// 观察器只持有弱引用；关闭 VM 就会关闭它的连接
-pub(super) fn observe(handle: Weak<connection::Handle>) -> lifecycle::ActivityObserver {
-    // 观察前后台变化
-    lifecycle::observe(move |visible| {
-        // 连接已释放
-        let Some(handle) = handle.upgrade() else {
-            // 返回
-            return;
-        };
-        let _ = handle.set_host_lifecycle(visible, true);
-    })
 }
 
 // 旧版面板偏好：优先读文件，其次读各个系统偏好键

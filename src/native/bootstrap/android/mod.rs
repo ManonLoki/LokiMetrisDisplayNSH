@@ -188,12 +188,12 @@ pub(super) fn configure(
         key.fill(0);
         // 失败转为错误
         result.map_err(Failure)?;
-        // 组装配置：宿主提供身份与生命周期，不保留离线快照
+        // 组装配置：宿主提供身份，不保留离线快照
         serde_json::from_value(json!({
             // 根目录、设备标识、名称与宿主标识
             "root":root, "deviceId":device_id, "name":name, "hostIdentity":true,
-            // 宿主管理生命周期、平台与不保留快照
-            "hostLifecycle":true, "platform":"android", "keepSnapshot":false,
+            // 平台与不保留快照
+            "platform":"android", "keepSnapshot":false,
             // 旧版面板配置
             "legacyPanel":legacy_panel(env, context)?,
             // 小组件共享目录：files/widget
@@ -238,55 +238,6 @@ pub(super) fn widget_changed() {
         // 成功
         Ok(())
     });
-}
-
-/// 查询操作系统的进程重要性,但不把后台应用当作可见。
-// 查询进程重要性，不把后台应用当作可见
-fn foreground() -> Option<bool> {
-    // 取得应用上下文并执行
-    context::with_context(|env, context| -> Result<_> {
-        // 新建进程信息对象
-        let info = env.new_object(
-            // Java 类名或方法名参数
-            "android/app/ActivityManager$RunningAppProcessInfo",
-            // JNI 方法签名
-            "()V",
-            // 传给 Java 方法的参数
-            &[],
-            // 调用结束，传播 JNI 错误
-        )?;
-        // getMyMemoryState:获取进程内存状态
-        env.call_static_method(
-            // Java 类名或方法名参数
-            "android/app/ActivityManager",
-            // Java 类名或方法名参数
-            "getMyMemoryState",
-            // JNI 方法签名
-            "(Landroid/app/ActivityManager$RunningAppProcessInfo;)V",
-            // 传给 Java 方法的参数
-            &[JValue::Object(&info)],
-            // 调用结束，传播 JNI 错误
-        )?;
-        // 进程重要性
-        let importance = env.get_field(info, "importance", "I")?.i()?;
-        // 电源服务
-        let power = jni_support::system_service(env, context, "power")?;
-        // 屏幕是否亮着
-        let interactive = env.call_method(power, "isInteractive", "()Z", &[])?.z()?;
-        // 键盘锁服务
-        let keyguard = jni_support::system_service(env, context, "keyguard")?;
-        // 是否锁屏
-        let locked = env
-            // 键盘是否锁定
-            .call_method(keyguard, "isKeyguardLocked", "()Z", &[])?
-            // 取布尔值
-            .z()?;
-        // IMPORTANCE_VISIBLE 也涵盖未获得焦点的分屏 Activity 和权限界面。
-        // IMPORTANCE_VISIBLE 也涵盖未获焦点的分屏 Activity 和权限界面
-        Ok(importance <= 200 && interactive && !locked)
-    })
-    // 出错忽略
-    .ok()
 }
 
 // 获取多播锁，发现期间需要持有
@@ -340,51 +291,33 @@ fn release_multicast(lock: &jni::objects::GlobalRef) {
     });
 }
 
-/// 弱观察者在其 NSH VM 关闭之后,无法让连接继续存活。
-// 弱引用的观察器：NSH VM 关闭后不会让连接继续存活
-pub(super) fn observe(link: std::sync::Weak<crate::native::connection::Handle>) {
-    // 用线程构造器创建后台线程
-    let _ = std::thread::Builder::new()
-        // 线程名
-        .name("loki-android-lifecycle".into())
-        // 启动线程
-        .spawn(move || {
-            // 上次推送的可见状态
-            let mut previous = None;
-            // 持有的多播锁
-            let mut multicast = None;
-            // 主循环
-            loop {
-                {
-                    // 连接已释放则退出
-                    let Some(link) = link.upgrade() else {
-                        // 结束循环
-                        break;
-                    };
-                    // 前台可见性，失败视为不可见
-                    let visible = foreground().unwrap_or(false);
-                    // 可见时持有多播锁
-                    if visible && multicast.is_none() {
-                        // 可见时尝试获取组播锁
-                        multicast = multicast_lock().ok().flatten();
-                    }
-                    // 不可见时释放
-                    if !visible && let Some(lock) = multicast.take() {
-                        // 释放组播锁
-                        release_multicast(&lock);
-                    }
-                    // 状态变化才推送；推送成功才记录
-                    if previous != Some(visible) && link.set_host_lifecycle(visible, true).is_ok() {
-                        previous = Some(visible);
-                    }
-                }
-                // 每 500 毫秒检查一次
-                std::thread::sleep(std::time::Duration::from_millis(500));
-            }
-            // 退出前释放多播锁
-            if let Some(lock) = multicast {
-                // 释放组播锁
-                release_multicast(&lock);
-            }
-        });
+/// 界面可见时持有的多播锁，局域网发现期间需要；不可见或连接释放时归还。
+#[derive(Default)]
+pub(super) struct Multicast(std::sync::Mutex<Option<jni::objects::GlobalRef>>);
+
+// 多播锁的方法
+impl Multicast {
+    // 随界面可见性获取或释放
+    pub(super) fn set_visible(&self, visible: bool) {
+        // 锁中毒时仍取出内部值
+        let mut held = self.0.lock().unwrap_or_else(|p| p.into_inner());
+        // 可见且尚未持有：获取
+        if visible && held.is_none() {
+            *held = multicast_lock().ok().flatten();
+        // 不可见：释放
+        } else if !visible && let Some(lock) = held.take() {
+            release_multicast(&lock);
+        }
+    }
+}
+
+// 连接释放时归还多播锁
+impl Drop for Multicast {
+    // 销毁时
+    fn drop(&mut self) {
+        // 仍持有则释放
+        if let Some(lock) = self.0.get_mut().unwrap_or_else(|p| p.into_inner()).take() {
+            release_multicast(&lock);
+        }
+    }
 }

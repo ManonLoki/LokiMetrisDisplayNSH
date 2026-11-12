@@ -3,7 +3,7 @@
 use super::{bootstrap, connection};
 // 引入 nsh 本地元素与模块宏
 use crate::features::connection::view_state;
-use crate::shared::contracts::models::{LinkCommand, ViewState, typed};
+use crate::shared::contracts::models::{LinkCommand, LinkOp, ViewState, typed};
 use nsh_core::{JsonValue, element::Local, prelude::*};
 // 引入 JSON 值
 use serde_json::Value;
@@ -16,8 +16,8 @@ struct Attached {
     handle: Arc<connection::Handle>,
     // 旧版移动端遗留的面板配置，仅在首次视图携带一次
     legacy_panel: Option<Value>,
-    // 前后台观察守卫，随连接一起释放
-    _activity: bootstrap::ActivityGuard,
+    // 随界面可见性变化的系统资源，随连接一起释放
+    visibility: bootstrap::Visibility,
     // 上一次交给 UI 的投影文本，用于只在变化时返回新视图
     last_view: Option<String>,
 }
@@ -131,10 +131,10 @@ impl Link {
                 .or_else(|| config.legacy_panel.clone());
             // 创建连接 owner
             let handle = Arc::new(connection::Handle::new(config)?);
-            // 保存连接，并开始观察系统前后台
+            // 保存连接
             *runtime.0.borrow_mut() = Some(Attached {
-                // 观察前后台变化
-                _activity: bootstrap::observe(Arc::downgrade(&handle)),
+                // 可见性资源
+                visibility: bootstrap::Visibility::default(),
                 // 句柄
                 handle,
                 // 旧版面板
@@ -152,6 +152,16 @@ impl Link {
     pub(crate) fn command(command: &LinkCommand, sys: &System) -> Result<(), String> {
         // 序列化为连接所有者读取的文本
         let text = serde_json::to_string(command).map_err(|_| "无效连接操作")?;
+        // 界面可见性同时驱动平台资源与 Watch 缓存的重试
+        if let (LinkOp::Active, Some(visible)) = (command.op, command.value) {
+            let runtime = sys.locals.get::<LinkRuntime>();
+            if let Some(attached) = runtime.0.borrow().as_ref() {
+                attached.visibility.set(visible);
+            }
+            if visible {
+                super::companion::foregrounded();
+            }
+        }
         // 把命令交给句柄
         with_handle(sys, |handle| handle.command(&text))?
     }

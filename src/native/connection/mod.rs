@@ -107,21 +107,14 @@ enum Command {
         // 设备名
         name: String,
     },
-    /// 桌面端可见性;移动端的活动状态由 NSH 系统适配器提供。
-    // 桌面端可见性
+    /// 界面是否可见，由界面按 NSH 的 `lifecycle()` 报告。
+    // 界面可见性
     Active {
         // 开关值
         value: bool,
     },
     // 刷新
     Refresh,
-    // 宿主命令只能由原生侧构造，JS 无法提交
-    #[serde(skip)]
-    #[cfg_attr(
-        not(any(target_os = "android", target_os = "ios", test)),
-        allow(dead_code)
-    )]
-    HostLifecycle(owner::Lifecycle),
     #[serde(skip)]
     // 停止 owner
     Stop,
@@ -145,10 +138,6 @@ pub(crate) struct Config {
     #[serde(default)]
     // 为 true 时由系统凭据库持有移动端身份
     pub host_identity: bool,
-    /// 由 NSH 系统适配器提供活动状态;UI 的 active 命令会被忽略。
-    #[serde(default)]
-    // 为 true 时前后台由系统适配层提供，界面的 active 命令被忽略
-    pub host_lifecycle: bool,
     #[serde(default = "default_platform")]
     // 平台名
     pub platform: String,
@@ -309,8 +298,6 @@ pub(crate) struct Handle {
     intent: Mutex<CommandIntent>,
     // 公开投影
     published: Arc<Published>,
-    // 宿主生命周期
-    host_lifecycle: bool,
     // 是否已停止
     stopped: Arc<AtomicBool>,
 }
@@ -335,8 +322,6 @@ impl Handle {
         let (tx, rx) = mpsc::sync_channel(256);
         // 修订号
         let revision = Arc::new(AtomicU64::new(0));
-        // 是否由宿主管理生命周期
-        let host_lifecycle = config.host_lifecycle;
         // 停止标记
         let stopped = Arc::new(AtomicBool::new(false));
         // owner 的启动参数
@@ -379,13 +364,11 @@ impl Handle {
             intent: Mutex::new(CommandIntent::default()),
             // 已发布视图
             published,
-            // 宿主生命周期标记
-            host_lifecycle,
             // 停止标记
             stopped,
         })
     }
-    /// 界面命令：长度有界、字段白名单，宿主专用操作不能从这里提交。
+    /// 界面命令：长度有界、字段白名单。
     // 界面命令：长度有界、字段白名单，宿主专用操作不能从这里提交
     pub fn command(&self, input: &str) -> Result<(), String> {
         // 参数过长
@@ -397,21 +380,8 @@ impl Handle {
         let command: Command =
             // 解析失败报无效连接操作
             serde_json::from_str(input).map_err(|_| "无效连接操作".to_owned())?;
-        // 宿主已提供前后台时忽略界面的 active 命令
-        if self.host_lifecycle && matches!(command, Command::Active { .. }) {
-            // 无需入队
-            return Ok(());
-        }
         // 入队
         self.enqueue(command)
-    }
-    /// 由移动宿主提交应用可见性与局域网权限。
-    #[cfg(any(target_os = "android", target_os = "ios"))]
-    pub fn set_host_lifecycle(&self, visible: bool, permitted: bool) -> Result<(), String> {
-        self.enqueue(Command::HostLifecycle(owner::Lifecycle {
-            visible,
-            permitted,
-        }))
     }
     pub(super) fn publications(&self) -> Arc<Published> {
         self.published.clone()
@@ -456,8 +426,6 @@ impl Handle {
             }),
             // 默认已发布状态
             published: Arc::new(Published::default()),
-            // 未启用宿主生命周期
-            host_lifecycle: false,
             // 未停止
             stopped: Arc::new(AtomicBool::new(false)),
         };

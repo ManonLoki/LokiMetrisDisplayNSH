@@ -15,16 +15,16 @@ NSH 提供 TSX 组件、布局、渐变、动效、原生模块注册与生成 r
 | 位置 | 应用职责 |
 | --- | --- |
 | `src/lib.rs`、`src/native/link.rs` | 注册本项目模块，连接 TSX 与 Rust |
-| `src/native/lifecycle/` | iOS 连接可见性、启动与 scene 通知 |
+| `src/native/lifecycle/` | iOS 启动通知与设备形态采样 |
 | `src/native/companion/` | Watch 公开缓存与 WatchConnectivity 投递 |
 | `src/native/bootstrap/android/context.rs` | 接收应用自己的 JavaVM/application context |
 | `src/native/android/java/` | 自有 Application/Activity、电视确认键与官方 NshView 接线 |
 | `src/native/image/` | 有界 GIF/LZW 解码、画布合成与异步 PNG 帧准备 |
 | `src/shared/ui/image*.ts*` | 标准 Image 显示帧，各控件独立管理播放时钟 |
 
-UI 通过 NSH 的 `lifecycle()` 和 `platform.idiom` 获取前后台与设备形态。Android 的连接也使用 `platform.idiom`，按现有协议只上报手机和平板。iOS 继续按 UIKit 的设备类型上报，遇到未知类型时省略该消息。Hooks 面板由 `nsh/base` 的 Carousel 管理吸附和翻页。Android 在 NSH 视图首次布局后加载 TSX bundle，让设备形态在模块加载前可用。
+UI 通过 NSH 的 `lifecycle()` 和 `platform.idiom` 获取前后台与设备形态，移动端把前后台经 `active` 命令交给连接 owner，只有进入后台才暂停，短暂失焦仍视为可见。Android 的连接也使用 `platform.idiom`，按现有协议只上报手机和平板。iOS 继续按 UIKit 的设备类型上报，遇到未知类型时省略该消息。Hooks 面板由 `nsh/base` 的 Carousel 管理吸附和翻页。Android 在 NSH 视图首次布局后加载 TSX bundle，让设备形态在模块加载前可用。
 
-iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访问 UIApplication 并启动 Watch 会话。前后台来自公开 UIScene 通知，聚合多窗口可见状态；短暂 inactive 不直接视为隐藏。Android 从 Application.onCreate 初始化应用上下文，不保存 Activity；可见性结合进程、亮屏及锁屏状态判断。
+iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访问 UIApplication 并启动 Watch 会话；回到前台时由 `active` 命令唤醒 Watch 缓存重试。Android 从 Application.onCreate 初始化应用上下文，不保存 Activity；界面可见期间持有多播锁，随 `active` 命令获取与释放。
 
 ## Windows 局部重绘
 

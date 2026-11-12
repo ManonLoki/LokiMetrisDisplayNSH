@@ -26,6 +26,13 @@ mod ios_policy;
 // iOS 的手表会话
 mod ios;
 
+/// 应用回到前台：此前耗尽预算的 Watch 缓存工作可以重试。
+// 应用回到前台时让手表缓存重新对账
+pub(super) fn foregrounded() {
+    #[cfg(target_os = "ios")]
+    ios::system_changed();
+}
+
 /// 启动进程范围的手表投递;其他目标没有配对的手表。
 // 启动进程级的手表投递；其他平台没有配对手表
 pub(crate) fn install() {

@@ -7,7 +7,7 @@ use super::super::{
         CLIENT, TestFiles, command, configured, files, owner_for_test, server_recv, server_send,
         snapshot, until,
     },
-    owner::{Lifecycle, Owner},
+    owner::Owner,
 };
 // 引入配对会话类型
 use loki_metris_pairing::session::AwaitingDeviceProof;
@@ -130,11 +130,7 @@ fn leaving_the_foreground_sends_pause_then_closes_and_reports_form_factor_once()
     // 等待已连接
     until(&published, |v| v["connected"] == true);
     // 应用离开前台
-    tx.send(command(Command::HostLifecycle(Lifecycle {
-        visible: false,
-        permitted: true,
-    })))
-    .unwrap();
+    tx.send(command(Command::Active { value: false })).unwrap();
     // 桌面应先收到 pause
     assert_eq!(next(&mut socket), json!({"type":"pause"}));
     // 之后连接关闭，不再有任何帧

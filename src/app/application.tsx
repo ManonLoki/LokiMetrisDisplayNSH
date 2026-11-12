@@ -68,11 +68,15 @@ export function createApp(runtime: AppRuntime = {}): () => JSX.Element {
   const panelController = createPanelController();
   // 设置页控制器
   const settingsController = createSettingsController();
+  // 只有移动端随前后台暂停连接，桌面窗口失焦或最小化仍保持连接；短暂失焦仍可见，只有进入后台才暂停。
+  const connectionVisible = platform.os === "ios" || platform.os === "android"
+    ? () => lifecycle() !== "background"
+    : undefined;
   // 运行时读写界面信号
   const ports = createRuntime({
     // 界面状态与回调集合
     panel, view, nameDraft, nameFeedback, nameIssue, panelIssue, savingName,
-  });
+  }, connectionVisible);
   // 画布背景色
   const bg = cyberColors.canvas;
 

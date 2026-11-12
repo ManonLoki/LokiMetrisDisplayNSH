@@ -137,7 +137,7 @@ fn wake() {
 }
 
 // 系统状态变化：要求整体重新对账
-fn system_changed() {
+pub(super) fn system_changed() {
     // 取全局信号
     SIGNALS
         // 加锁
@@ -205,17 +205,6 @@ fn start() {
         let (tx, rx) = mpsc::sync_channel(1);
         // 保存发送端
         let _ = WAKE.set(tx);
-        // 新的前台窗口可以重试此前耗尽预算的工作。
-        // 回到前台时可重试此前耗尽预算的工作
-        static ACTIVITY: OnceLock<lifecycle::ActivityObserver> = OnceLock::new();
-        // 登记前后台观察者
-        let _ = ACTIVITY.set(lifecycle::observe(|visible| {
-            // 应用可见时
-            if visible {
-                // 通知系统状态有变化
-                system_changed();
-            }
-        }));
         // 用线程构造器创建后台线程
         let _ = thread::Builder::new()
             // 线程名

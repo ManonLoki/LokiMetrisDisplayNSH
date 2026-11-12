@@ -23,22 +23,19 @@ pub(super) fn configure(root: &Path, device_id: &str, name: &str) -> Result<Conf
         .map_err(|error| error.to_string())
 }
 
-/// 只要 Link 持有它,就让系统活动观察一直保持存活。
-#[cfg(target_os = "ios")]
-// 守卫类型：iOS 持有观察者，其余平台无需持有
-pub(super) type ActivityGuard = super::lifecycle::ActivityObserver;
-#[cfg(not(target_os = "ios"))]
-pub(super) type ActivityGuard = ();
+/// 随连接存活的系统资源，跟随界面可见性：Android 持有多播锁，其余平台无需持有。
+#[derive(Default)]
+pub(super) struct Visibility(#[cfg(target_os = "android")] android::Multicast);
 
-/// 开始向所有者推送系统前台事实;桌面端则改为轮询。
-// 开始把系统前后台事实推送给 owner；桌面平台改为轮询
-pub(super) fn observe(handle: std::sync::Weak<super::connection::Handle>) -> ActivityGuard {
-    #[cfg(target_os = "ios")]
-    return ios::observe(handle);
-    #[cfg(target_os = "android")]
-    return android::observe(handle);
-    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    drop(handle)
+// 可见性守卫的方法
+impl Visibility {
+    /// 界面可见性变化。
+    pub(super) fn set(&self, visible: bool) {
+        #[cfg(target_os = "android")]
+        self.0.set_visible(visible);
+        #[cfg(not(target_os = "android"))]
+        let _ = visible;
+    }
 }
 
 #[cfg(target_os = "android")]

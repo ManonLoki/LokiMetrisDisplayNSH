@@ -1,5 +1,5 @@
 // 引入响应式原语
-import { cleanup, effect, platform, untracked, type Bounds, type Signal, type Size } from "nsh";
+import { cleanup, effect, platform, signal, untracked, type Bounds, type Signal, type Size } from "nsh";
 // 引入 Rust 外壳与它返回的公开状态类型
 import { Shell, type LinkCommand, type SettingsResult } from "loki-metris-mobile-display/native";
 // 引入视图与面板类型
@@ -33,11 +33,13 @@ interface UiState {
  * 连接变化由 Rust 通知。界面按 Rust 给出的截止时间触发名称确认超时。
  * TS 唯一的判断是：异步结果返回时用户若又改了草稿，就不覆盖名称相关字段。
  */
-export function createRuntime(state: UiState) {
+export function createRuntime(state: UiState, connectionVisible?: () => boolean) {
   // 是否已挂载，避免重复启动
   let mounted = false;
   // 是否已释放
   let disposed = false;
+  // 外壳是否已启动；之前下发的 active 命令会被忽略
+  const started = signal(false);
   let nameTimer: ReturnType<typeof setTimeout> | undefined;
   let fixtureTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -81,6 +83,7 @@ export function createRuntime(state: UiState) {
   async function start() {
     const startedAt = Date.now();
     await run(() => Shell.start(startedAt, platform.idiom));
+    started.set(true);
     while (!disposed) {
       const changed = await Shell.waitForViewChange();
       if (disposed || changed == null) return;
@@ -95,6 +98,14 @@ export function createRuntime(state: UiState) {
   function mount() {
     if (mounted) return;
     mounted = true;
+    // 前后台由 NSH 的 lifecycle() 提供，连接 owner 据此暂停或恢复发现与会话
+    if (connectionVisible) {
+      effect(() => {
+        const visible = connectionVisible();
+        if (!started()) return;
+        untracked(() => void command({ op: "active", value: visible }));
+      });
+    }
     effect(() => {
       untracked(() => void start());
       cleanup(() => {
@@ -106,10 +117,12 @@ export function createRuntime(state: UiState) {
     });
   }
 
+  // 下发连接命令
+  const command = (command: LinkCommand) => run(() => Shell.command(command, state.nameDraft(), Date.now()));
+
   return {
     mount,
-    // 下发连接命令
-    command: (command: LinkCommand) => run(() => Shell.command(command, state.nameDraft(), Date.now())),
+    command,
     // 编辑名称草稿
     editName: (draft: string) => { state.nameDraft.set(draft); return run(() => Shell.editName(draft)); },
     // 保存名称

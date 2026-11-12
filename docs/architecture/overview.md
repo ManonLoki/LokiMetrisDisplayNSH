@@ -28,7 +28,7 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 | `src/native/fixture/` | 仅调试构建的测试夹具连接，按存储键扮演桌面端；产品构建不含 |
 | `src/native/connection/` | 连接 owner、发现、认证会话与验证后的资源缓存 |
 | `src/native/credentials/` | Keychain、Credential Manager、Secret Service 与 Android 密钥保护存储 |
-| `src/native/lifecycle/`、`src/native/bootstrap/`（平台文件多时放入 `android/`、`ios/` 子目录） | 移动端连接可见性、身份初始化、JNI 与 UIKit 接线 |
+| `src/native/lifecycle/`、`src/native/bootstrap/`（平台文件多时放入 `android/`、`ios/` 子目录） | iOS 启动通知、身份初始化、JNI 与 UIKit 接线 |
 | `src/native/android/` | Android Application／Activity 与电视确认键转换 |
 | `src/native/image/` | 有界 GIF 解码、异步帧准备和 PNG 帧数据 |
 | `src/native/companion/` | iPhone 公开缓存与进程级 WatchConnectivity 投递 |
@@ -50,7 +50,7 @@ feature 通过公开入口互相依赖，不导入 app；shared 不导入 featur
 
 ## 生命周期、缓存与图片
 
-移动连接根据真实系统前台事实运行，未知状态不视为前台。Android 通过 JNI 获取 Application，读取进程可见性、屏幕和锁屏状态，iOS 通过 UIKit scene 通知推进状态；移动 owner 不接受 JS 伪造的前台许可。退到后台后暂停桌面连接。
+移动连接按界面经 NSH `lifecycle()` 报告的前后台运行：进入后台暂停并关闭桌面连接，短暂失焦仍保持。界面把状态以 `active` 命令交给 owner，Android 同时据此持有或释放多播锁，iOS 回到前台时唤醒 Watch 缓存重试。Android 通过 JNI 获取 Application 只用于身份与多播锁。
 
 Android 配置 `keep_snapshot = false`，重启后等待新快照；iOS 默认恢复最后接收的缓存，显示原同步时间。受验证的图片资源使用私有磁盘缓存；忘记或切换来源时清理相应状态。
 
