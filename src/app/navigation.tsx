@@ -1,6 +1,6 @@
 import { Canvas, Text, View, type Accessor } from "nsh";
 import { CyberPressable } from "../shared/ui/effects";
-import { cyberColors as color } from "../shared/ui/theme";
+import { cyberAlpha, cyberColors as color } from "../shared/ui/theme";
 
 // 应用的两个页面：展示台与设置
 export type DisplayPage = "panel" | "settings";
@@ -58,7 +58,7 @@ export function CyberNavigation(props: { placement: "side" | "bottom"; selected:
     // 侧边布局的宽高与对齐
     ? { width: 104, height: "100%", alignItems: "center", paddingTop: 16 }
     // 否则使用底部横向布局的样式
-    : { width: "100%", height: 68, flexDirection: "row", backgroundColor: "#111D2DF7", alignItems: "center" }}>
+    : { width: "100%", height: 68, flexDirection: "row", backgroundColor: cyberAlpha(color.surface, 0.97), alignItems: "center" }}>
     {/* 仅侧栏顶部显示品牌标志 */}
     {side ? <View style={{ marginBottom: 30 }}><BrandMark /></View> : null}
     {/* 逐页生成标签；返回函数使选中态可随信号更新 */}

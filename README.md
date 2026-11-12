@@ -83,7 +83,7 @@ python3 tools/test.py --suite watch
 | `src/tests/` | 界面、打包、Android 入口、像素测试与协议夹具 |
 | `tools/` | 构建脚本与统一测试入口 |
 | `signing/` | 移动身份配置和本机签名材料 |
-| `docs/` | 文档与来源记录 |
+| `docs/`、`DESIGN.md` | 文档、来源记录与设计／动效规范 |
 | `.nsh/`、`target/`、`output/` | 生成工程、编译缓存、包与验证结果 |
 
 五个平台共用一个 NSH TSX/Rust 应用，Watch 使用独立 SwiftUI 工程。TSX 只处理布局与交互；Rust 的 Shell 控制器处理启动、轮询、设置保存，并驱动发现、配对、会话和资源。继续阅读 [应用架构](docs/architecture/overview.md)、[代码约定](docs/development/code-style.md)、[NSH 来源](docs/provenance/nsh-runtime.md) 与 [配对库来源](docs/provenance/pairing-core.md)。

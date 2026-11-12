@@ -5,9 +5,6 @@ import type { UsageDetail } from "../../shared/contracts/panel";
 import { CyberArrival, CyberNumber, CyberSurfaceScan } from "../../shared/ui/effects";
 import { cyberAlpha, cyberColors as color } from "../../shared/ui/theme";
 
-const background = "#101E33";
-const foreground = "#E9F2FF";
-const muted = "#9BB0C9";
 type Window = DisplayRow["windows"][number];
 
 export interface UsageCardProps {
@@ -81,21 +78,21 @@ export function UsageCard(props: UsageCardProps) {
       {/* 精确值文本 */}
       <Text testID="usage-exact" accessibilityLabel={projection().amountAccessibility ?? ""}
         // 样式：等宽字体与详情字号
-        style={{ numberOfLines: 1, userSelect: "text", color: muted, fontFamily: "monospace", fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>
+        style={{ numberOfLines: 1, userSelect: "text", color: color.usageMuted, fontFamily: "monospace", fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>
         {projection().exact}
       </Text>
     </Scroll>
   </View> : null;
   // 数据缺失时的提示文本
-  const missing = () => <Text style={{ color: muted, fontSize: 14, lineHeight: 20 }}>
+  const missing = () => <Text style={{ color: color.usageMuted, fontSize: 14, lineHeight: 20 }}>
     {projection().missingText}
   </Text>;
   return <CyberArrival order={0} active={props.active} testID="usage-card" onLayout={({ bounds }) => props.onFrame?.(bounds)}
     // 样式：撑满、背景色与圆角
-    style={{ flex: 1, minWidth: 0, minHeight: 0, backgroundColor: background, borderRadius: 18,
+    style={{ flex: 1, minWidth: 0, minHeight: 0, backgroundColor: color.usageSurface, borderRadius: 18,
       borderWidth: 1, borderColor: "transparent", overflow: "hidden" }}>
     {/* 表面扫描光效 */}
-    <CyberSurfaceScan active={props.active} surfaceColor={background} testID="usage-surface-scan" />
+    <CyberSurfaceScan active={props.active} surfaceColor={color.usageSurface} testID="usage-surface-scan" />
     {/* 隐形画布：借助 measureText 二分求出能放下的最大字号 */}
     <Canvas accessible={false} accessibilityElementsHidden
       style={{ pointerEvents: "none", position: "absolute", width: 1, height: 1, opacity: 0 }} draw={(cx) => {
@@ -122,9 +119,9 @@ export function UsageCard(props: UsageCardProps) {
         // 样式：横向换行排列，两端对齐
         style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", rowGap: 4 }}>
         {/* 标题 */}
-        <Text style={{ color: muted, fontSize: 13 * scale(), lineHeight: 18 * scale(), fontWeight: 500 }}>Token 用量</Text>
+        <Text style={{ color: color.usageMuted, fontSize: 13 * scale(), lineHeight: 18 * scale(), fontWeight: 500 }}>Token 用量</Text>
         {/* 有数据时显示日期 */}
-        {hasTokens() ? <Text style={{ color: muted, fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>{projection().date}</Text> : null}
+        {hasTokens() ? <Text style={{ color: color.usageMuted, fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>{projection().date}</Text> : null}
       </View>
       {/* 精简模式：居中显示总量与精确值 */}
       {compact() ? <View testID="usage-summary" style={{ width: "100%", gap: spacing(), alignItems: "center",
@@ -141,17 +138,17 @@ export function UsageCard(props: UsageCardProps) {
           {/* 设备时区行 */}
           <View style={{ flexDirection: "row", gap: spacing(), alignItems: "center" }}>
             {/* 标签 */}
-            <Text style={{ color: muted, fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>设备时区</Text>
+            <Text style={{ color: color.usageMuted, fontSize: detailSize(), lineHeight: detailSize() * 1.4 }}>设备时区</Text>
             {/* 时区文本右对齐且可横向滚动 */}
             <Scroll horizontal scrollbar={false} style={{ flex: 1, minWidth: 0 }} contentStyle={{ flexGrow: 1, justifyContent: "flex-end" }}>
-              <Text testID="usage-timezone" style={{ numberOfLines: 1, color: muted, fontSize: detailSize(), lineHeight: detailSize() * 1.4, textAlign: "right" }}>{projection().zone}</Text>
+              <Text testID="usage-timezone" style={{ numberOfLines: 1, color: color.usageMuted, fontSize: detailSize(), lineHeight: detailSize() * 1.4, textAlign: "right" }}>{projection().zone}</Text>
             </Scroll>
           </View>
         </> : missing()}
         {/* 各代理明细 */}
         <View testID="usage-details" style={{ gap: spacing() }}>
           {/* 无明细时的提示 */}
-          {rows().length === 0 ? <Text style={{ color: muted, fontSize: 13 * scale(), lineHeight: 18 * scale() }}>暂无明细</Text> : null}
+          {rows().length === 0 ? <Text style={{ color: color.usageMuted, fontSize: 13 * scale(), lineHeight: 18 * scale() }}>暂无明细</Text> : null}
           {/* 逐行渲染代理明细 */}
           {rows().map((row) => <UsageRow row={row} width={contentWidth()} scale={scale()} detailSize={detailSize()} barWidth={barWidth()} gap={spacing()} />)}
         </View>
@@ -164,7 +161,7 @@ export function UsageCard(props: UsageCardProps) {
         {/* 分隔线 */}
         <Divider />
         {/* 小标题 */}
-        <Text style={{ color: muted, fontSize: 12, lineHeight: 16, fontWeight: 500 }}>额度剩余</Text>
+        <Text style={{ color: color.usageMuted, fontSize: 12, lineHeight: 16, fontWeight: 500 }}>额度剩余</Text>
         {/* 逐个供应商渲染额度 */}
         {providers().map((provider) => <ProviderQuota provider={provider} width={contentWidth()} />)}
         {/* 额度更新时间 */}
@@ -175,7 +172,7 @@ export function UsageCard(props: UsageCardProps) {
 }
 
 function Divider() {
-  return <View style={{ height: 1, width: "100%", backgroundColor: cyberAlpha(muted, 0.2) }} />;
+  return <View style={{ height: 1, width: "100%", backgroundColor: cyberAlpha(color.usageMuted, 0.2) }} />;
 }
 
 // 供应商标题：名称与可选的套餐徽标
@@ -185,7 +182,7 @@ function ProviderTitle(props: { name: string; plan?: string | null; size: number
     // 内容区样式：横向排列，底部对齐
     contentStyle={{ flexDirection: "row", gap: 6, alignItems: "flex-end" }}>
     {/* 供应商名称 */}
-    <Text style={{ numberOfLines: 1, color: foreground, fontSize: props.size, lineHeight: props.lineHeight, fontWeight: props.weight }}>{props.name}</Text>
+    <Text style={{ numberOfLines: 1, color: color.ink, fontSize: props.size, lineHeight: props.lineHeight, fontWeight: props.weight }}>{props.name}</Text>
     {/* 有套餐时显示徽标 */}
     {props.plan ? <View style={{ borderRadius: 4, backgroundColor: cyberAlpha(color.cyan, 0.08), borderWidth: 0.5,
       borderColor: cyberAlpha(color.cyan, 0.3), paddingHorizontal: 5, paddingVertical: 1 }}>
@@ -203,7 +200,7 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
       <ProviderTitle name={props.row.name} plan={props.row.plan} size={18 * props.scale} lineHeight={25 * props.scale} weight={700} />
       {/* 有紧凑用量时显示，宽度不超过 55% */}
       {props.row.compact != null ? <Scroll horizontal scrollbar={false} style={{ maxWidth: props.width * 0.55, flexShrink: 1 }}>
-        <Text style={{ numberOfLines: 1, userSelect: "text", color: foreground, fontFamily: "monospace", fontSize: 18 * props.scale,
+        <Text style={{ numberOfLines: 1, userSelect: "text", color: color.ink, fontFamily: "monospace", fontSize: 18 * props.scale,
           lineHeight: 18 * props.scale * 1.35 }}>{props.row.compact}</Text>
       </Scroll> : null}
     </View>
@@ -216,7 +213,7 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
         // 样式：横向排列，间距 3
         style={{ flexDirection: "row", gap: 3, alignItems: "center" }}>
         {/* 窗口标签 */}
-        <Text style={{ numberOfLines: 1, color: muted, fontSize: props.detailSize, lineHeight: props.detailSize * 1.4, fontWeight: 500 }}>{window.kindLabel}</Text>
+        <Text style={{ numberOfLines: 1, color: color.usageMuted, fontSize: props.detailSize, lineHeight: props.detailSize * 1.4, fontWeight: 500 }}>{window.kindLabel}</Text>
         {/* 剩余百分比，颜色表示等级 */}
         <Text style={{ numberOfLines: 1, color: quotaColor(window.level), fontFamily: "monospace", fontSize: props.detailSize,
           lineHeight: props.detailSize * 1.4, fontWeight: 500 }}>{window.percent}</Text>
@@ -228,7 +225,7 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
       {/* 精确值 */}
       {props.row.exact != null ? <Text accessibilityLabel={`Token ${props.row.tokenText}`}
         // 样式：等宽字体与详情字号
-        style={{ numberOfLines: 1, userSelect: "text", color: muted, fontFamily: "monospace", fontSize: props.detailSize, lineHeight: props.detailSize * 1.4 }}>{props.row.exact}</Text> : null}
+        style={{ numberOfLines: 1, userSelect: "text", color: color.usageMuted, fontFamily: "monospace", fontSize: props.detailSize, lineHeight: props.detailSize * 1.4 }}>{props.row.exact}</Text> : null}
     </Scroll> : null}
   </View>;
 }
@@ -260,7 +257,7 @@ function ProviderQuota(props: { provider: QuotaProjection; width: number }) {
         {/* 标签与百分比一行 */}
         <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
           {/* 窗口标签 */}
-          <Text style={{ flex: 1, color: muted, fontSize: 11, lineHeight: 15.4, fontWeight: 500 }}>{window.kindLabel}</Text>
+          <Text style={{ flex: 1, color: color.usageMuted, fontSize: 11, lineHeight: 15.4, fontWeight: 500 }}>{window.kindLabel}</Text>
           {/* 剩余百分比 */}
           <Text style={{ color: quotaColor(window.level), fontFamily: "monospace", fontSize: 11, lineHeight: 15.4, fontWeight: 500 }}>{window.percent}</Text>
         </View>
@@ -273,7 +270,7 @@ function ProviderQuota(props: { provider: QuotaProjection; width: number }) {
 
 // 额度条：底槽加按剩余比例填充的色条
 function BalanceBar(props: { window: Window; width?: number }) {
-  return <View style={{ width: props.width ?? "100%", height: 3, borderRadius: 1.5, overflow: "hidden", backgroundColor: cyberAlpha(muted, 0.15) }}>
+  return <View style={{ width: props.width ?? "100%", height: 3, borderRadius: 1.5, overflow: "hidden", backgroundColor: cyberAlpha(color.usageMuted, 0.15) }}>
     {/* 剩余大于 0 才画填充 */}
     {props.window.remainingTenths > 0 ? <View style={{ height: 3, borderRadius: 1.5,
       width: `${props.window.remainingTenths / 10}%`, backgroundColor: quotaColor(props.window.level) }} /> : null}
@@ -281,7 +278,7 @@ function BalanceBar(props: { window: Window; width?: number }) {
 }
 
 function QuotaObservedAt(props: { unix: number }) {
-  return <Text testID="quota-observed-at" style={{ color: muted, fontSize: 11, lineHeight: 16 }}>
+  return <Text testID="quota-observed-at" style={{ color: color.usageMuted, fontSize: 11, lineHeight: 16 }}>
     {`额度更新 ${quotaTimestamp(props.unix)}`}
   </Text>;
 }

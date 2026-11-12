@@ -4,7 +4,7 @@ import { cyberAlpha, cyberColors as color } from "../../shared/ui/theme";
 
 // 根据行为状态选择色调：运行青色、询问黄色、错误红色、其余灰色
 export function hookStatusTone(behavior: string): string {
-  return behavior === "running" ? color.cyan : behavior === "asking" ? "#F4C675"
+  return behavior === "running" ? color.cyan : behavior === "asking" ? color.asking
     // 否则按行为取颜色
     : behavior === "error" ? color.error : color.muted;
 }

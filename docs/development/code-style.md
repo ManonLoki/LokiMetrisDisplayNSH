@@ -17,6 +17,10 @@
 
 feature 经公开 `index.ts` 供其他业务使用，不反向导入 app；shared 不依赖 feature 或 app。TSX 保存布局、导航、草稿、详情和动效状态；校验、展示规则、默认值和持久化决策放在所属 Rust 模块。TS 适配层只传参及解析结果。
 
+## 颜色与样式
+
+界面颜色只来自 `nsh.json` 的 `theme` token，经 `src/shared/ui/theme.ts` 的别名读取；TSX 和 TS 里不写十六进制、`rgb()` 等颜色字面量。新增颜色先补 token。设计规范和动效清单见 [DESIGN.md](../../DESIGN.md)。
+
 ## 状态与资源
 
 - 配对、会话序号和图片缓存由一个 Rust 连接 owner 串行修改；系统适配执行平台 API，不复制业务规则。

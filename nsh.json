@@ -4,18 +4,62 @@
   "version": "1.0.21",
   "build": 30,
   "appearance": "dark",
-  "statusBar": { "foreground": "light" },
+  "statusBar": {
+    "foreground": "light"
+  },
   "icon": "src/assets/branding/app-icon.png",
   "rust": ".",
-  "android": { "usesCleartextTraffic": true },
+  "android": {
+    "usesCleartextTraffic": true
+  },
   "ios": {
     "infoPlist": {
       "NSLocalNetworkUsageDescription": "连接同一局域网内已配对的电脑，接收 Token 用量、账户额度与 Agent 活动。",
-      "NSBonjourServices": ["_loki-host._tcp"],
-      "BGTaskSchedulerPermittedIdentifiers": ["com.manonloki.lokimetrisdisplay.widget-refresh"],
-      "UIBackgroundModes": ["fetch"],
-      "NSAppTransportSecurity": { "NSAllowsLocalNetworking": true },
+      "NSBonjourServices": [
+        "_loki-host._tcp"
+      ],
+      "BGTaskSchedulerPermittedIdentifiers": [
+        "com.manonloki.lokimetrisdisplay.widget-refresh"
+      ],
+      "UIBackgroundModes": [
+        "fetch"
+      ],
+      "NSAppTransportSecurity": {
+        "NSAllowsLocalNetworking": true
+      },
       "NSSupportsLiveActivities": true
+    }
+  },
+  "theme": {
+    "cssVars": {
+      "dark": {
+        "background": "#080D17",
+        "foreground": "#E9F2FF",
+        "card": "#111D2D",
+        "muted-foreground": "#96ABC5",
+        "primary": "#67E8F9",
+        "primary-foreground": "#06252E",
+        "secondary": "#AE8CFF",
+        "secondary-foreground": "#21103B",
+        "destructive": "#FF8B9C",
+        "border": "#244052",
+        "ring": "#67E8F9",
+        "surface-container": "#17243A",
+        "primary-container": "#123D50",
+        "secondary-container": "#2C244A",
+        "on-secondary-container": "#DCCEFF",
+        "outline": "#60849C",
+        "on-error": "#420E1C",
+        "disconnected": "#8FA4BC",
+        "usage-surface": "#101E33",
+        "usage-muted": "#9BB0C9",
+        "asking": "#F4C675",
+        "switch-off": "#233247",
+        "switch-on-thumb": "#0A2530",
+        "success": "#40C057",
+        "warning": "#F5C542",
+        "danger": "#FA5252"
+      }
     }
   }
 }

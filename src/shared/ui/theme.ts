@@ -1,24 +1,33 @@
-/** 取自源 Android App.kt / CyberMotion.kt 深色方案的颜色。 */
+import { token } from "nsh";
+
+/** 颜色的唯一来源是 nsh.json 的 `theme`，这里只给界面代码起语义别名；界面代码不写十六进制颜色。 */
 export const cyberColors = {
-  canvas: "#080D17",
-  surface: "#111D2D",
-  surfaceContainer: "#17243A",
-  ink: "#E9F2FF",
-  muted: "#96ABC5",
-  cyan: "#67E8F9",
-  violet: "#AE8CFF",
-  onPrimary: "#06252E",
-  onSecondary: "#21103B",
-  primaryContainer: "#123D50",
-  secondaryContainer: "#2C244A",
-  // 次色容器上的前景色
-  onSecondaryContainer: "#DCCEFF",
-  outline: "#60849C",
-  outlineVariant: "#244052",
-  error: "#FF8B9C",
-  onError: "#420E1C",
-  disconnected: "#8FA4BC",
-} as const;
+  get canvas() { return token("background"); },
+  get surface() { return token("card"); },
+  get surfaceContainer() { return token("surface-container"); },
+  get ink() { return token("foreground"); },
+  get muted() { return token("muted-foreground"); },
+  get cyan() { return token("primary"); },
+  get violet() { return token("secondary"); },
+  get onPrimary() { return token("primary-foreground"); },
+  get onSecondary() { return token("secondary-foreground"); },
+  get primaryContainer() { return token("primary-container"); },
+  get secondaryContainer() { return token("secondary-container"); },
+  get onSecondaryContainer() { return token("on-secondary-container"); },
+  get outline() { return token("outline"); },
+  get outlineVariant() { return token("border"); },
+  get error() { return token("destructive"); },
+  get onError() { return token("on-error"); },
+  get disconnected() { return token("disconnected"); },
+  get usageSurface() { return token("usage-surface"); },
+  get usageMuted() { return token("usage-muted"); },
+  get asking() { return token("asking"); },
+  get switchOff() { return token("switch-off"); },
+  get switchOnThumb() { return token("switch-on-thumb"); },
+  get success() { return token("success"); },
+  get warning() { return token("warning"); },
+  get danger() { return token("danger"); },
+};
 
 /** 共用动效尺寸；Token 绕边沿用原 iOS CyberSurface 的八秒周期。 */
 export const cyberMotion = {
@@ -45,8 +54,7 @@ export const cyberMotion = {
   numberSlideOut: 220,
 } as const;
 
-// 给颜色附加透明度：限制到 0–1 后转为两位十六进制
+// 给颜色附加透明度：token 以 #rrggbbaa 给出，替换其透明度字节
 export function cyberAlpha(color: string, opacity: number): string {
-  // 把透明度限制到 0 到 1 并转为两位十六进制
-  return `${color}${Math.round(Math.max(0, Math.min(1, opacity)) * 255).toString(16).padStart(2, "0")}`;
+  return `${color.slice(0, 7)}${Math.round(Math.max(0, Math.min(1, opacity)) * 255).toString(16).padStart(2, "0")}`;
 }

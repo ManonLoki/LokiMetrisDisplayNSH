@@ -22,11 +22,11 @@ function SettingsToggle(props: { title: string; subtitle: string; symbol: Symbol
       // 内边距与对齐随选中状态变化
       padding: props.checked() ? 4 : 8, alignItems: props.checked() ? "flex-end" : "flex-start", justifyContent: "center",
       // 背景色随选中状态变化
-      backgroundColor: props.checked() ? color.cyan : "#233247" }}
+      backgroundColor: props.checked() ? color.cyan : color.switchOff }}
     // 滑块样式：选中时更大
     thumbStyle={{ width: props.checked() ? 24 : 16, height: props.checked() ? 24 : 16, borderRadius: 12,
       // 背景色随选中状态变化
-      backgroundColor: props.checked() ? "#0A2530" : color.muted }}>
+      backgroundColor: props.checked() ? color.switchOnThumb : color.muted }}>
     {/* 图标与文字 */}
     <View style={{ ...row, flex: 1, minWidth: 0 }}>
       {/* 图标 */}

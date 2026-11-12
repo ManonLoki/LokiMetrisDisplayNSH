@@ -27,6 +27,7 @@
 | [构建说明](development/build.md) | 环境准备、各端开发、打包和签名命令 |
 | [测试说明](development/test.md) | 统一测试入口、覆盖范围与宿主要求 |
 | [代码约定](development/code-style.md) | TSX／Rust 职责、依赖方向与文件组织 |
+| [设计与动效](../DESIGN.md) | 颜色 token、共用控件与动效清单 |
 | [工具说明](../tools/README.md) | 保留脚本、输入与产物位置 |
 
 ## 来源与许可
