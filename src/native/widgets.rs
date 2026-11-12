@@ -235,8 +235,8 @@ pub(super) fn changed() {
         let delay = gate
             // 加锁
             .lock()
-            // 锁中毒则崩溃
-            .expect("widget reload gate poisoned")
+            // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
+            .unwrap_or_else(|p| p.into_inner())
             // 申请一次重载
             .request(Instant::now());
         // 已有补刷排队，直接返回
@@ -254,7 +254,7 @@ pub(super) fn changed() {
             // 在主队列上延后执行
             let _ = dispatch2::DispatchQueue::main().after(when, move || {
                 // 回调中清除排队标记并记录刷新时刻
-                let mut state = gate.lock().expect("widget reload gate poisoned");
+                let mut state = gate.lock().unwrap_or_else(|p| p.into_inner());
                 // 清除待执行标记
                 state.pending = false;
                 // 记录本次重载时刻

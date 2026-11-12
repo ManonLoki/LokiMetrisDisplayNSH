@@ -483,5 +483,9 @@ impl Drop for Handle {
 mod connection_test;
 
 #[cfg(test)]
+#[path = "boundary_test.rs"]
+mod boundary_test;
+
+#[cfg(test)]
 #[path = "watch_test.rs"]
 mod watch_test;

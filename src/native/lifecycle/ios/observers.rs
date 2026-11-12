@@ -74,8 +74,8 @@ impl Drop for ActivityObserver {
                 .listeners
                 // 加锁
                 .lock()
-                // 锁中毒则崩溃
-                .expect("iOS observer lock poisoned")
+                // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
+                .unwrap_or_else(|p| p.into_inner())
                 // 移除自己
                 .remove(&self.id);
             // 闭包析构也可能释放另一枚 token；必须先释放订阅表的锁。
@@ -133,8 +133,8 @@ impl ActivityObservers {
         self.listeners
             // 加锁
             .lock()
-            // 锁中毒则崩溃
-            .expect("iOS observer lock poisoned")
+            // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
+            .unwrap_or_else(|p| p.into_inner())
             // 登记监听者
             .insert(id, Arc::new(listener));
         // 返回观察者
@@ -162,8 +162,8 @@ impl ActivityObservers {
             .listeners
             // 加锁
             .lock()
-            // 锁中毒则崩溃
-            .expect("iOS observer lock poisoned")
+            // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
+            .unwrap_or_else(|p| p.into_inner())
             // 全部标识
             .keys()
             // 复制
@@ -186,8 +186,8 @@ impl ActivityObservers {
             .listeners
             // 加锁
             .lock()
-            // 锁中毒则崩溃
-            .expect("iOS observer lock poisoned")
+            // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
+            .unwrap_or_else(|p| p.into_inner())
             // 按标识取
             .get(&id)
             // 复制

@@ -7,7 +7,7 @@ use std::time::Instant;
 
 /// 最新LAN意图合并为一项，不建立第二个WC worker或周期轮询。
 pub(in crate::native) fn command(command: Command) {
-    SIGNALS.lock().expect("Watch回执信号锁未被污染").presence = Some(command);
+    SIGNALS.lock().unwrap_or_else(|p| p.into_inner()).presence = Some(command);
     wake();
 }
 
@@ -16,7 +16,7 @@ pub(super) fn completed(challenge: String, data: Option<&NSData>) {
     let bytes = data
         .filter(|data| data.len() <= 4096)
         .map(|data| data.to_vec());
-    let mut signals = SIGNALS.lock().expect("Watch回执信号锁未被污染");
+    let mut signals = SIGNALS.lock().unwrap_or_else(|p| p.into_inner());
     if signals.presence_completed.len() < 4 {
         signals.presence_completed.push((challenge, bytes));
     }
@@ -29,7 +29,7 @@ pub(super) fn revoked(data: &NSData) {
     if data.len() > 4096 {
         return;
     }
-    let mut signals = SIGNALS.lock().expect("Watch回执信号锁未被污染");
+    let mut signals = SIGNALS.lock().unwrap_or_else(|p| p.into_inner());
     if signals.presence_revoked.len() < 16 {
         signals.presence_revoked.push(data.to_vec());
     } else {

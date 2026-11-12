@@ -77,6 +77,9 @@ def commands(suite, output):
 
 # 入口：解析参数、准备输出目录并逐条执行命令
 def main():
+    # 测试与打包脚本需要 Python 3.11+，版本过低时给出明确提示而不是导入错误
+    if sys.version_info < (3, 11):
+        raise SystemExit(f'Python 3.11+ is required, found {sys.version.split()[0]}')
     parser = argparse.ArgumentParser(description=__doc__)
     # 选择套件
     parser.add_argument('--suite', choices=['unit', 'android', 'ios', 'simulator', 'watch', 'visual', 'integration'], default='unit')

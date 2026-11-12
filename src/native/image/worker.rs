@@ -62,7 +62,7 @@ impl Future for Pending {
         // 登记与完成共用同一把锁；自定义唤醒器的克隆与释放始终在锁外执行
         let (result, previous_waker) = {
             // 取完成状态
-            let mut completion = self.0.completion.lock().expect("GIF completion poisoned");
+            let mut completion = self.0.completion.lock().unwrap_or_else(|p| p.into_inner());
             // 已有结果：交出结果并取走旧唤醒器
             if let Some(result) = completion.result.take() {
                 // 就绪：返回结果并取走旧唤醒器
@@ -95,8 +95,8 @@ impl Drop for Pending {
             .completion
             // 加锁
             .lock()
-            // 锁中毒则崩溃
-            .expect("GIF completion poisoned")
+            // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
+            .unwrap_or_else(|p| p.into_inner())
             // 唤醒器
             .waker
             // 取走
@@ -236,8 +236,8 @@ fn process(job: Job, prepare: impl FnOnce(&str) -> Result<String, String>) {
             .completion
             // 加锁
             .lock()
-            // 锁中毒则崩溃
-            .expect("GIF completion poisoned");
+            // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
+            .unwrap_or_else(|p| p.into_inner());
         // 解码期间被取消则丢弃结果
         if job.shared.cancelled.load(Ordering::Acquire) {
             // 直接返回

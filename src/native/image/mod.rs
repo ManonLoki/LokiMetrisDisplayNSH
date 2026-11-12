@@ -173,8 +173,8 @@ fn prepare(source: &str) -> Result<String, String> {
         .get_or_init(Mutex::default)
         // 加锁
         .lock()
-        // 锁中毒则崩溃
-        .expect("GIF frame cache poisoned");
+        // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
+        .unwrap_or_else(|p| p.into_inner());
     // 安全读取来源
     let (bytes, gif_mime) = source::load(source)?;
     // 命中缓存：移到队尾并返回
