@@ -49,7 +49,7 @@ nsh test src/tests/desktop/image-playback.test.ts
 | iOS 小组件后台执行器 | `python3 tools/test.py --suite ios` | macOS、Swift；取消早于启动、等待取消清理、只完成一次；默认 unit 亦包含 |
 | Watch | `python3 tools/test.py --suite watch` | macOS、Swift/Xcode；编译实际缓存、展示和图片实现 |
 | 原生像素 | `python3 tools/test.py --suite visual` | macOS 原生 NSH 宿主、Swift；验证卡片动效门控和 GIF 显示帧 |
-| 协议联调 | `python3 tools/test.py --suite integration` | macOS；启动隔离协议夹具，配对、传输 GIF 并检查原生显示帧 |
+| 协议联调 | `python3 tools/test.py --suite integration` | macOS；启动隔离协议夹具，配对、传输 GIF 并检查原生显示帧。应用靠 mDNS 多播发现夹具，运行测试的终端须获得“本地网络”权限，否则入口会提前报错 |
 
 结果默认写入 `output/tests/<套件>/`。`--output` 改变结果根目录，入口仍会追加套件名称：
 

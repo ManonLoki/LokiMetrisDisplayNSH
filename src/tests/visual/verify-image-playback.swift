@@ -74,7 +74,8 @@ struct Pixels {
         var green = 0
         for y in 7...12 { for x in 7...12 {
             let value = rgb(Double(x), Double(y), viewport, flipped)
-            if value[1] > 180 && value[0] < 80 && value[2] < 80 { green += 1 }
+            // 绿色占主导即可：宽色域显示器的截图会把纯绿抬高到约 (10, 245, 103)。
+            if value[1] > 180 && value[1] > Int(value[0]) + 100 && value[1] > Int(value[2]) + 80 { green += 1 }
         } }
         return green
     }

@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import re
 import shutil
+import socket
+import struct
 import subprocess
 import time
 
@@ -33,6 +35,31 @@ def stop(process):
         process.wait(timeout=5)
 
 
+# 应用靠 mDNS 多播发现夹具桌面；收不到多播的进程会一直停在“正在发现桌面端”，这里提前说清原因。
+def require_multicast():
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    probe.bind(("", 5353))
+    probe.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, struct.pack("4sl", socket.inet_aton("224.0.0.251"), socket.INADDR_ANY))
+    probe.settimeout(1)
+    # 系统的 dns-sd 会发出多播查询，本进程应当能收到
+    query = subprocess.Popen(["dns-sd", "-B", "_loki-probe._tcp", "local"], stdout=subprocess.DEVNULL)
+    try:
+        deadline = time.monotonic() + 6
+        while time.monotonic() < deadline:
+            try:
+                probe.recvfrom(4096)
+                return
+            except socket.timeout:
+                pass
+    finally:
+        query.kill()
+        probe.close()
+    raise SystemExit("This process cannot receive mDNS multicast, so the app cannot discover the fixture. "
+                     "Allow the terminal under System Settings > Privacy & Security > Local Network and rerun.")
+
+
 # 用 Swift 脚本检查六张原生截图中确实出现了两种夹具颜色且在变化
 def verify_frames(output):
     frames = [output / f"frame-{index}.png" for index in range(6)]
@@ -53,6 +80,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "output/tests/integration")
     args = parser.parse_args()
+    require_multicast()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     # 读取场景模板并替换入口与输出目录占位符
