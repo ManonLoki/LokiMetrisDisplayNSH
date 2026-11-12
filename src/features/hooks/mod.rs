@@ -2,13 +2,9 @@
 // 把行为状态映射为中文文案
 pub(crate) fn label(behavior: &str) -> &'static str {
     match behavior {
-        // 空闲
         "idle" => "空闲",
-        // 运行
         "running" => "运行",
-        // 询问
         "asking" => "询问",
-        // 其余按出错处理
         _ => "出错",
     }
 }
@@ -33,7 +29,6 @@ pub(crate) fn pages(count: usize, layout: &str) -> Vec<Vec<Option<u32>>> {
         .collect()
 }
 
-// 测试模块
 #[cfg(test)]
 #[path = "hooks_test.rs"]
 mod hooks_test;

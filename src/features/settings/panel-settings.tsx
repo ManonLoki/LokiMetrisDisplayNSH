@@ -1,17 +1,10 @@
-// 引入画布、文本、视图、计算信号与减少动效开关
 import { Canvas, Text, View, computed, type Accessor, reduceMotion } from "nsh";
-// 引入单选与开关组件
 import { Radio, RadioGroup, Switch } from "nsh/base";
-// 引入面板配置类型
 import type { PanelConfig } from "../../shared/contracts/panel";
-// 引入设置页通用组件
 import { SettingsCard, SettingsDivider, SettingsIcon, row, decoration } from "../../shared/ui/settings-components";
-// 引入透明度、色板与动效参数
 import { cyberAlpha, cyberColors as color, cyberMotion } from "../../shared/ui/theme";
-// 引入遥控器焦点目标
 import { RemoteTarget } from "../../shared/ui/remote-focus";
 
-// 图标种类
 type Symbol = "usage" | "hooks";
 // 缩略图种类：用量两种、布局两种
 type Miniature = "compact" | "detailed" | "1x1" | "2x2";
@@ -25,7 +18,6 @@ function SettingsToggle(props: { title: string; subtitle: string; symbol: Symbol
     <Switch testID={props.testID} accessibilityLabel={props.title} checked={props.checked()} onChange={({ checked }) => props.onChange(checked)}
     // 样式：反向横排，垂直居中
     style={{ minHeight: 52, flexDirection: "row-reverse", alignItems: "center", gap: 12 }}
-    // 轨道样式
     trackStyle={{ width: 52, height: 32, flexShrink: 0, borderRadius: 16,
       // 内边距与对齐随选中状态变化
       padding: props.checked() ? 4 : 8, alignItems: props.checked() ? "flex-end" : "flex-start", justifyContent: "center",
@@ -52,11 +44,9 @@ function SettingsToggle(props: { title: string; subtitle: string; symbol: Symbol
 
 // 面板显示设置：用量与 Hooks 的开关及其子选项
 export function PanelSettings(props: { config: Accessor<PanelConfig>; panelError: Accessor<string | null>; onPanelChange: (next: PanelConfig) => void }) {
-  // 是否显示用量
   const showUsage = computed(() => props.config().showUsage);
   // 是否显示 Hooks
   const showHooks = computed(() => props.config().showHooks);
-  // 卡片主体
   return <SettingsCard testID="settings-panel-card">
     {/* 用量设置组 */}
     <View style={{ gap: 12 }}>
@@ -68,11 +58,9 @@ export function PanelSettings(props: { config: Accessor<PanelConfig>; panelError
       {showUsage() ? <RadioGroup style={{ flexDirection: "row", gap: 10 }}>
         {/* 精简选项 */}
         <SettingsChoice title="精简" kind="compact" selected={() => props.config().usageDetail === "compact"}
-          // 紧凑用量
           testID="settings-usage-compact" onSelect={() => props.onPanelChange({ ...props.config(), usageDetail: "compact" })} />
         {/* 详细选项 */}
         <SettingsChoice title="详细" kind="detailed" selected={() => props.config().usageDetail === "detailed"}
-          // 详细用量
           testID="settings-usage-detailed" onSelect={() => props.onPanelChange({ ...props.config(), usageDetail: "detailed" })} />
       </RadioGroup> : null}
       {/* 当前模式的说明 */}
@@ -127,9 +115,7 @@ function SettingsChoice(props: { title: string; kind: Miniature; selected: Acces
       borderRadius: 12, borderWidth: 1, borderColor: props.selected() ? cyberAlpha(color.cyan, 0.65) : cyberAlpha(color.ink, 0.09),
       // 背景色随选中状态变化
       backgroundColor: props.selected() ? cyberAlpha(color.cyan, 0.08) : cyberAlpha(color.canvas, 0.4),
-      // 过渡属性与时长
       transitionProperty: "transform", transitionDuration: reduceMotion() ? 0 : cyberMotion.pressDuration,
-      // 过渡缓动函数
       transitionTimingFunction: "cubic-bezier(0.4,0,0.2,1)" }}
     // 激活样式：减少动效时不缩放
     activeStyle={{ transform: [{ scale: reduceMotion() ? 1 : cyberMotion.pressScale }] }}>
@@ -154,33 +140,26 @@ function SettingsMiniature(props: { kind: Miniature; selected: Accessor<boolean>
     if (props.kind === "compact" || props.kind === "detailed") {
       // 画外框，再画表示总量的粗线
       cx.strokeStyle = cyberAlpha(tint, 0.35); cx.beginPath(); cx.roundRect(0, 0, w, h, 2); cx.stroke();
-      // 画图标线条
       cx.strokeStyle = tint; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(w * 0.24, h * 0.38); cx.lineTo(w * 0.76, h * 0.38); cx.stroke();
       // 精简：下方一条细线
       if (props.kind === "compact") {
-        // 细线
         cx.strokeStyle = cyberAlpha(tint, 0.45); cx.lineWidth = 1; cx.beginPath(); cx.moveTo(w * 0.34, h * 0.68); cx.lineTo(w * 0.66, h * 0.68); cx.stroke();
       // 否则分支
       } else {
         // 详细：下方三个小块表示明细
         cx.fillStyle = cyberAlpha(tint, 0.35);
-        // 逐个绘制
         for (let i = 0; i < 3; i++) { cx.beginPath(); cx.roundRect(w * (0.15 + i * 0.25), h * 0.62, w * 0.2, h * 0.17, 1); cx.fill(); }
       }
     // 否则分支
     } else {
       // 布局缩略图：每边块数与间距
       const columns = props.kind === "1x1" ? 1 : 2, gap = 3;
-      // 单块宽高
       const width = (w - gap * (columns - 1)) / columns, height = (h - gap * (columns - 1)) / columns;
       // 逐块绘制填充与描边
       for (let x = 0; x < columns; x++) for (let y = 0; y < columns; y++) {
-        // 圆角矩形路径
         cx.beginPath(); cx.roundRect(x * (width + gap), y * (height + gap), width, height, 2);
-        // 淡填充加描边
         cx.fillStyle = cyberAlpha(tint, 0.15); cx.fill(); cx.strokeStyle = cyberAlpha(tint, 0.8); cx.stroke();
       }
     }
-  // 绘制回调结束
   }} />;
 }

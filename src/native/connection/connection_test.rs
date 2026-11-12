@@ -1,8 +1,5 @@
-// 引入被测模块
 use super::*;
-// 引入命令与 owner
 use super::{commands::QueuedCommand, owner::Owner};
-// 引入配对库，用来模拟桌面端
 use loki_metris_pairing::assets::AssetDescriptor;
 #[cfg(target_os = "macos")]
 use loki_metris_pairing::{SenderSession, session::AwaitingDeviceProof};
@@ -13,11 +10,9 @@ use std::{
     fs,
     io::{Read, Write},
     net::{TcpListener, TcpStream},
-    // 接收端类型
     sync::mpsc::Receiver,
     // 线程
     thread,
-    // 时长与时刻
     time::{Duration, Instant},
 };
 
@@ -53,7 +48,6 @@ pub(super) fn configured(s: TcpStream) -> TcpStream {
     s.set_write_timeout(Some(Duration::from_secs(15))).unwrap();
     s
 }
-// 读取已发布的视图
 fn view(published: &Published) -> Value {
     serde_json::from_str(&published.state.lock().unwrap().view).unwrap_or(Value::Null)
 }
@@ -66,13 +60,9 @@ pub(super) fn until(published: &Published, predicate: impl Fn(&Value) -> bool) -
             return v;
         }
         assert!(
-            // 条件：未超时
             Instant::now() < end,
-            // 超时信息：状态
             "timed out: status={} error={}",
-            // 状态
             v["status"],
-            // 错误
             v["error"]
         );
         // 休眠 10 毫秒后重试
@@ -135,7 +125,6 @@ fn tcp_owner_pairs_commits_keychain_resumes_syncs_assets_and_rejects_replay() {
     let address = listener.local_addr().unwrap();
     // 配对码通道：把应用显示的码交给模拟桌面
     let (code_tx, code_rx) = mpsc::sync_channel::<String>(1);
-    // 完成信号通道
     let (done_tx, done_rx) = mpsc::sync_channel(1);
     let device = files.device.clone();
     // 构造 36,111 字节的假 GIF，需要多块传输
@@ -146,7 +135,6 @@ fn tcp_owner_pairs_commits_keychain_resumes_syncs_assets_and_rejects_replay() {
     let hash = descriptor.hash.clone();
     // 模拟桌面端线程
     let server = thread::spawn(move || {
-        // 第一条连接：配对
         let mut socket = configured(listener.accept().unwrap().0);
         // 开场消息必须是配对邀请，带有设备 ID
         let intro = server_recv(&mut socket, HANDSHAKE_FRAME);
@@ -183,9 +171,7 @@ fn tcp_owner_pairs_commits_keychain_resumes_syncs_assets_and_rejects_replay() {
             uuid::Uuid::new_v4().to_string(),
         )
         .unwrap();
-        // 服务端发送回复
         server_send(&mut socket, &serde_json::to_value(reply).unwrap());
-        // 得到加密通道
         let mut channel = waiting
             .verify(serde_json::from_value(server_recv(&mut socket, HANDSHAKE_FRAME)).unwrap())
             .unwrap();
@@ -223,7 +209,6 @@ fn tcp_owner_pairs_commits_keychain_resumes_syncs_assets_and_rejects_replay() {
                 .unwrap();
             server_send(&mut socket, &serde_json::to_value(packet).unwrap());
         }
-        // 发送心跳
         let ping = channel.seal(br#"{"type":"ping","nonce":7}"#).unwrap();
         server_send(&mut socket, &serde_json::to_value(ping).unwrap());
         // 应用必须回应相同编号的 pong
@@ -251,7 +236,6 @@ fn tcp_owner_pairs_commits_keychain_resumes_syncs_assets_and_rejects_replay() {
             address,
         },
     );
-    // 发布视图
     owner.publish();
     // 在线程里运行 owner 事件循环
     let worker = thread::spawn(move || owner.run(rx));
@@ -260,7 +244,6 @@ fn tcp_owner_pairs_commits_keychain_resumes_syncs_assets_and_rejects_replay() {
         client_id: CLIENT.into(),
     }))
     .unwrap();
-    // 等待配对码出现
     let v = until(&published, |v| v["pairingCode"].is_string());
     // 配对途中改名：只影响后续连接
     tx.send(command(Command::Rename {
@@ -283,9 +266,7 @@ fn tcp_owner_pairs_commits_keychain_resumes_syncs_assets_and_rejects_replay() {
         v["snapshot"]["tokens"]["all"]["total"],
         "18446744073709551615"
     );
-    // 实时连接
     assert_eq!(v["live"], true);
-    // 已登记配对
     assert!(v["paired"][CLIENT].is_object());
     // 公开视图不含任何秘密
     assert!(v.to_string().find("secret").is_none());
@@ -327,7 +308,6 @@ fn tcp_owner_pairs_commits_keychain_resumes_syncs_assets_and_rejects_replay() {
     cached.records = records;
     cached.restore_cache();
     assert!(cached.view["images"][&hash].is_string());
-    // 缓存不是实时的
     assert_eq!(cached.view["live"], false);
     assert_eq!(cached.view["receivedAtMs"], v["receivedAtMs"]);
     // 遗忘已缓存的来源会清除所有内容,桌面端也一样。

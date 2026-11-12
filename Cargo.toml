@@ -61,7 +61,7 @@ block2 = { version = "0.6.2", default-features = false, features = ["alloc"] }
 # 主队列派发
 dispatch2 = "0.3.1"
 # UIKit 通知
-objc2-ui-kit = { version = "0.3.2", default-features = false, features = ["std", "UIApplication", "UIResponder", "UIScene", "UISceneDefinitions", "UIDevice"] }
+objc2-ui-kit = { version = "0.3.2", default-features = false, features = ["std", "UIApplication", "UIResponder"] }
 
 # 协议验证夹具示例
 [[example]]

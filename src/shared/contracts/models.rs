@@ -1,37 +1,28 @@
 //! TSX 与 Rust 之间传递的公开数据形状。
 //! 这些结构同时决定 Rust 侧的反序列化校验和 TS 侧自动生成的类型声明。
-// 引入 nsh 的 JS 对象/枚举派生与 JSON 值
 use nsh_core::{JsonValue, prelude::*};
-// 引入序列化
 use serde::{Deserialize, Serialize};
 
 /// 用量卡片的详细程度。
-// 精简或详细
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PropEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum UsageDetail {
-    // 精简
     Compact,
-    // 详细
     Detailed,
 }
 
 /// Hooks 的每页布局。
-// 每页一张或四张
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PropEnum)]
 pub enum HookLayout {
-    // 每页一张
     #[serde(rename = "1x1")]
     #[prop(rename = "1x1")]
     OneByOne,
-    // 每页四张
     #[serde(rename = "2x2")]
     #[prop(rename = "2x2")]
     TwoByTwo,
 }
 
 /// 面板偏好。
-// 面板配置
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct PanelConfig {
@@ -50,37 +41,26 @@ pub struct PanelConfig {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PropEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum Availability {
-    // 可用
     Available,
-    // 无记录
     NoRecords,
-    // 不可用
     Unavailable,
 }
 
 /// 数值的完整程度。
-// 完整、部分或未知
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PropEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum Completeness {
-    // 完整
     Complete,
-    // 部分
     Partial,
-    // 未知
     Unknown,
 }
 
 /// 数值的可信程度。
-// 精确、推导或疑似
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PropEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum Confidence {
-    // 精确
     Exact,
-    // 推导
     Derived,
-    // 疑似
     Suspected,
 }
 
@@ -104,16 +84,12 @@ pub struct Amount {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PropEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum QuotaKind {
-    // 月度
     Monthly,
-    // 每周
     Weekly,
-    // 五小时
     FiveHour,
 }
 
 /// 一个额度窗口。
-// 额度窗口
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct QuotaWindow {
@@ -124,7 +100,6 @@ pub struct QuotaWindow {
 }
 
 /// 一个提供方的额度。
-// 提供方额度
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct QuotaProvider {
@@ -155,7 +130,6 @@ pub struct ProviderQuota {
 }
 
 /// 一个 Hook 的当前图文事实。
-// Hook 条目
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct HookItem {
@@ -188,7 +162,6 @@ pub struct TokenAgent {
 }
 
 /// 统计所属的日期与时区。
-// 日期与时区
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenDay {
@@ -212,7 +185,6 @@ pub struct Tokens {
 }
 
 /// 桌面端发来并经 Rust 校验的公开快照。
-// 公开快照
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
@@ -233,7 +205,6 @@ pub struct Snapshot {
 }
 
 /// 已发现或已配对的桌面端。
-// 桌面端
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct Host {
@@ -248,13 +219,9 @@ pub struct Host {
 }
 
 /// 原生连接的公开投影;展示层不会接触真实配对密钥。
-// 连接视图
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct ViewState {
-    /// 移动宿主遗留的面板偏好,仅首次视图携带。
-    #[serde(default)]
-    pub panel_config: Option<PanelConfig>,
     /// 本机设备标识。
     pub device_id: String,
     /// 本机设备名称。
@@ -287,20 +254,15 @@ pub struct ViewState {
 }
 
 /// 额度等级。
-// 红、黄、绿
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PropEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum QuotaLevel {
-    // 紧张
     Red,
-    // 偏低
     Yellow,
-    // 充足
     Green,
 }
 
 /// 额度窗口的展示投影。
-// 展示用窗口
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct DisplayWindow {
@@ -315,7 +277,6 @@ pub struct DisplayWindow {
 }
 
 /// 用量卡片里的一行。
-// 展示行
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct DisplayRow {
@@ -334,7 +295,6 @@ pub struct DisplayRow {
 }
 
 /// 一个提供方的额度投影。
-// 提供方额度展示
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct QuotaProjection {
@@ -349,7 +309,6 @@ pub struct QuotaProjection {
 }
 
 /// 用量卡片所需的全部业务事实。
-// 卡片投影
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct UsageCardProjection {
@@ -382,22 +341,15 @@ pub struct UsageCardProjection {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PropEnum)]
 #[serde(rename_all = "camelCase")]
 pub enum LinkOp {
-    // 发现桌面端
     Discover,
-    // 选择桌面端
     Select,
-    // 遗忘桌面端
     Forget,
-    // 重命名本机
     Rename,
-    // 报告界面是否活动
     Active,
-    // 刷新
     Refresh,
 }
 
 /// 下发给连接所有者的命令;各种类需要的字段不同。
-// 连接命令
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct LinkCommand {
@@ -418,7 +370,6 @@ pub struct LinkCommand {
 }
 
 /// 设备身份。
-// 设备身份
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct Device {
@@ -429,7 +380,6 @@ pub struct Device {
 }
 
 /// 设置用例返回的公开状态;空字段表示无变化。
-// 设置结果
 #[derive(Clone, Debug, Serialize, Deserialize, JsObject)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsResult {

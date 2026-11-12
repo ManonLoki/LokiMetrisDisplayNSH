@@ -1,4 +1,3 @@
-// 引入被测模块
 use super::*;
 
 // 供应商投影只保留服务端提供的窗口，并按展示顺序排列
@@ -10,18 +9,14 @@ fn provider_projection_keeps_only_supplied_windows_in_display_order() {
         "monthly":{"kind":"monthly","usedTenths":499}});
     let projection = provider_projection(&provider);
     assert_eq!(projection["name"], "Grok");
-    // 套餐首字母大写
     assert_eq!(projection["plan"], "Pro");
-    // 缺失的窗口不补
     assert_eq!(projection["windows"].as_array().unwrap().len(), 2);
-    // 月窗口排在最前
     assert_eq!(
         projection["windows"][0],
         json!({"kindLabel":"每月","percent":"50.1%",
         "level":"green","remainingTenths":501})
     );
     assert_eq!(projection["windows"][1]["percent"], "19.9%");
-    // 空套餐无标签
     assert!(plan_label(Some("")).is_none());
 }
 
@@ -42,6 +37,5 @@ fn balance_warning_thresholds_include_exact_boundary_values() {
     assert_eq!(percent_text(0), "100%");
     // 全部用完显示 0%
     assert_eq!(percent_text(1000), "0%");
-    // 带小数的百分比
     assert_eq!(percent_text(795), "20.5%");
 }

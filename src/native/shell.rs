@@ -1,14 +1,11 @@
 //! 应用外壳控制器:启动、轮询、保存名称/面板和命令转发都在 Rust 中完成。
 //! TSX 只持有 UI 时钟和信号,把每次调用返回的公开状态原样赋给信号。
-// 引入设置用例与公开数据形状
 use super::Link;
-use crate::features::settings::Settings;
-use crate::shared::contracts::models::{LinkCommand, PanelConfig, SettingsResult, ViewState};
-// 引入 nsh 本地元素与模块宏
-use nsh_core::{element::Local, prelude::*};
-// 引入内部可变性
 #[cfg(debug_assertions)]
 use super::fixture::Fixture;
+use crate::features::settings::Settings;
+use crate::shared::contracts::models::{LinkCommand, PanelConfig, SettingsResult, ViewState};
+use nsh_core::{element::Local, prelude::*};
 use std::cell::RefCell;
 #[cfg(debug_assertions)]
 use std::rc::Rc;
@@ -27,11 +24,9 @@ enum Backend {
 // 外壳状态：后端、最近一次公开视图与阶段标记
 #[derive(Default)]
 struct ShellState {
-    // 连接后端
     backend: Backend,
     // 最近一次交给 UI 的视图，名称确认和失败上报都要用
     view: Option<ViewState>,
-    // 当前设置会话
     session: u64,
     // 连接端口是否已初始化，之后才允许下发命令
     started: bool,
@@ -52,9 +47,7 @@ impl Local for ShellRuntime {
 
 // 取外壳状态的副本字段
 fn with<T>(sys: &System, f: impl FnOnce(&mut ShellState) -> T) -> T {
-    // 取运行时
     let runtime = sys.locals.get::<ShellRuntime>();
-    // 借用并执行
     let mut state = runtime.0.borrow_mut();
     f(&mut state)
 }
@@ -92,7 +85,6 @@ fn current_view(sys: &System) -> Result<ViewState, String> {
     with(sys, |state| state.view.clone()).ok_or_else(|| "连接视图尚未建立".to_owned())
 }
 
-// 初始化连接
 #[cfg_attr(not(debug_assertions), allow(unused_variables))]
 fn link_initialize(
     sys: &System,
@@ -103,9 +95,7 @@ fn link_initialize(
     now_ms: u64,
 ) -> Result<ViewState, String> {
     match backend {
-        // 真实连接
         Backend::Real => Link::initialize(id, name, idiom, sys),
-        // 夹具
         #[cfg(debug_assertions)]
         Backend::Fixture(fixture) => fixture.borrow_mut().initialize(id, name, now_ms),
     }
@@ -115,15 +105,12 @@ fn link_initialize(
 #[cfg_attr(not(debug_assertions), allow(unused_variables))]
 fn link_poll(sys: &System, backend: &Backend, now_ms: u64) -> Result<Option<ViewState>, String> {
     match backend {
-        // 真实连接
         Backend::Real => Link::poll(sys),
-        // 夹具
         #[cfg(debug_assertions)]
         Backend::Fixture(fixture) => fixture.borrow_mut().poll(now_ms),
     }
 }
 
-// 下发命令
 #[cfg_attr(not(debug_assertions), allow(unused_variables))]
 fn link_command(
     sys: &System,
@@ -132,9 +119,7 @@ fn link_command(
     now_ms: u64,
 ) -> Result<(), String> {
     match backend {
-        // 真实连接
         Backend::Real => Link::command(command, sys),
-        // 夹具
         #[cfg(debug_assertions)]
         Backend::Fixture(fixture) => {
             fixture.borrow_mut().command(command, now_ms);
@@ -158,14 +143,12 @@ async fn poll_and_observe(
     draft: String,
     now_ms: u64,
 ) -> Result<SettingsResult, String> {
-    // 取后端
     let backend = with(sys, |state| state.backend.clone());
     // 轮询：只有变化时才有新视图
     let changed = match link_poll(sys, &backend, now_ms) {
         Ok(changed) => changed,
         Err(error) => return fail(sys, "poll", error),
     };
-    // 记下新视图
     if let Some(view) = &changed {
         with(sys, |state| state.view = Some(view.clone()));
     }
@@ -188,32 +171,26 @@ async fn command_then_poll(
     draft: String,
     now_ms: u64,
 ) -> Result<Option<SettingsResult>, String> {
-    // 取后端
     let backend = with(sys, |state| state.backend.clone());
     // 端口未启动或已销毁时忽略
     if !with(sys, |state| state.started && !state.disposed) {
         return Ok(None);
     }
-    // 下发
     if let Err(error) = link_command(sys, &backend, command, now_ms) {
         return fail(sys, "command", error).map(Some);
     }
-    // 随后轮询
     poll_and_observe(sys, draft, now_ms).await.map(Some)
 }
 
 /// 应用外壳:TSX 调用它们并把返回的公开状态赋给信号。
-// 外壳模块
 #[module]
 pub struct Shell;
 
-// 模块方法
 #[module]
 impl Shell {
     /// 启动:恢复身份和偏好,初始化连接,返回首个公开状态。
     /// 调试构建里,存储中有测试夹具键时由 Rust 夹具扮演桌面端,否则使用真实连接。
     pub async fn start(now_ms: u64, idiom: String, sys: System) -> Result<SettingsResult, String> {
-        // 选择后端
         #[cfg(debug_assertions)]
         let backend = Fixture::select().map_or(Backend::Real, |fixture| {
             Backend::Fixture(Rc::new(RefCell::new(fixture)))
@@ -221,14 +198,12 @@ impl Shell {
         #[cfg(not(debug_assertions))]
         let backend = Backend::Real;
         with(&sys, |state| state.backend = backend.clone());
-        // 恢复身份和偏好
         let restored = Settings::boot(&sys)?;
         remember(&sys, &restored);
         let identity = restored
             .initialize
             .clone()
             .ok_or_else(|| "设置未提供设备身份".to_owned())?;
-        // 初始化连接
         let view =
             match link_initialize(&sys, &backend, &identity.id, &identity.name, &idiom, now_ms) {
                 Ok(view) => view,
@@ -251,7 +226,6 @@ impl Shell {
                     return Ok(merged);
                 }
             };
-        // 端口已启动
         with(&sys, |state| {
             state.started = true;
             state.view = Some(view.clone());

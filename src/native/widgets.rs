@@ -2,9 +2,7 @@
 // 仅 iOS：引入 C 字符串与路径类型
 #[cfg(target_os = "ios")]
 use std::{
-    // C 字符串类型
     ffi::{CStr, c_char},
-    // 路径类型
     path::PathBuf,
 };
 
@@ -26,9 +24,7 @@ unsafe extern "C" {
     fn loki_widget_host_directory() -> *mut c_char;
     // 释放垫片分配的字符串
     fn loki_widget_host_free(value: *mut c_char);
-    // 请求刷新小组件
     fn loki_widget_host_reload();
-    // 注册系统入口
     fn loki_widget_host_bootstrap();
     // 通知灵动岛的 Agent 状态载荷
     fn loki_agent_activity_notify(payload: *const c_char);
@@ -43,9 +39,7 @@ pub(crate) fn install() {
         // 保留它们的地址,但不执行任何一个入口。
         // 最终的 Swift 宿主引用这些 C 导出；这里保留其地址使 LTO 不会裁掉，但不执行
         let call: unsafe extern "C" fn(*const c_char) -> *mut c_char =
-            // 引入展示核心调用函数
             loki_widget_core::ffi::loki_core_call;
-        // 导出释放函数
         let free: unsafe extern "C" fn(*mut c_char) = loki_widget_core::ffi::loki_core_free;
         // 防止链接器丢弃这两个符号
         std::hint::black_box((call, free));
@@ -62,19 +56,13 @@ pub(super) fn directory() -> Option<PathBuf> {
     // SAFETY: 垫片返回的是持有所有权、以 NUL 结尾的分配,或 null。
     // 垫片返回自有的 NUL 结尾字符串，或空指针
     let raw = unsafe { loki_widget_host_directory() };
-    // 指针为空
     if raw.is_null() {
-        // 返回 None
         return None;
     }
     // SAFETY: 在下面匹配的垫片 free 之前,raw 一直有效。
-    // 转为路径
     let path = unsafe { CStr::from_ptr(raw) }
-        // 转为字符串
         .to_str()
-        // 出错忽略
         .ok()
-        // 转为路径
         .map(PathBuf::from);
     // SAFETY: 这是垫片的分配,且只释放一次。
     // 释放垫片分配的内存，仅一次
@@ -96,34 +84,27 @@ pub(super) fn directory() -> Option<PathBuf> {
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_nativeCall(
-    // JNI 环境
     mut env: JNIEnv<'_>,
-    // 类（未使用）
     _class: JClass<'_>,
     // JSON 请求文本
     request: JString<'_>,
 ) -> jni::sys::jstring {
     // 读取请求文本；null 按空请求处理，由核心返回统一错误
     let request = if request.is_null() {
-        // 空请求
         String::new()
     // 否则分支
     } else {
         // SAFETY: JNI 合同保证 request 是有效的本地引用字符串。
         match unsafe { env.get_string(&request) } {
-            // 转为自有文本
             Ok(text) => text.to_string_lossy().into_owned(),
-            // 取文本失败
             Err(_) => String::new(),
         }
     };
-    // 调用小组件核心
     let response = loki_widget_core::ffi::call(&request);
     // 返回结果字符串；失败交由 Java 侧按 null 处理
     env.new_string(response)
         // 失败返回 null 引用
         .map(|value| value.into_raw())
-        // 异常路径
         .unwrap_or_else(|_| std::ptr::null_mut())
 }
 
@@ -131,9 +112,7 @@ pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_na
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_nativeWidgetDir(
-    // JNI 环境
     mut env: JNIEnv<'_>,
-    // 类（未使用）
     _class: JClass<'_>,
 ) -> jni::sys::jstring {
     // 取共享目录；未就绪时返回 null，调用方按未同步处理
@@ -142,31 +121,25 @@ pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_na
         Some(directory) => env
             // 构造 Java 字符串
             .new_string(directory.to_string_lossy().into_owned())
-            // 成功返回引用
             .map(|value| value.into_raw())
             // 失败返回 null
             .unwrap_or_else(|_| std::ptr::null_mut()),
-        // 没有目录
         None => std::ptr::null_mut(),
     }
 }
 
 #[cfg(any(target_os = "ios", test))]
 #[derive(Default)]
-// 刷新节流门
 struct ReloadGate {
-    // 上次刷新时刻
     last: Option<std::time::Instant>,
     // 是否已有等待中的补刷
     pending: bool,
 }
 
 #[cfg(any(target_os = "ios", test))]
-// 重载门的方法
 impl ReloadGate {
     // 请求刷新：返回需要等待的时长，None 表示已有补刷在排队
     fn request(&mut self, now: std::time::Instant) -> Option<std::time::Duration> {
-        // 已有待执行的重载
         if self.pending {
             // 不再安排
             return None;
@@ -175,7 +148,6 @@ impl ReloadGate {
         let interval = std::time::Duration::from_secs(30);
         // 距离下次允许刷新还要多久
         let remaining = self
-            // 上次重载时刻
             .last
             // 距上次的间隔不足则需等待
             .and_then(|last| interval.checked_sub(now.saturating_duration_since(last)))
@@ -183,7 +155,6 @@ impl ReloadGate {
             .unwrap_or_default();
         // 立即刷新并记录时刻
         if remaining.is_zero() {
-            // 记录本次重载时刻
             self.last = Some(now);
         // 否则登记一次补刷
         } else {
@@ -202,7 +173,6 @@ pub(super) fn agent_activity(_payload: &str) {
     {
         // SAFETY: 载荷字符串在本调用期间存活；垫片复制后立即归还。
         let c_payload = match std::ffi::CString::new(_payload) {
-            // 构造成功
             Ok(value) => value,
             // 内部 NUL 不会出现（JSON 文本）
             Err(_) => return,
@@ -220,16 +190,12 @@ pub(super) fn changed() {
     super::bootstrap::android_widget_changed();
     #[cfg(target_os = "ios")]
     {
-        // 标准库同步原语
         use std::{
             // 互斥锁与一次性初始化
             sync::{Mutex, OnceLock},
-            // 时刻
             time::Instant,
         };
-        // 全局节流门
         static GATE: OnceLock<Mutex<ReloadGate>> = OnceLock::new();
-        // 全局重载门
         let gate = GATE.get_or_init(|| Mutex::new(ReloadGate::default()));
         // 计算需要延后的时间
         let delay = gate
@@ -255,9 +221,7 @@ pub(super) fn changed() {
             let _ = dispatch2::DispatchQueue::main().after(when, move || {
                 // 回调中清除排队标记并记录刷新时刻
                 let mut state = gate.lock().unwrap_or_else(|p| p.into_inner());
-                // 清除待执行标记
                 state.pending = false;
-                // 记录本次重载时刻
                 state.last = Some(Instant::now());
                 // 释放锁
                 drop(state);
@@ -272,36 +236,27 @@ pub(super) fn changed() {
 // 测试：刷新被合并且保留末尾那次变化
 #[cfg(test)]
 mod tests {
-    // 引入上层
     use super::*;
-    // 时长与时刻
     use std::time::{Duration, Instant};
     #[test]
     fn reloads_coalesce_and_preserve_the_trailing_change() {
-        // 当前时刻
         let now = Instant::now();
-        // 新建重载门
         let mut gate = ReloadGate::default();
-        // 首次立即刷新
         assert_eq!(gate.request(now), Some(Duration::ZERO));
         // 5 秒后再请求：需要再等 25 秒
         assert_eq!(
-            // 申请：五秒后
             gate.request(now + Duration::from_secs(5)),
             // 需再等 25 秒
             Some(Duration::from_secs(25))
         );
         // 已有补刷排队，其余请求被合并
         assert_eq!(gate.request(now + Duration::from_secs(6)), None);
-        // 模拟补刷已执行
         gate.pending = false;
         // 模拟三十秒后的上次时刻
         gate.last = Some(now + Duration::from_secs(30));
         // 又过 30 秒后可立即刷新
         assert_eq!(
-            // 申请：一分钟后
             gate.request(now + Duration::from_secs(60)),
-            // 无需等待
             Some(Duration::ZERO)
         );
     }

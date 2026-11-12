@@ -1,8 +1,6 @@
-// 引入被测 HTTP 协议
 use super::*;
 // 复用摘要测试里的消息夹具
 use crate::summary::summary_test::{SOURCE, message};
-// 引入桌面端的协议实现作为对照
 use loki_metris_pairing::widget::{derive_key, open_request, seal_response};
 
 // 测试用的设备 ID
@@ -125,9 +123,7 @@ fn hosts_are_limited_to_private_lan_addresses() {
         "mac-mini.local",
         // 末尾带点的 .local 也合法
         "studio.local.",
-        // 逐个检查
     ] {
-        // 应判定为合法
         assert!(valid_host(host), "{host}");
     }
     // 非法主机：公网地址、前导零、非 .local 域名、大写、公网 IPv6、非法作用域、空串
@@ -139,11 +135,8 @@ fn hosts_are_limited_to_private_lan_addresses() {
         "2001:db8::1",
         "fe80::1%EN0",
         "-a.local",
-        // 空串
         "",
-        // 逐个检查
     ] {
-        // 应判定为非法
         assert!(!valid_host(host), "{host}");
     }
     // 取一份有效凭据作为基础
@@ -166,7 +159,6 @@ fn targets_come_only_from_declared_capability() {
     message["widgetEndpoint"] = json!({"version": 1, "port": 51_303, "key": STANDARD.encode(key)});
     // 没声明 widgetHttpV1：不产生凭据
     assert!(target_from_message(&message, SOURCE, DEVICE, "192.168.1.20").is_none());
-    // 声明能力后才产生
     message["capabilities"] = json!(["widgetHttpV1"]);
     let first = target_from_message(&message, SOURCE, DEVICE, "192.168.1.20").unwrap();
     let second = target_from_message(&message, SOURCE, DEVICE, "192.168.1.20").unwrap();

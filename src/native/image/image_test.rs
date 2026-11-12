@@ -1,4 +1,3 @@
-// 引入被测模块
 use super::*;
 use serde_json::Value;
 use std::{fs, io::Cursor};
@@ -14,7 +13,6 @@ fn prepared(source: String) -> Result<String, String> {
     // 唤醒时让测试线程继续运行
     struct ThreadWake(std::thread::Thread);
     impl Wake for ThreadWake {
-        // 空唤醒器
         fn wake(self: Arc<Self>) {
             self.0.unpark();
         }
@@ -22,7 +20,6 @@ fn prepared(source: String) -> Result<String, String> {
     let waker = Waker::from(Arc::new(ThreadWake(std::thread::current())));
     let mut context = Context::from_waker(&waker);
     let mut future = Box::pin(ImageFrames::prepare(source));
-    // 最多等 5 秒
     let until = Instant::now() + Duration::from_secs(5);
     // 轮询直到完成，否则停车等待唤醒
     loop {
@@ -100,11 +97,8 @@ fn single_frames_and_errors_do_not_fall_back_to_uncontrolled_animation() {
     )
     .unwrap();
     assert_eq!(value["animated"], false);
-    // 断言
     assert_eq!(
-        // 第一帧的像素
         pixels(value["frames"][0]["source"].as_str().unwrap()),
-        // 应为全透明
         [0; 4]
     );
     // 非法的内联 GIF 都要报错，而不是退回不受控的动画
@@ -122,7 +116,6 @@ fn regular_pngs_use_the_stock_path_without_rewriting_originals() {
     fs::write(&path, bytes).unwrap();
     // 普通 PNG 走标准路径：返回“非动画”
     let result = prepare(&fixtures::file_url(&path));
-    // 原文件内容不变
     let untouched = fs::read(&path).unwrap();
     fs::remove_file(path).unwrap();
     assert_eq!(result.unwrap(), super::STATIC_IMAGE);
@@ -187,6 +180,5 @@ fn valid_static_images_between_eight_and_thirty_two_mib_keep_the_stock_path() {
         .unwrap();
     let result = prepare(&fixtures::file_url(&path));
     fs::remove_file(path).unwrap();
-    // 返回非动画的清单
     assert_eq!(result.unwrap(), super::STATIC_IMAGE);
 }

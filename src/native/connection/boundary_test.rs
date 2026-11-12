@@ -1,6 +1,4 @@
-// 引入被测模块
 use super::*;
-// 引入套接字、持久化与快照校验
 use super::{
     connection_test::{amount, files, snapshot},
     framed_socket::{FramedSocket, SocketEvent},
@@ -13,7 +11,6 @@ use std::{fs, io::Write, net::TcpListener, path::Path, time::Duration};
 #[test]
 // 原生快照边界在报告在线之前就拒绝格式错误的快照
 fn native_snapshot_boundary_rejects_malformed_before_online() {
-    // 合法快照通过校验
     let v = snapshot(vec![]);
     assert!(validate_snapshot(&v).is_ok());
     // 只有错误而没有统计也合法
@@ -30,10 +27,8 @@ fn native_snapshot_boundary_rejects_malformed_before_online() {
     ] {
         let mut bad = v.clone();
         bad["tokens"]["all"]["total"] = total;
-        // 应校验失败
         assert!(validate_snapshot(&bad).is_err());
     }
-    // 重复的代理
     let mut bad = v.clone();
     bad["tokens"]["agents"] =
         json!([{"agent":"codex","amount":amount("1")},{"agent":"codex","amount":amount("2")}]);
@@ -119,7 +114,6 @@ fn native_and_projected_snapshot_share_agent_identity_rules() {
         {"agent":"cafe\u{301}","amount":amount("2")}
     ]);
     assert!(validate_snapshot(&bad).is_err());
-    // 投影同样拒绝
     assert!(crate::features::connection::snapshot::project_snapshot(&bad, &Value::Null).is_none());
     // 启用列表里归一化后重复的名称
     let mut bad = v;

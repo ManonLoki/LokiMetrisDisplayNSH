@@ -1,9 +1,6 @@
-// 引入被测引擎
 use super::*;
-// 引入有序映射
 use std::collections::BTreeMap;
 
-// 测试用设备 ID
 const ID: &str = "11111111-1111-4111-8111-111111111111";
 
 #[derive(Default)]
@@ -14,11 +11,8 @@ struct Memory {
     reject: bool,
 }
 
-// 内存存储的实现
 impl Store for Memory {
-    // 按键读取
     fn get(&self, key: &str) -> Option<String> {
-        // 返回副本
         self.values.get(key).cloned()
     }
     // 拒绝模式下返回配额错误
@@ -55,7 +49,6 @@ fn ready() -> (Engine, Memory) {
     );
     let mut engine = Engine::default();
     run(&mut engine, &mut store, json!({"op":"boot"}));
-    // 返回引擎与存储
     (engine, store)
 }
 
@@ -81,7 +74,6 @@ fn boot_restores_original_keys_without_rewriting_existing_records() {
     let raw =
         r#"{"showUsage":false,"showHooks":false,"usageDetail":"detailed","hookLayout":"2x2"}"#;
     store.values.insert(PANEL.into(), raw.into());
-    // 重新启动
     let result = run(&mut engine, &mut store, json!({"op":"boot"}));
     // 恢复出原有的设备身份、名称草稿与面板
     assert_eq!(result.device.unwrap().id, ID);
@@ -108,9 +100,7 @@ fn corrupt_identity_requests_native_generation_and_persists_its_confirmation() {
     // UI 把未确认的身份显示为不可用,而不是占位 UUID。
     // 界面把未确认的身份显示为不可用，而不是占位 UUID
     assert_eq!(result.device.unwrap().id, "");
-    // 名称仍沿用
     assert_eq!(result.draft.as_deref(), Some("旧名称"));
-    // 面板回落到默认值
     assert_eq!(result.panel.unwrap()["hookLayout"], "1x1");
     // 原生端口确认身份后，引擎把它保存
     run(
@@ -124,41 +114,10 @@ fn corrupt_identity_requests_native_generation_and_persists_its_confirmation() {
 }
 
 #[test]
-// 只有本地没有偏好时才采纳旧版偏好
-fn legacy_preferences_are_adopted_only_when_no_local_preferences_exist() {
-    let (mut engine, mut store) = ready();
-    // 原生视图带着旧版的面板偏好
-    let mut native = view("客厅手机");
-    native["panelConfig"] = json!({"showUsage":false,"hookLayout":"2x2"});
-    // 本地没有偏好：采纳旧版偏好
-    let result = run(
-        &mut engine,
-        &mut store,
-        json!({"op":"initialized","view":native}),
-    );
-    assert_eq!(result.panel.unwrap()["showUsage"], false);
-    assert_eq!(saved(&store, PANEL)["hookLayout"], "2x2");
-    let existing = store.values[PANEL].clone();
-    // 重新启动后，本地已有偏好
-    run(&mut engine, &mut store, json!({"op":"boot"}));
-    // 旧版偏好再变也不会再被采纳
-    native["panelConfig"]["showUsage"] = json!(true);
-    let result = run(
-        &mut engine,
-        &mut store,
-        json!({"op":"initialized","view":native}),
-    );
-    assert!(result.panel.is_none());
-    assert_eq!(store.values[PANEL], existing);
-}
-
-#[test]
 // 面板写入被拒时，可见偏好不变，也不下发命令
 fn rejected_panel_write_never_changes_visible_preferences_or_dispatches_a_command() {
     let (mut engine, mut store) = ready();
-    // 存储拒绝写入
     store.reject = true;
-    // 保存面板
     let result = run(
         &mut engine,
         &mut store,
@@ -182,7 +141,6 @@ fn rejected_panel_write_never_changes_visible_preferences_or_dispatches_a_comman
     );
     assert!(result.commands.is_empty());
     assert_eq!(result.panel.unwrap(), saved(&store, PANEL));
-    // 没有面板问题
     assert!(result.panel_issue.is_none());
 }
 
@@ -204,12 +162,10 @@ fn illegal_names_and_rejected_storage_never_reach_the_native_port() {
         result.name_issue.as_deref(),
         Some("设备名称不能超过 160 个 UTF-8 字节")
     );
-    // 存储未变
     assert_eq!(store.values[DEVICE], old);
     // 名称合法但存储拒绝写入
     store.reject = true;
     let result = begin(&mut engine, &mut store);
-    // 同样不下发命令
     assert!(result.commands.is_empty());
     assert!(!result.saving_name);
     assert_eq!(result.name_feedback.as_deref(), Some(SAVE_FAILED));
@@ -333,7 +289,6 @@ fn dispatch_failure_rolls_back_only_the_record_owned_by_that_request() {
     );
     // 投递失败只回滚属于自己的记录
     run(&mut engine, &mut store, json!({"op":"nameDispatchFailed"}));
-    // 别人的记录不动
     assert_eq!(saved(&store, DEVICE)["name"], "另一个窗口已保存");
 }
 
@@ -342,9 +297,7 @@ fn dispatch_failure_rolls_back_only_the_record_owned_by_that_request() {
 fn a_disposed_or_replaced_generation_cannot_roll_back_a_new_session() {
     let (mut engine, mut store) = ready();
     begin(&mut engine, &mut store);
-    // 记下当前会话号
     let old = engine.session;
-    // 释放会话
     run(&mut engine, &mut store, json!({"op":"dispose"}));
     // 旧会话迟到的失败通知
     let late = serde_json::from_value(json!({"op":"nameDispatchFailed","session":old})).unwrap();
@@ -365,13 +318,11 @@ fn a_disposed_or_replaced_generation_cannot_roll_back_a_new_session() {
 fn a_failed_native_poll_ends_pending_confirmation_and_restores_the_previous_name() {
     let (mut engine, mut store) = ready();
     begin(&mut engine, &mut store);
-    // 原生轮询失败
     let result = run(
         &mut engine,
         &mut store,
         json!({"op":"portFailure","view":view("客厅手机"),"stage":"poll","error":"owner stopped"}),
     );
-    // 待确认状态结束
     assert!(!result.saving_name);
     assert_eq!(result.name_feedback.as_deref(), Some(SAVE_FAILED));
     // 名称恢复为先前的
@@ -389,12 +340,8 @@ fn port_failure_keeps_the_last_snapshot() {
         &mut store,
         json!({"op":"portFailure","view":native,"stage":"poll","error":"closed socket"}),
     );
-    // 取出失败时的视图
     let failed = result.view.unwrap();
-    // 状态为同步失败
     assert_eq!(failed["status"], "同步失败");
-    // 未连接
     assert_eq!(failed["connected"], false);
-    // 快照沿用原生快照
     assert_eq!(failed["snapshot"], native["snapshot"]);
 }

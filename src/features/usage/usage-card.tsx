@@ -1,33 +1,19 @@
-// 引入画布、滚动、文本、视图、响应式原语与字体缩放
 import { Canvas, Scroll, Text, View, computed, effect, signal, type Accessor, type Bounds, type TextStyle, fontScale } from "nsh";
-// 引入投影函数、颜色函数与类型
 import { Rules } from "loki-metris-mobile-display/native";
 import { quotaColor, type DisplayRow, type QuotaProjection, type UsageSnapshot } from "./card-projection";
-// 引入用量详细程度类型
 import type { UsageDetail } from "../../shared/contracts/panel";
-// 引入入场动效、数字动画与扫描光效
 import { CyberArrival, CyberNumber, CyberSurfaceScan } from "../../shared/ui/effects";
-// 引入透明度函数与色板
 import { cyberAlpha, cyberColors as color } from "../../shared/ui/theme";
 
-// 卡片背景色
 const background = "#101E33";
-// 前景文字色
 const foreground = "#E9F2FF";
-// 弱化文字色
 const muted = "#9BB0C9";
-// 额度窗口类型简写
 type Window = DisplayRow["windows"][number];
 
-// 用量卡片属性
 export interface UsageCardProps {
-  // 卡片宽度
   width: Accessor<number>;
-  // 卡片高度
   height: Accessor<number>;
-  // 当前快照
   snapshot: Accessor<UsageSnapshot | null | undefined>;
-  // 精简或详细模式
   detail: Accessor<UsageDetail>;
   // 卡片是否处于活跃状态
   active?: Accessor<boolean>;
@@ -37,53 +23,37 @@ export interface UsageCardProps {
 
 /** Android UsageCard.kt:测量等宽字体的总额、独立的纵向滚动,
  * 以及从已认证快照投影出来的提供方窗口。 */
-// 用量卡片
 export function UsageCard(props: UsageCardProps) {
-  // 是否精简模式
   const compact = () => props.detail() === "compact";
   // 随卡片尺寸缩放的系数，限制在 0.85 到 1.4
   const scale = () => Math.max(0.85, Math.min(1.4, props.width() / 360, props.height() / 320));
   // 内边距，精简模式更大
   const padding = () => (compact() ? 16 : 12) * scale();
-  // 元素间距
   const spacing = () => (compact() ? 8 : 5) * scale();
-  // 明细文字字号
   const detailSize = () => 12 * scale();
-  // 内容区宽度
   const contentWidth = () => Math.max(1, props.width() - padding() * 2);
-  // 内容区高度
   const contentHeight = () => Math.max(0, props.height() - padding() * 2);
   // 由快照计算出的投影
   const projection = computed(() => Rules.usageCardProjection(props.snapshot()));
   // 是否有 Token 数据
   const hasTokens = computed(() => projection().hasTokens);
-  // 是否有精确值
   const hasExact = computed(() => projection().hasExact);
-  // 供应商额度列表
   const providers = () => projection().providers;
-  // 明细行
   const rows = () => projection().rows;
-  // 标题行实测高度
   const headerHeight = signal(0);
-  // 精确值行实测高度
   const detailsHeight = signal(0);
   // 精确值出现或消失时重置其高度，等待重新测量
   effect(() => { hasExact(); detailsHeight.set(0); });
-  // 摘要区可用高度
   const summaryHeight = () => Math.max(0, contentHeight() - headerHeight() - spacing());
   // 大数字可用高度：精简模式随剩余空间，详细模式取内容高度的 22%
   const numberHeight = () => compact()
-    // 高度下限
     ? Math.max(56, (providers().length === 0 ? summaryHeight() : Math.min(summaryHeight(), Math.max(contentHeight() * 0.45, 96))) - detailsHeight() - spacing())
     // 否则按内容高度的比例
     : Math.max(40, contentHeight() * 0.22);
-  // 总量文本
   const text = () => projection().total;
   // 大数字字号，由下方画布二分得出
   const numberSize = signal(48);
-  // 大数字样式
   const numberStyle = (): TextStyle => ({ color: color.cyan, fontFamily: "monospace", fontWeight: 600,
-    // 字号、行高与字距
     fontSize: numberSize(), lineHeight: numberSize() * 1.12, letterSpacing: 0, textAlign: "center" });
   // 额度条宽度随内容宽度分三档
   const barWidth = () => contentWidth() / fontScale() >= 440 ? 44 : contentWidth() / fontScale() >= 280 ? 28 : 18;
@@ -120,36 +90,28 @@ export function UsageCard(props: UsageCardProps) {
   const missing = () => <Text style={{ color: muted, fontSize: 14, lineHeight: 20 }}>
     {projection().missingText}
   </Text>;
-  // 卡片入场容器
   return <CyberArrival order={0} active={props.active} testID="usage-card" onLayout={({ bounds }) => props.onFrame?.(bounds)}
     // 样式：撑满、背景色与圆角
     style={{ flex: 1, minWidth: 0, minHeight: 0, backgroundColor: background, borderRadius: 18,
-      // 描边与裁剪
       borderWidth: 1, borderColor: "transparent", overflow: "hidden" }}>
     {/* 表面扫描光效 */}
     <CyberSurfaceScan active={props.active} surfaceColor={background} testID="usage-surface-scan" />
     {/* 隐形画布：借助 measureText 二分求出能放下的最大字号 */}
     <Canvas accessible={false} accessibilityElementsHidden
-      // 样式：隐藏的占位
       style={{ pointerEvents: "none", position: "absolute", width: 1, height: 1, opacity: 0 }} draw={(cx) => {
-        // 二分下界
         let low = compact() ? 20 : 18;
-        // 二分上界
         let high = compact() ? 160 : 48;
         // 迭代 10 次足够收敛
         for (let step = 0; step < 10; step++) {
-          // 候选字号
           const candidate = (low + high) / 2;
           // 以候选字号设置字体后测量
           cx.font = `600 ${candidate * fontScale()}px monospace`;
           // 宽高都放得下则提高下界，否则降低上界
           if (cx.measureText(text()).width <= contentWidth() && candidate * 1.12 * fontScale() <= numberHeight()) low = candidate;
-          // 放不下，降低上界
           else high = candidate;
         }
         // 变化超过阈值才更新字号
         if (Math.abs(numberSize() - low) > 0.05) numberSize.set(low);
-      // 绘制回调结束
       }} />
     {/* 垂直滚动的内容区 */}
     <Scroll testID="usage-scroll" style={{ flex: 1, minHeight: 0, minWidth: 0 }}
@@ -212,9 +174,7 @@ export function UsageCard(props: UsageCardProps) {
   </CyberArrival>;
 }
 
-// 水平分隔线
 function Divider() {
-  // 分隔线
   return <View style={{ height: 1, width: "100%", backgroundColor: cyberAlpha(muted, 0.2) }} />;
 }
 
@@ -228,7 +188,6 @@ function ProviderTitle(props: { name: string; plan?: string | null; size: number
     <Text style={{ numberOfLines: 1, color: foreground, fontSize: props.size, lineHeight: props.lineHeight, fontWeight: props.weight }}>{props.name}</Text>
     {/* 有套餐时显示徽标 */}
     {props.plan ? <View style={{ borderRadius: 4, backgroundColor: cyberAlpha(color.cyan, 0.08), borderWidth: 0.5,
-      // 边框颜色与内边距
       borderColor: cyberAlpha(color.cyan, 0.3), paddingHorizontal: 5, paddingVertical: 1 }}>
       <Text style={{ numberOfLines: 1, color: color.cyan, fontSize: 10, lineHeight: 14, fontWeight: 500 }}>{props.plan}</Text>
     </View> : null}
@@ -237,7 +196,6 @@ function ProviderTitle(props: { name: string; plan?: string | null; size: number
 
 // 详细模式下的代理明细行
 function UsageRow(props: { row: DisplayRow; width: number; scale: number; detailSize: number; barWidth: number; gap: number }) {
-  // 行容器
   return <View testID={`usage-row-${props.row.name}`} style={{ gap: 2 * props.scale }}>
     {/* 标题行：供应商标题与紧凑用量 */}
     <View style={{ flexDirection: "row", gap: props.gap, alignItems: "center" }}>
@@ -246,7 +204,6 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
       {/* 有紧凑用量时显示，宽度不超过 55% */}
       {props.row.compact != null ? <Scroll horizontal scrollbar={false} style={{ maxWidth: props.width * 0.55, flexShrink: 1 }}>
         <Text style={{ numberOfLines: 1, userSelect: "text", color: foreground, fontFamily: "monospace", fontSize: 18 * props.scale,
-          // 行高
           lineHeight: 18 * props.scale * 1.35 }}>{props.row.compact}</Text>
       </Scroll> : null}
     </View>
@@ -262,7 +219,6 @@ function UsageRow(props: { row: DisplayRow; width: number; scale: number; detail
         <Text style={{ numberOfLines: 1, color: muted, fontSize: props.detailSize, lineHeight: props.detailSize * 1.4, fontWeight: 500 }}>{window.kindLabel}</Text>
         {/* 剩余百分比，颜色表示等级 */}
         <Text style={{ numberOfLines: 1, color: quotaColor(window.level), fontFamily: "monospace", fontSize: props.detailSize,
-          // 行高与字重
           lineHeight: props.detailSize * 1.4, fontWeight: 500 }}>{window.percent}</Text>
         {/* 剩余额度条 */}
         <BalanceBar window={window} width={props.barWidth} />
@@ -283,7 +239,6 @@ function ProviderQuota(props: { provider: QuotaProjection; width: number }) {
   const inlineTitle = () => props.width >= 260 && fontScale() < 1.3;
   // 额度窗口区域可用宽度
   const windowsWidth = () => inlineTitle() ? (props.width - 12) * 2 / 2.8 : props.width;
-  // 窗口列表
   const windows = () => props.provider.windows;
   // 块容器：同行或上下排布
   return <View testID={`quota-${props.provider.provider}`} style={{ flexDirection: inlineTitle() ? "row" : "column", gap: inlineTitle() ? 12 : 5 }}>
@@ -318,18 +273,14 @@ function ProviderQuota(props: { provider: QuotaProjection; width: number }) {
 
 // 额度条：底槽加按剩余比例填充的色条
 function BalanceBar(props: { window: Window; width?: number }) {
-  // 底槽，默认撑满
   return <View style={{ width: props.width ?? "100%", height: 3, borderRadius: 1.5, overflow: "hidden", backgroundColor: cyberAlpha(muted, 0.15) }}>
     {/* 剩余大于 0 才画填充 */}
     {props.window.remainingTenths > 0 ? <View style={{ height: 3, borderRadius: 1.5,
-      // 宽度按剩余比例
       width: `${props.window.remainingTenths / 10}%`, backgroundColor: quotaColor(props.window.level) }} /> : null}
   </View>;
 }
 
-// 额度观测时间文案
 function QuotaObservedAt(props: { unix: number }) {
-  // 额度观测时间文本
   return <Text testID="quota-observed-at" style={{ color: muted, fontSize: 11, lineHeight: 16 }}>
     {`额度更新 ${quotaTimestamp(props.unix)}`}
   </Text>;

@@ -1,18 +1,12 @@
-// 引入 nsh 运行时与存储
 import { effect, mount, reduceMotion, signal, Storage, Text, View } from "nsh";
-// 引入按钮
 import { Button } from "nsh/base";
-// 引入动效作用域
 import { CyberMotionScope } from "../../shared/ui/effects";
-// 引入图片组件
 import { CyberImage } from "../../shared/ui/image";
 
 // 显式的仅图片夹具:没有 Link、真实配对、网络或连接所有者。
 // 读取测试选项后挂载
 void (async () => {
-  // 读取测试选项
   const options = JSON.parse((await Storage.getItem("test.imagePlayback")) ?? "{}");
-  // 图片地址
   const source = String(options.source ?? "");
   // 两个图片的活跃开关与前台开关
   const activeA = signal(true), activeB = signal(false), foreground = signal(true);
@@ -25,7 +19,6 @@ void (async () => {
   };
   // 写入矩形供测试读取
   await Storage.setItem("test.imagePlaybackRects", JSON.stringify(rects));
-  // 挂载页面
   mount(() => {
     // 把状态持续写入存储
     effect(() => {

@@ -1,7 +1,5 @@
-// 引入被测摘要模块
 use super::*;
 
-// 测试用来源 ID
 pub(crate) const SOURCE: &str = "c1c1c1c1-2222-4ccc-8ccc-cccccccccccc";
 
 // 一条完整的测试快照消息：Token、Hook（含私密正文）与额度
@@ -15,7 +13,6 @@ pub(crate) fn message() -> Value {
             "contentTruncated": false, "image": "a".repeat(64)}],
         // 额度：Codex 的五小时窗口
         "providerQuota": {"observedAtUnix": 10, "providers": [{"provider": "codex", "plan": "plus",
-            // 已用 25%
             "fiveHour": {"kind": "fiveHour", "usedTenths": 250}}]},
     }})
 }
@@ -30,7 +27,6 @@ fn summary_drops_private_hook_fields_and_keeps_day_bounds() {
         hook,
         &json!({"agent": "Codex", "slot": 2, "behavior": "running"})
     );
-    // 日界被保留
     assert_eq!(record["snapshot"]["tokens"]["day"]["endMs"], 86_400_001);
     // 租约截止 = 接收时间 + 45 秒
     assert_eq!(record["validUntilMs"], 1_000 + LEASE_MS);

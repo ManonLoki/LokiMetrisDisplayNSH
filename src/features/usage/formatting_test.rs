@@ -1,4 +1,3 @@
-// 引入被测模块
 use super::*;
 use serde_json::json;
 
@@ -16,9 +15,7 @@ fn integer_rounding_promotes_units_without_losing_full_u64_precision() {
         ("1000000000000", "1000B"),
         // u64 最大值的紧凑写法
         ("18446744073709551615", "18446744073.71B"),
-        // 逐项检查
     ] {
-        // 紧凑写法符合预期
         assert_eq!(token_compact(raw), expected, "{raw}");
     }
     // 精确写法每三位加逗号
@@ -43,7 +40,6 @@ fn unavailable_or_invalid_decimals_do_not_become_numeric_zero() {
         // 无需压缩的值保持原样
         assert_eq!(token_compact(raw), raw);
     }
-    // 精确写法保持原样
     assert_eq!(token_exact("1.5"), "1.5");
     // 前导零的纯数字不足一千，原样返回
     assert_eq!(token_compact("000999"), "000999");
@@ -54,7 +50,6 @@ fn unavailable_or_invalid_decimals_do_not_become_numeric_zero() {
         "不可用"
     );
     assert!(!has_numeric_value(
-        // 可用但没有总量
         &json!({"availability":"available","total":null})
     ));
 }
@@ -62,7 +57,6 @@ fn unavailable_or_invalid_decimals_do_not_become_numeric_zero() {
 // 无障碍文案保留完整度与估算的限定词
 #[test]
 fn accessibility_preserves_completeness_and_estimation_qualifiers() {
-    // 部分统计、推算
     let amount = json!({"availability":"available","total":"18446744073709551615",
         "completeness":"partial","confidence":"derived"});
     assert_eq!(

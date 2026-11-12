@@ -2,9 +2,9 @@
 
 Windows、macOS、Linux、Android 与 iOS/iPadOS 共用 `App.tsx` 和同一份 NSH TSX/Rust 实现。Apple Watch 是独立 SwiftUI 配套应用，接收 iPhone 已生成的公开缓存。
 
-iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`crates/widget-core/` 复用当前快照与展示规则，执行共享摘要、租约和独立只读 HTTP 协议；`platform/ios/` 执行系统容器、网络传输、时间线刷新与绘制。下方交互图覆盖主应用、小组件与 Watch 三条通道。
+iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`crates/widget-core/` 复用当前快照与展示规则，执行共享摘要、租约和独立只读 HTTP 协议；`platform/ios/` 执行系统容器、网络传输、时间线刷新与绘制。
 
-[打开交互架构图](../../.archify/architecture-lokimetris-20261028-105048/lokimetris.html) · [连接协议](protocol.md) · [Watch 数据契约](watch-companion.md)
+[连接协议](protocol.md) · [Watch 数据契约](watch-companion.md)
 
 ## 从入口到展示台
 
@@ -75,7 +75,5 @@ iPhone 的灵动岛实时活动走应用内通道：连接 owner 在认证快照
 | 资源验证与播放 | [资源接收](../../src/native/connection/assets.rs)、[图片模块](../../src/native/image/mod.rs)、[界面图片](../../src/shared/ui/image.tsx) |
 | 小组件通道 | [摘要发布与撤销](../../src/native/connection/widget.rs)、[共享存储](../../crates/widget-core/src/store.rs)、[Swift 入口](../../crates/widget-core/src/ffi.rs)、[系统调度](../../platform/ios/bridge/WidgetHostBridge.swift)、[Android 提供器](../../src/native/android/java/com/manonloki/lokimetrisdisplay/widget/LokiWidgetProvider.java)、[小组件打包](../../tools/build/android_widget.py) |
 | iPhone 到 Watch | [缓存发布](../../src/native/companion/mod.rs)、[系统投递](../../src/native/companion/ios/session.rs)、[手表缓存](../../platform/watchos/Sources/SnapshotCache.swift) |
-
-交互图由 archify 的 architecture 模式生成，[candidate.json](../../.archify/architecture-lokimetris-20261028-105048/candidate.json) 保存组件、关系与源码行号，证据固定在本仓库的一次提交。生成命令与检查结果见图目录的 [维护说明](../../.archify/architecture-lokimetris-20261028-105048/README.md)。
 
 开发命令见 [构建说明](../development/build.md)，自动测试与设备验收边界见 [测试说明](../development/test.md)。

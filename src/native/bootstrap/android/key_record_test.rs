@@ -1,4 +1,3 @@
-// 引入被测模块
 use super::*;
 
 #[test]
@@ -12,7 +11,6 @@ fn an_existing_vault_without_its_envelope_is_preserved() {
     fs::write(&file, b"existing ciphertext").unwrap();
     // 没有密钥记录：必须报错，不能新建密钥
     assert!(read(None, None, &directory).is_err());
-    // 原数据完好
     assert_eq!(fs::read(&file).unwrap(), b"existing ciphertext");
     fs::remove_dir_all(directory).unwrap();
 }

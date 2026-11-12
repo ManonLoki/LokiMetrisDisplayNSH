@@ -1,10 +1,7 @@
-// 引入被测模块
 use super::*;
 use std::cell::RefCell;
 
-// 已保存的身份
 const OLD: &str = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-// 新生成的身份
 const NEW: &str = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 
 #[test]
@@ -16,7 +13,6 @@ fn an_existing_identity_does_not_need_or_read_pairing_records() {
         |_| panic!("must not overwrite identity"),
         || panic!("must not replace identity"),
     );
-    // 直接返回已有身份
     assert_eq!(result.unwrap(), OLD);
 }
 
@@ -33,12 +29,10 @@ fn a_missing_identity_is_generated_and_saved_before_returning() {
             *saved.borrow_mut() = Some(id.into());
             Ok(true)
         },
-        // 生成：返回新身份
         || NEW.into(),
     );
     // 返回的就是新生成的
     assert_eq!(result.unwrap(), NEW);
-    // 且已保存
     assert_eq!(saved.into_inner(), Some(NEW.to_owned()));
 }
 
@@ -54,9 +48,7 @@ fn read_and_write_failures_cannot_claim_a_new_identity() {
         ),
         Err(Failure::StoreUnavailable)
     );
-    // 断言
     assert_eq!(
-        // 加载结果
         load(
             // 写入失败：报告写入失败，不声称拥有新身份
             || Ok(None),
@@ -90,6 +82,5 @@ fn simultaneous_first_start_must_confirm_the_identity_that_was_saved() {
         },
         || NEW.into(),
     );
-    // 视为成功
     assert_eq!(result.unwrap(), NEW);
 }

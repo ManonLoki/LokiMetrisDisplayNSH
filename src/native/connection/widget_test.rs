@@ -1,6 +1,4 @@
-// 引入被测模块
 use super::*;
-// 引入配对材料、测试夹具与套接字
 use crate::native::connection::{
     Material,
     connection_test::{CLIENT, amount, snapshot},
@@ -12,7 +10,6 @@ use std::{collections::BTreeMap, net::TcpListener, sync::mpsc};
 #[test]
 // 认证后的小组件授权使用套接字对端地址，且绝不进入公开视图
 fn authenticated_widget_grants_use_socket_peer_and_never_enter_public_view() {
-    // 独立的临时根目录
     let root = std::env::temp_dir().join(format!("loki-widget-owner-{}", uuid::Uuid::new_v4()));
     // 模拟 App Group 共享目录
     let shared = root.join("shared");
@@ -29,11 +26,8 @@ fn authenticated_widget_grants_use_socket_peer_and_never_enter_public_view() {
         "widget-fixture",
         tx.clone(),
     );
-    // 不发布手表缓存
     owner.watch_companion = false;
-    // 接上共享存储
     owner.widget = WidgetShare::new(Some(shared.clone()));
-    // 选中测试桌面
     owner.selected = Some(CLIENT.into());
     // 本机监听一个端口，让套接字有真实的对端地址
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -101,7 +95,6 @@ fn authenticated_widget_grants_use_socket_peer_and_never_enter_public_view() {
         "a late HTTP result cannot revive a forgotten source"
     );
     drop(owner);
-    // 清理
     std::fs::remove_dir_all(root).unwrap();
 }
 
@@ -112,14 +105,12 @@ fn widget_summary_uses_the_same_unicode_duplicate_admission_as_the_application()
     let mut raw = snapshot(vec![]);
     raw["tokens"]["agents"] =
         json!([{"agent":"Café","amount":amount("1")},{"agent":"Cafe\u{301}","amount":amount("2")}]);
-    // 应用的投影拒绝
     assert!(crate::features::connection::snapshot::project_snapshot(&raw, &json!({})).is_none());
     // 小组件摘要同样拒绝
     assert!(summary::from_message(&raw, CLIENT, 1000).is_none());
     // 启用列表里的两个名称归一化后重复
     let mut raw = snapshot(vec![]);
     raw["enabledAgents"] = json!(["claudeCode", "CLAUDE_code"]);
-    // 同样被拒绝
     assert!(summary::from_message(&raw, CLIENT, 1000).is_none());
 }
 
@@ -133,13 +124,9 @@ fn owner_startup_revokes_shared_targets_no_longer_in_its_pairing_book() {
     let (tx, _rx) = mpsc::sync_channel(256);
     let mut owner = Owner::for_test(
         root.join("link"),
-        // 标识
         &id,
-        // 名称
         "Widget fixture",
-        // 目录名
         "widget-fixture",
-        // 事件通道
         tx,
     );
     // owner 的配对簿是空的
@@ -154,13 +141,9 @@ fn owner_startup_revokes_shared_targets_no_longer_in_its_pairing_book() {
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
     )
     .unwrap();
-    // 由快照构造摘要
     let record = summary::from_message(&snapshot(vec![]), CLIENT, 1000).unwrap();
-    // 打开共享存储
     let store = Store::new(&shared);
-    // 以已认证身份保存
     store.save_authenticated(&record, Some(&target)).unwrap();
-    // 启动对账
     owner.reconcile_widget_authorization();
     // 凭据与摘要都被撤销
     assert!(store.load_target().unwrap().is_none() && store.load().unwrap().is_none());
@@ -178,18 +161,12 @@ fn failed_shared_revocation_cannot_report_forget_or_source_switch_success() {
     let id = uuid::Uuid::new_v4().to_string();
     let (tx, _rx) = mpsc::sync_channel(256);
     let mut owner = Owner::for_test(
-        // 链接目录
         root.join("link"),
-        // 标识
         &id,
-        // 名称
         "Widget fixture",
-        // 目录名
         "widget-failure-fixture",
-        // 事件通道
         tx,
     );
-    // 关闭手表配套
     owner.watch_companion = false;
     // 已选中并已配对的桌面
     owner.selected = Some(CLIENT.into());
@@ -200,13 +177,10 @@ fn failed_shared_revocation_cannot_report_forget_or_source_switch_success() {
             client_id: CLIENT.into(),
             device_id: id.clone(),
             name: "Fixture".into(),
-            // 测试用密钥
             secret: "private test book".into(),
-            // 保存时间
             saved_at_ms: 1,
         },
     );
-    // 设置小组件共享
     owner.widget = WidgetShare::new(Some(shared.clone()));
     // 共享存储里已有该桌面的凭据与摘要
     let target = widget_http::target(
@@ -217,18 +191,13 @@ fn failed_shared_revocation_cannot_report_forget_or_source_switch_success() {
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
     )
     .unwrap();
-    // 由快照构造摘要
     let record = summary::from_message(&snapshot(vec![]), CLIENT, 1000).unwrap();
-    // 打开共享存储
     Store::new(&shared)
-        // 以已认证身份保存
         .save_authenticated(&record, Some(&target))
-        // 保存成功
         .unwrap();
     // 把共享目录挪走，模拟撤销时存储不可用
     let unavailable = root.join("withheld");
     std::fs::rename(&shared, &unavailable).unwrap();
-    // 此时忘记桌面
     let forgotten = owner.command(Command::Forget {
         client_id: CLIENT.into(),
     });
@@ -261,7 +230,6 @@ fn failed_shared_revocation_cannot_report_forget_or_source_switch_success() {
         switched.is_err(),
         "source selection must fail when the old Widget source cannot be revoked"
     );
-    // 选择保持不变
     assert_eq!(owner.selected.as_deref(), Some(CLIENT));
     assert_eq!(owner.view["selectedId"], CLIENT);
     // 把目录放回去，原有授权与摘要毫发无损

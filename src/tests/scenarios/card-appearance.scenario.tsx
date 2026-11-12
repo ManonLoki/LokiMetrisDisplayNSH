@@ -1,12 +1,9 @@
-// 引入场景测试 API
 import { expect, open, test, type App } from "nsh/test";
 
 // 原生截图需要 --target macos。这个夹具从不打开生产环境的 Link。
 // 截图输出目录占位符，由测试脚本替换
 const OUTPUT = "__OUTPUT_DIRECTORY__";
-// 应用入口占位符
 const ENTRY = "__APP_ENTRY__";
-// 视口尺寸
 const viewport = { width: 520, height: 680 };
 
 // 读取页面写入的门控状态
@@ -27,7 +24,6 @@ test("rounded Token edge travels around four sides and respects motion gates", a
   const app = await open(ENTRY, { ...viewport, reducedMotion: false, network: {},
     storage: { "test.cardAppearance": JSON.stringify({ mode: "motion" }) } });
   await app.waitFor("usage-surface-scan", { timeout: 15_000 });
-  // 等待门控打开
   await app.waitUntil(() => gates(app).active === true && gates(app).foreground === true);
   expect(gates(app).reducedMotion).toBe(false);
   await app.wait(900); // 等卡片的入场动画结束,再只测量它的边框。
@@ -68,7 +64,6 @@ test("rounded Token edge travels around four sides and respects motion gates", a
   await capture(reduced, "reduced", 0);
   await reduced.wait(1400);
   await capture(reduced, "reduced", 1);
-// 超时 90 秒
 }, 90_000);
 
 // 手机与桌面尺寸下的卡片与设置页使用隔离夹具渲染
@@ -80,11 +75,9 @@ test("shared phone and desktop cards and settings render with isolated fixture d
     await app.waitFor("usage-total", { timeout: 15_000 });
     await app.waitFor("hook-card-4");
     await app.wait(600);
-    // 截图保存
     await app.screenshot(`${OUTPUT}/${name}-panel.png`);
     // 输出截图的尺寸等信息
     console.log(`CARD_APPEARANCE_VISUAL=${JSON.stringify({ file: `${name}-panel.png`, width, height, page: "panel" })}`);
-    // 切到设置页
     await app.press("menu-settings");
     await app.waitFor("settings-panel-card");
     await app.wait(400);

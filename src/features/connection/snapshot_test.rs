@@ -1,7 +1,5 @@
-// 引入被测模块
 use super::*;
 
-// 最小的合法快照
 fn snapshot() -> Value {
     json!({
         "version": 1, "tokens": null, "tokenError": null, "hooksAvailable": true,
@@ -18,15 +16,12 @@ fn amount(total: &str) -> Value {
 #[test]
 fn full_unsigned_tokens_keep_precision_and_overflow_is_rejected() {
     let mut value = snapshot();
-    // u64 最大值
     value["tokens"] = json!({"day": {"date": "2026-10-26", "zone": "Asia/Shanghai"},
         "all": amount("18446744073709551615"), "agents": []});
     let output = project_snapshot(&value, &Value::Null).unwrap();
-    // 原样保留
     assert_eq!(output["tokens"]["all"]["total"], "18446744073709551615");
     // 超出 u64 一位
     value["tokens"]["all"]["total"] = json!("18446744073709551616");
-    // 被拒绝
     assert!(project_snapshot(&value, &Value::Null).is_none());
 }
 
@@ -77,7 +72,6 @@ fn malformed_lists_quotas_and_duplicate_unicode_identities_are_rejected() {
         {"provider": "codex", "monthly": {"kind": "monthly", "usedTenths": 1001}}
     ]});
     assert!(project_snapshot(&value, &Value::Null).is_none());
-    // 修正后通过
     value["providerQuota"]["providers"][0]["monthly"]["usedTenths"] = json!(999);
     assert!(project_snapshot(&value, &Value::Null).is_some());
 }

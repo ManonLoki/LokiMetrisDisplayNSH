@@ -1,20 +1,16 @@
-// 引入被测模块
 use super::*;
 use serde_json::json;
 
-// 测试用来源 ID
 const SOURCE: &str = "c02d28a3-bede-46cd-a21e-daa576b7ee0c";
 
 // 临时目录，用完删除
 struct Temp(std::path::PathBuf);
 impl Temp {
     fn new() -> Self {
-        // 随机的临时根目录
         let root = std::env::temp_dir().join(format!("loki-companion-{}", uuid::Uuid::new_v4()));
         fs::create_dir_all(&root).unwrap();
         Self(root)
     }
-    // 发件箱目录
     fn outbox(&self) -> std::path::PathBuf {
         self.0.join("companion-v1")
     }
@@ -25,7 +21,6 @@ impl Drop for Temp {
     }
 }
 
-// 构造测试快照
 fn snapshot() -> Value {
     json!({
         "version":1, "tokens":{"day":{"date":"2026-10-27","zone":"Asia/Shanghai"},
@@ -41,7 +36,6 @@ fn snapshot() -> Value {
 fn public_projection_preserves_exact_tokens_and_removes_private_fields() {
     let temp = Temp::new();
     let raw = snapshot();
-    // 首次写入：有变化
     assert!(update(&temp.outbox(), &temp.0, Some(SOURCE), Some(&raw), Some(7)).unwrap());
     let manifest = read_manifest(&temp.outbox()).unwrap();
     let projected = manifest.snapshot.as_ref().unwrap();
@@ -62,19 +56,15 @@ fn public_projection_preserves_exact_tokens_and_removes_private_fields() {
 fn clear_is_durable_and_revision_never_resets_across_reopen_or_source_switch() {
     let temp = Temp::new();
     let raw = snapshot();
-    // 写入第一份快照
     update(&temp.outbox(), &temp.0, Some(SOURCE), Some(&raw), Some(7)).unwrap();
     let first = read_manifest(&temp.outbox()).unwrap();
-    // 清空
     update(&temp.outbox(), &temp.0, None, None, None).unwrap();
     // 清空后修订号 +1，流 ID 不变，来源与快照都为空
     let clear = read_manifest(&temp.outbox()).unwrap();
     assert_eq!(clear.revision, "2");
     assert_eq!(clear.stream_id, first.stream_id);
     assert!(clear.snapshot.is_none() && clear.source_id.is_none() && clear.assets.is_empty());
-    // 重复清空没有变化
     assert!(!update(&temp.outbox(), &temp.0, None, None, None).unwrap());
-    // 切换到另一个来源
     update(
         &temp.outbox(),
         &temp.0,
@@ -142,16 +132,13 @@ fn images_are_checked_copied_when_ready_and_removed_on_clear() {
         );
         fs::create_dir_all(&directory).unwrap();
         fs::write(directory.join("manifest.json"), ready_bytes).unwrap();
-        // 写入资源文件
         fs::write(directory.join(&descriptor.hash), bytes).unwrap();
         // 复制清单为清除指令
         fs::copy(
-            // 源：外发清单
             temp.outbox().join("manifest.json"),
             // 目标：clear.json
             directory.join("clear.json"),
         )
-        // 复制成功
         .unwrap();
     }
 }
@@ -173,10 +160,8 @@ fn invalid_input_does_not_replace_a_valid_snapshot_or_overwrite_bad_state() {
             Some(&raw),
             Some(7)
         )
-        // 应被拒绝
         .is_err()
     );
-    // 原清单一字节未变
     assert_eq!(
         fs::read(temp.outbox().join("manifest.json")).unwrap(),
         first
@@ -213,7 +198,6 @@ fn path_substitution_and_revision_overflow_fail_closed() {
             Some(&snapshot()),
             Some(7)
         )
-        // 应被拒绝
         .is_err()
     );
     // Unix：清单被替换成符号链接
@@ -224,9 +208,7 @@ fn path_substitution_and_revision_overflow_fail_closed() {
         fs::write(&victim, b"untouched").unwrap();
         fs::remove_file(temp.outbox().join("manifest.json")).unwrap();
         std::os::unix::fs::symlink(&victim, temp.outbox().join("manifest.json")).unwrap();
-        // 更新失败
         assert!(update(&temp.outbox(), &temp.0, None, None, None).is_err());
-        // 受害文件没被写入
         assert_eq!(fs::read(victim).unwrap(), b"untouched");
     }
 }

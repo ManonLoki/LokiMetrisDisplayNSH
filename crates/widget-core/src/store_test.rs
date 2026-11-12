@@ -1,6 +1,4 @@
-// 引入被测存储
 use super::*;
-// 引入摘要夹具与 HTTP 协议
 use crate::{
     summary::{
         self,
@@ -24,7 +22,6 @@ fn directory(name: &str) -> PathBuf {
     path
 }
 
-// 构造一条摘要记录
 fn record(source: &str, received: i64) -> Value {
     // 以测试消息为基础，换成指定来源
     let mut message = message();
@@ -32,7 +29,6 @@ fn record(source: &str, received: i64) -> Value {
     summary::from_message(&message, source, received).unwrap()
 }
 
-// 构造一份读取凭据
 fn target(source: &str) -> Value {
     // 构造读取凭据（局域网地址、固定端口与测试密钥）
     widget_http::target(
@@ -78,7 +74,6 @@ fn authenticated_writes_keep_generation_and_reject_older_results() {
     );
     // 摘要仍是较新的那份
     assert_eq!(store.load().unwrap().unwrap()["receivedAtMs"], 2_000);
-    // 租约内续租成功
     assert!(store.renew(SOURCE, 30_000).unwrap());
     // 续租后的截止时间 = 现在 + 租约
     assert_eq!(

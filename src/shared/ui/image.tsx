@@ -1,10 +1,6 @@
-// 引入 nsh 的图片、视图与响应式原语
 import { Image, View, cleanup, effect, signal, split, untracked, type ImageProps, type ImageStyle, type PixelSize, type StyleProp } from "nsh";
-// 引入动效许可钩子
 import { useCyberMotion, type MotionProps } from "./effects";
-// 引入图片预处理
 import { ImageFrames } from "loki-metris-mobile-display/native";
-// 引入播放器
 import { ImagePlayback } from "./image-playback";
 
 // NSH 样式列表是只读递归数组，保留该类型以便缩窄列表外的样式对象。
@@ -26,7 +22,6 @@ export function CyberImage(props: ImageProps & MotionProps) {
   const source = signal<ImageProps["src"]>(undefined);
   // 双缓冲：新帧先在隐藏层加载完成再显示，避免换帧时旧帧先消失导致闪烁
   const slots = [signal<ImageProps["src"]>(undefined), signal<ImageProps["src"]>(undefined)];
-  // 当前显示的层
   const shown = signal(0);
   // 等待显示的层与兜底定时器
   let target = -1;
@@ -36,9 +31,7 @@ export function CyberImage(props: ImageProps & MotionProps) {
     if (slot !== target) return;
     clearTimeout(swapTimer); target = -1; shown.set(slot);
   };
-  // 当前动图播放器
   const player = signal<ImagePlayback | null>(null);
-  // 容器实测尺寸
   const frame = signal<{ width: number; height: number } | null>(null);
   // 代数：丢弃过期的异步结果
   let generation = 0;
@@ -52,42 +45,30 @@ export function CyberImage(props: ImageProps & MotionProps) {
   const [, nativeProps] = split(props, ["active", "src", "style", "onLayout", "onLoad", "onLoadStart", "onLoadEnd", "onError"] as const);
   // 出错时销毁播放器，并只上报一次
   const onError = (error: { message: string }) => {
-    // 释放播放器
     untracked(player)?.dispose();
     // 首次出错时上报错误并结束加载
     if (!settled) { settled = true; props.onError?.(error); props.onLoadEnd?.(); }
   };
   // 地址变化时重新准备图片
   effect(() => {
-    // 当前地址
     const original = props.src;
-    // 递增代数
     const current = ++generation;
-    // 清理旧播放器
     untracked(player)?.dispose(); player.set(null);
-    // 重置所有状态
     loaded = false; settled = false; animated = false; source.set(undefined);
-    // 无地址则不加载
     if (!original) return;
     // 副作用是否已被清理
     let disposed = false;
-    // 异步准备图片
     void ImageFrames.prepare(typeof original === "string" ? original : original.url).then((prepared) => {
-      // 结果过期则丢弃
       if (disposed || current !== generation) return;
-      // 记录是否动图
       animated = prepared.animated;
       // 静态图直接使用原地址
       if (!prepared.animated) { source.set(original); return; }
       // 动图：创建播放器并用真实时钟驱动
       const playback = new ImagePlayback(prepared, {
-        // 时钟与定时调度
         now: () => performance.now(), schedule: (callback, delay) => setTimeout(callback, delay),
-        // 取消定时器
         cancel: (timer) => clearTimeout(timer as ReturnType<typeof setTimeout>),
       // 每切换一帧更新显示地址
       }, (next) => source.set(next));
-      // 保存播放器
       player.set(playback);
     // 准备失败时上报错误
     }).catch((error) => {
@@ -130,7 +111,6 @@ export function CyberImage(props: ImageProps & MotionProps) {
     const old = untracked(frame), next = bounds.size;
     // 有效且变化超过 0.5 才更新
     if (next.width > 0 && next.height > 0 && (!old || Math.abs(old.width - next.width) > 0.5 || Math.abs(old.height - next.height) > 0.5)) {
-      // 记录帧尺寸
       frame.set({ width: next.width, height: next.height });
     }
   }}>
@@ -140,7 +120,6 @@ export function CyberImage(props: ImageProps & MotionProps) {
         <Each of={[0, 1]} key="index">{(slot) =>
           <Image {...nativeProps} src={slots[slot()]()}
             style={[imageStyle(props.style), { position: "absolute", top: 0, left: 0, width: size().width, height: size().height, opacity: shown() === slot() ? 1 : 0 }]}
-            // 动图不做淡入
             fadeDuration={animated ? 0 : props.fadeDuration}
             // 加载开始、成功与出错回调
             onLoadStart={() => { if (!loaded && !settled) props.onLoadStart?.(); }} onLoad={({ size: loadedSize }) => onLoad(loadedSize, slot())} onError={onError} />}

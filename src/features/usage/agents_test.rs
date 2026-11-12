@@ -1,4 +1,3 @@
-// 引入被测模块
 use super::*;
 
 // 字符串切片转 String 列表
@@ -16,7 +15,6 @@ fn aliases_match_enabled_agents_and_provider_quotas() {
     // 不在列表中的未启用
     assert!(!is_enabled("Codex", Some(&enabled)));
     assert_eq!(provider_quota_key("Claude Code").as_deref(), Some("claude"));
-    // 没有额度的代理
     assert_eq!(provider_quota_key("Other Agent"), None);
 }
 
@@ -29,12 +27,9 @@ fn stable_agent_order_merges_provider_rows_without_mutating_sources() {
         "Grok Build",
         "Claude Code",
         "codex",
-        // 名称样例
         "Other A",
     ]);
-    // 额度供应商名单
     let quotas = names(&["claude", "grok"]);
-    // 计算投影行
     let rows = project_rows(true, &tokens, &quotas, None);
     // 顺序：Codex、Claude、Cursor 默认行、Grok、其他、WorkBuddy 在末尾；纯额度行在原位
     assert_eq!(
@@ -45,7 +40,6 @@ fn stable_agent_order_merges_provider_rows_without_mutating_sources() {
     assert_eq!(rows[1].quota_index, 0);
     // Grok 行匹配到 grok 额度
     assert_eq!(rows[3].quota_index, 1);
-    // 来源列表未被改动
     assert_eq!(tokens[0], "Other B");
 }
 

@@ -1,21 +1,14 @@
-// 引入 nsh 测试的打开函数与选项类型
 import { open as openApp, type OpenOptions } from "nsh/test";
 
-// 手机端设备 ID
 export const PHONE = "11111111-1111-4111-8111-111111111111";
-// 桌面端设备 ID
 export const DESKTOP = "22222222-2222-4222-8222-222222222222";
 // 测试基准时间（毫秒）
 export const T0 = 1_700_000_000_000;
 // 快照接收时间（毫秒）
 export const RECEIVED = 1_720_111_000_000;
-// 面板配置的存储键
 export const KEY_PANEL = "loki.panel";
-// 设备身份的存储键
 export const KEY_DEVICE = "loki.device";
-// 配对记录的存储键
 export const KEY_PAIRED = "loki.paired";
-// 快照缓存的存储键
 export const KEY_CACHE = "loki.cache";
 // 测试注入夹具的存储键
 export const KEY_INJECT = "loki.inject";

@@ -1,5 +1,4 @@
 //! TSX 调用 Rust 业务规则的类型化入口：每条规则都是 `Rules` 模块上的一个方法。
-// 引入 nsh 模块宏与 JsonValue
 use nsh_core::prelude::*;
 
 use crate::features::{connection, hooks, usage};

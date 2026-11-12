@@ -1,4 +1,3 @@
-// 引入被测展示投影
 use super::*;
 use crate::summary::{
     from_message,
@@ -10,7 +9,6 @@ use crate::summary::{
 fn view_formats_totals_quota_hooks_and_rows() {
     // 由测试消息生成摘要
     let record = from_message(&message(), SOURCE, 1).unwrap();
-    // 投影为展示模型
     let view = project(&record["snapshot"]);
     // 总量的紧凑、精确与无障碍写法
     assert_eq!(view["tokens"]["total"]["compact"], "18446744073.71B");
@@ -93,13 +91,9 @@ fn desktop_camel_case_names_match_tokens_and_quota_aliases() {
     let view = project(&from_message(&message, SOURCE, 1).unwrap()["snapshot"]);
     let names: Vec<_> = view["agents"]
         .as_array()
-        // 取出行数组
         .unwrap()
-        // 遍历
         .iter()
-        // 取每行的名称
         .map(|row| row["name"].as_str().unwrap())
-        // 收集为列表
         .collect();
     // Codex 只有额度，排在最前；未启用的 Grok 不显示；无记录保持文字而非零。
     // Codex 只有额度，排最前；未启用的 Grok 不显示
@@ -113,13 +107,11 @@ fn desktop_camel_case_names_match_tokens_and_quota_aliases() {
 // 显式的空启用列表隐藏所有行，但不改变总量
 fn explicit_empty_list_hides_every_row_without_changing_totals() {
     let mut message = message();
-    // 显式的空列表
     message["snapshot"]["enabledAgents"] = json!([]);
     let view = project(&from_message(&message, SOURCE, 1).unwrap()["snapshot"]);
     // 所有行与额度都被隐藏
     assert_eq!(view["agents"], json!([]));
     assert!(view["quota"].is_null());
-    // 但总量不变
     assert_eq!(
         view["tokens"]["total"]["exact"],
         "18,446,744,073,709,551,615"

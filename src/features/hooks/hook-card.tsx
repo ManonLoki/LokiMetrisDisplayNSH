@@ -1,16 +1,10 @@
-// 引入画布、文本、视图及类型
 import { Canvas, Text, View, type Accessor, type Size, type ViewRef } from "nsh";
-// 引入 Hook 条目类型
 import type { HookItem } from "../../shared/contracts/snapshot";
-// 引入代理显示名
 import { Rules } from "loki-metris-mobile-display/native";
 import { CyberArrival } from "../../shared/ui/effects";
 import { registerRemoteTarget, RemoteRing } from "../../shared/ui/remote-focus";
-// 引入透明度函数与色板
 import { cyberAlpha, cyberColors as color } from "../../shared/ui/theme";
-// 引入状态徽标与色调函数
 import { HookStatus, hookStatusTone } from "./hook-status";
-// 引入图片视口
 import { HookImageViewport } from "./hook-image";
 
 // Hook 卡片：显示代理名、状态与图片
@@ -31,7 +25,6 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
   registerRemoteTarget(id, { node: () => node, disabled: () => false, focused: props.onRemoteFocus });
   // 入场动效容器，order 决定入场先后
   return <CyberArrival order={2 + Math.min(4, props.hook().slot)} active={props.active}
-    // 样式：撑满
     style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
     <View testID={id} ref={(value: ViewRef) => { node = value; }}
       // 样式：相对定位与背景
@@ -44,7 +37,6 @@ export function HookCard(props: { hook: Accessor<HookItem>; connected: Accessor<
       <View style={{ flexDirection: "row", alignItems: "flex-end", gap: small() ? 5 : 10 }}>
         {/* 代理名，单行超出省略 */}
         <Text style={{ numberOfLines: 1, textOverflow: "ellipsis", flex: 1, minWidth: 0, color: color.ink,
-          // 字号、行高与字重
           fontSize: small() ? 13 : 18, lineHeight: small() ? 18 : 24, fontWeight: 600 }}>{Rules.agentDisplayName(props.hook().agent)}</Text>
         {/* 状态徽标 */}
         <HookStatus behavior={props.hook().behavior} compact={small()} />
@@ -63,46 +55,32 @@ export function HookCardSurface(props: { tone: string; quiet?: boolean }) {
   return <Canvas accessible={false} accessibilityElementsHidden
     // 对子孙元素隐藏读屏
     importantForAccessibility="no-hide-descendants"
-    // 样式：铺满
     style={{ pointerEvents: "none", position: "absolute", top: 1, right: 1, bottom: 1, left: 1 }} draw={(cx, { width: w, height: h }) => {
-      // 尺寸过小时不绘制
       if (w <= 2 || h <= 2) return;
       // quiet 模式降低光效强度
       const strength = props.quiet ? 0.45 : 1;
-      // 圆角不超过半边长
       const radius = Math.min(17, w / 2, h / 2);
       // 保存状态并裁剪为圆角矩形
       cx.save(); cx.beginPath(); cx.roundRect(0, 0, w, h, radius); cx.clip();
       // 底色渐变：左上较亮，向右下透明
       const surface = cx.createLinearGradient(0, 0, w * 0.4, h);
-      // 起点颜色
       surface.addColorStop(0, cyberAlpha(color.surfaceContainer, props.quiet ? 0.5 : 0.85));
-      // 终点完全透明
       surface.addColorStop(1, cyberAlpha(color.surface, 0));
-      // 填充底色
       cx.fillStyle = surface; cx.fillRect(0, 0, w, h);
       // 左上角的径向辉光，使用状态色调
       const glow = cx.createRadialGradient(0, 0, 0, 0, 0, Math.max(w, h * 0.7));
-      // 辉光中心
       glow.addColorStop(0, cyberAlpha(props.tone, 0.085 * strength));
-      // 辉光边缘透明
       glow.addColorStop(1, cyberAlpha(props.tone, 0));
-      // 填充辉光
       cx.fillStyle = glow; cx.fillRect(0, 0, w, h);
       // 描边渐变：白、状态色、紫依次过渡
       const edge = cx.createLinearGradient(0, 0, w, h * 0.45);
-      // 起点偏白
       edge.addColorStop(0, cyberAlpha(color.ink, 0.13 * strength));
-      // 中段偏状态色
       edge.addColorStop(0.45, cyberAlpha(props.tone, 0.06 * strength));
-      // 终点偏紫
       edge.addColorStop(1, cyberAlpha(color.violet, 0.075 * strength));
       // 描一圈 1px 渐变边
       cx.strokeStyle = edge; cx.lineWidth = 1;
       // 路径位于像素中线以保持清晰
       cx.beginPath(); cx.roundRect(0.5, 0.5, w - 1, h - 1, radius); cx.stroke();
-      // 还原裁剪状态
       cx.restore();
-    // 绘制回调结束
     }} />;
 }

@@ -80,7 +80,6 @@ pub(super) fn read_paired(raw: Option<&str>) -> Map<String, Value> {
     result
 }
 
-// 读取缓存快照
 pub(super) fn read_cache(raw: Option<&str>) -> Option<(String, u64, Value)> {
     let value: Value = serde_json::from_str(raw?).ok()?;
     let source = value["sourceId"]

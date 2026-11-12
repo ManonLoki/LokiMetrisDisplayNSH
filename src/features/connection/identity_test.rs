@@ -1,4 +1,3 @@
-// 引入被测模块的全部内容
 use super::*;
 
 // 名称按 UTF-8 字节限制，并拒绝不可见字符或只含控制字符的名称
@@ -54,9 +53,7 @@ fn names_are_limited_by_utf8_bytes_without_changing_saved_text() {
 fn uuid_validation_preserves_canonical_nonzero_contract() {
     // 规范 UUID 合法
     assert!(valid_device_id("11111111-1111-1111-1111-111111111111"));
-    // 全零非法
     assert!(!valid_device_id("00000000-0000-0000-0000-000000000000"));
-    // 大写非法
     assert!(!valid_device_id("AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA"));
     // 路径样式的字符串非法
     assert!(!valid_device_id("../../identity"));

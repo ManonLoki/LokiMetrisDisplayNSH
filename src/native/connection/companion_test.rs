@@ -1,5 +1,3 @@
-// 引入被测类型
-// 引入命令、材料与测试夹具
 use super::{
     Command, Material,
     connection_test::{CLIENT, files, owner_for_test, snapshot},
@@ -9,12 +7,10 @@ use serde_json::{Value, json};
 #[test]
 // 只有受信任的 owner 才能导出；忘记桌面会持久化一次清空修订
 fn only_a_trusted_owner_can_export_and_forgetting_persists_a_clear_revision() {
-    // 临时目录
     let files = files();
     let (mut owner, _, _) = owner_for_test(&files);
     // 手表发件箱的清单文件
     let path = files.root.join("companion-v1/manifest.json");
-    // 读取并解析清单
     let read = || serde_json::from_slice::<Value>(&std::fs::read(&path).unwrap()).unwrap();
     // 选中桌面并放入快照，但配对簿里没有它
     owner.selected = Some(CLIENT.into());
@@ -37,9 +33,7 @@ fn only_a_trusted_owner_can_export_and_forgetting_persists_a_clear_revision() {
             saved_at_ms: 1,
         },
     );
-    // 发布视图
     owner.publish();
-    // 提交变更
     owner.commit();
     // 现在清单里应有来源与精确的 Token 总量，修订号为 2
     let current = read();
@@ -49,7 +43,6 @@ fn only_a_trusted_owner_can_export_and_forgetting_persists_a_clear_revision() {
         "18446744073709551615"
     );
     assert_eq!(current["revision"], "2");
-    // 忘记桌面
     owner
         .command(Command::Forget {
             client_id: CLIENT.into(),

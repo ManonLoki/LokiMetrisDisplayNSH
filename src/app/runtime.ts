@@ -1,8 +1,5 @@
-// 引入响应式原语
 import { cleanup, effect, platform, signal, untracked, type Bounds, type Signal, type Size } from "nsh";
-// 引入 Rust 外壳与它返回的公开状态类型
 import { Shell, type LinkCommand, type SettingsResult } from "loki-metris-mobile-display/native";
-// 引入视图与面板类型
 import type { ViewState } from "../features/connection";
 import type { PanelConfig } from "../shared/contracts/panel";
 
@@ -10,7 +7,6 @@ import type { PanelConfig } from "../shared/contracts/panel";
 export interface AppRuntime {
   // 当前是否在前台，未知为 null
   foreground?: () => boolean | null;
-  // 是否启用遥控导航
   remoteNavigation?: () => boolean;
   // 测试用：上报面板边界
   onFrame?: (id: "usage" | "hook", bounds: Bounds) => void;
@@ -36,7 +32,6 @@ interface UiState {
 export function createRuntime(state: UiState, connectionVisible?: () => boolean) {
   // 是否已挂载，避免重复启动
   let mounted = false;
-  // 是否已释放
   let disposed = false;
   // 外壳是否已启动；之前下发的 active 命令会被忽略
   const started = signal(false);
@@ -117,17 +112,13 @@ export function createRuntime(state: UiState, connectionVisible?: () => boolean)
     });
   }
 
-  // 下发连接命令
   const command = (command: LinkCommand) => run(() => Shell.command(command, state.nameDraft(), Date.now()));
 
   return {
     mount,
     command,
-    // 编辑名称草稿
     editName: (draft: string) => { state.nameDraft.set(draft); return run(() => Shell.editName(draft)); },
-    // 保存名称
     saveName: () => run(() => Shell.saveName(state.nameDraft(), Date.now())),
-    // 保存面板
     savePanel: (panel: PanelConfig) => run(() => Shell.savePanel(panel, state.nameDraft(), Date.now())),
   };
 }

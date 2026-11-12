@@ -1,4 +1,3 @@
-// 引入数值与快照类型
 import type { Amount, Snapshot } from "../../shared/contracts/snapshot";
 
 // 构造一项完整、精确、可用的用量
@@ -10,13 +9,10 @@ export function amount(total: string): Amount {
 // 构造具代表性的快照
 export function representativeSnapshot(): Snapshot {
   return {
-    // 协议版本
     version: 1,
     // Token 统计
     tokens: {
-      // 统计日与时区
       day: { date: "2026-10-21", zone: "Asia/Shanghai" },
-      // 总量
       all: amount("1500"),
       // 各代理用量，含别名与超大数值
       agents: [
@@ -34,13 +30,9 @@ export function representativeSnapshot(): Snapshot {
     hooksAvailable: true,
     // 五条 Hook，覆盖空闲、运行、询问、错误四种状态
     hooks: [
-      // 空闲
       { agent: "codex", slot: 1, behavior: "idle", content: "空闲正文", contentTruncated: false, image: null },
-      // 运行中
       { agent: "claude", slot: 2, behavior: "running", content: "运行正文", contentTruncated: false, image: null },
-      // 询问中
       { agent: "cursor", slot: 3, behavior: "asking", content: "询问正文", contentTruncated: false, image: null },
-      // 出错
       { agent: "grok", slot: 4, behavior: "error", content: "出错正文", contentTruncated: false, image: null },
       {
         // 带图片与截断正文的 Hook
@@ -70,7 +62,6 @@ export function representativeSnapshot(): Snapshot {
         },
       ],
     },
-    // 启用的代理列表
     enabledAgents: ["codex", "claudeCode", "cursor", "grok", "Other Agent", "Work_Buddy"],
   };
 }

@@ -8,19 +8,13 @@ mod source;
 // 后台解码线程
 mod worker;
 
-// 测试夹具
 #[cfg(test)]
 mod fixtures;
 
-// 引入 base64
 use base64::{Engine, engine::general_purpose::STANDARD};
-// 引入 nsh 模块宏
 use nsh_core::prelude::*;
-// 引入序列化
 use serde::{Deserialize, Serialize};
-// 引入队列与同步原语
 use std::{
-    // 双端队列
     collections::VecDeque,
     // 互斥锁与一次性初始化
     sync::{Mutex, OnceLock},
@@ -32,9 +26,7 @@ const MAX_SOURCE: usize = 32 * 1024 * 1024;
 /// 细长的图片同样有界;对正方形而言像素上限更严格。
 // 单边最大像素；狭长图同样受限，方图另受像素总数约束
 const MAX_SIDE: u16 = 4096;
-// 像素总数上限
 const MAX_PIXELS: usize = 16 * 1024 * 1024;
-// 帧数上限
 const MAX_FRAMES: usize = 512;
 /// 每个动画的全画布像素工作量;各帧按顺序编码并释放。
 // 每个动画全画布像素工作量上限；帧按序编码并释放
@@ -44,11 +36,9 @@ const MAX_FRAME_PIXELS: usize = 128 * 1024 * 1024;
 const MAX_JSON: usize = 24 * 1024 * 1024;
 // 解码结果缓存的总字节上限
 const MAX_CACHE: usize = 32 * 1024 * 1024;
-// 缓存条目数上限
 const CACHE_ENTRIES: usize = 4;
 
 /// 非动画来源的清单:没有帧,播放一次。
-// 非动画结果
 const STATIC_IMAGE: &str =
     "{\"animated\":false,\"width\":0,\"height\":0,\"plays\":1,\"frames\":[]}";
 
@@ -64,7 +54,6 @@ pub struct PreparedFrame {
 }
 
 /// 解码后的动画清单;静态图或不可解码的来源为非动画且没有帧。
-// 解码后的动画清单
 #[derive(Clone, Serialize, Deserialize, JsObject)]
 pub struct Prepared {
     /// 多于一帧才算动画。
@@ -81,21 +70,16 @@ pub struct Prepared {
 
 // 缓存条目：原始字节与对应的 JSON
 struct CacheEntry {
-    // 输入字节
     input: Vec<u8>,
-    // 结果 JSON
     json: String,
 }
 
 // 把 GIF 的每一帧编码为 PNG，生成清单 JSON
 fn encode(bytes: &[u8]) -> Result<String, String> {
-    // 帧列表
     let mut frames = Vec::new();
     // 已编码字节数估计，用于限额
     let mut encoded_bytes = 0;
-    // 逐帧解码并回调
     let animation = decode::decode_each(bytes, |pixels, duration_ms, width, height| {
-        // PNG 缓冲
         let mut png_bytes = Vec::new();
         {
             // 8 位 RGBA、快速压缩的 PNG
@@ -104,60 +88,39 @@ fn encode(bytes: &[u8]) -> Result<String, String> {
                 png::Encoder::new(&mut png_bytes, u32::from(width), u32::from(height));
             // 设置 RGBA 颜色
             encoder.set_color(png::ColorType::Rgba);
-            // 设置 8 位深度
             encoder.set_depth(png::BitDepth::Eight);
-            // 使用快速压缩
             encoder.set_compression(png::Compression::Fast);
             // 写文件头，失败则报错
             let mut writer = encoder.write_header().map_err(|_| "GIF帧PNG头编码失败")?;
-            // 写入像素
             writer
-                // 写入像素数据
                 .write_image_data(pixels)
-                // PNG 编码失败
                 .map_err(|_| "GIF帧PNG编码失败")?;
             // 结束编码，失败则报错
             writer.finish().map_err(|_| "GIF帧PNG编码结束失败")?;
         }
         // 估算 Base64 后的大小，超限即失败
         encoded_bytes += png_bytes.len().div_ceil(3) * 4 + 128;
-        // 编码结果超限
         if encoded_bytes > MAX_JSON {
-            // 报超出限额
             return Err("GIF帧编码结果超过限额".into());
         }
-        // 加入一帧
         frames.push(PreparedFrame {
             // 以 data URL 形式保存 PNG
             source: format!("data:image/png;base64,{}", STANDARD.encode(png_bytes)),
-            // 持续毫秒数
             duration_ms,
         });
-        // 完成
         Ok(())
-        // 出错即返回
     })?;
-    // 构造清单
     let prepared = Prepared {
-        // 多于一帧才算动画
         animated: frames.len() > 1,
-        // 宽
         width: animation.width,
-        // 高
         height: animation.height,
-        // 循环次数
         plays: animation.plays,
-        // 各帧
         frames,
     };
-    // 序列化清单
     let json = serde_json::to_string(&prepared).map_err(|_| "GIF帧清单编码失败")?;
-    // 超出限额
     if json.len() > MAX_JSON {
-        // 报错
         return Err("GIF帧清单超过限额".into());
     }
-    // 返回 JSON
     Ok(json)
 }
 
@@ -175,24 +138,19 @@ fn prepare(source: &str) -> Result<String, String> {
         .lock()
         // 锁中毒时仍取回内部状态，不让一次 panic 连带拖垮其他线程
         .unwrap_or_else(|p| p.into_inner());
-    // 安全读取来源
     let (bytes, gif_mime) = source::load(source)?;
     // 命中缓存：移到队尾并返回
     if let Some(index) = cache.iter().position(|entry| entry.input == bytes) {
-        // 取出命中的缓存项
         let entry = cache.remove(index).expect("matched GIF cache entry exists");
-        // 复制其 JSON
         let json = entry.json.clone();
         // 放回队尾，保持最近使用
         cache.push_back(entry);
-        // 返回 JSON
         return Ok(json);
     }
     // 非 GIF：内联 GIF 声明但头部不对则报错，否则交给标准 Image 解码
     if !bytes.starts_with(b"GIF") {
         // 文件头声明是 GIF 却无效
         return if gif_mime {
-            // 报文件头无效
             Err("GIF内联来源的文件头无效".into())
         // 否则分支
         } else {
@@ -200,41 +158,29 @@ fn prepare(source: &str) -> Result<String, String> {
             Ok(STATIC_IMAGE.into())
         };
     }
-    // 编码为帧清单
     let json = encode(&bytes)?;
     // 总大小：输入加输出
     let size = bytes.len() + json.len();
-    // 太大的结果不缓存
     if size <= MAX_CACHE {
         // 从最旧的开始淘汰直到放得下
         while !cache.is_empty()
             // 并且缓存条目数已达上限
             && (cache.len() >= CACHE_ENTRIES
-                // 或者
                 || cache
-                    // 遍历
                     .iter()
                     // 每项的输入与结果大小
                     .map(|entry| entry.input.len() + entry.json.len())
-                    // 求和
                     .sum::<usize>()
-                    // 加上本次大小
                     + size
-                    // 超过字节上限
                     > MAX_CACHE)
         {
-            // 淘汰最旧的缓存项
             cache.pop_front();
         }
-        // 放入新缓存项
         cache.push_back(CacheEntry {
-            // 输入字节
             input: bytes,
-            // 结果 JSON
             json: json.clone(),
         });
     }
-    // 返回 JSON
     Ok(json)
 }
 

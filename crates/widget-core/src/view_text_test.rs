@@ -1,4 +1,3 @@
-// 引入被测文案模块
 use super::*;
 use crate::{
     summary::{
@@ -11,7 +10,6 @@ use crate::{
 #[test]
 // 没有缓存或 Token 失败时，不宣称为 0 或成功
 fn no_cache_and_failed_token_data_do_not_claim_zero_or_success() {
-    // 没有缓存
     let empty = describe(&json!({"view":null}));
     // 空态文案使用默认应用名
     assert_eq!(empty["widgetEmptyInline"], "诡秘神谕 · 尚未同步");
@@ -41,7 +39,6 @@ fn descriptions_use_host_formatted_dates() {
     assert_eq!(labels["appleSyncText"], "上次同步 11:30");
     assert_eq!(labels["appleSyncDescription"], "上次同步于 27 Oct, 11:30");
     assert_eq!(labels["appleAccessoryInline"], "上次 11:30 · Hooks 1");
-    // 应用名取自参数
     assert_eq!(labels["widgetEmptyInline"], "测试 · 尚未同步");
     // 紧凑描述以“统计日期”开头
     assert!(
@@ -76,7 +73,6 @@ fn exact_amount_and_hook_lead_are_projected_once() {
 #[test]
 // 紧凑额度与被隐藏的代理依据宿主的布局事实
 fn widget_compact_quota_and_hidden_agents_use_host_layout_facts() {
-    // 三个代理
     let view = json!({"agents":[{},{},{}]});
     // 只显示两个时，提示另有 1 个，并给出紧凑的额度更新时间
     let labels = describe(&json!({"view":view,"quotaCompactTime":"10/27 12:20","visibleAgents":2}));

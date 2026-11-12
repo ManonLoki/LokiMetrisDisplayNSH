@@ -1,4 +1,3 @@
-// 引入被测模块
 use super::*;
 
 // 临时目录，用完删除
@@ -11,11 +10,8 @@ impl Directory {
         Self(root)
     }
 }
-// 临时目录的析构
 impl Drop for Directory {
-    // 销毁时
     fn drop(&mut self) {
-        // 删除整个目录
         let _ = fs::remove_dir_all(&self.0);
     }
 }
@@ -27,7 +23,6 @@ fn queued_copy_survives_replaced_or_pruned_source() {
     // 用测试 PNG 作为图片
     let bytes = include_bytes!("../../../tests/fixtures/assets/hook.png");
     let descriptor = AssetDescriptor::from_bytes(bytes).expect("valid fixture PNG");
-    // 缓存里的原图
     let original = directory.0.join("assets").join(&descriptor.hash);
     fs::write(&original, bytes).expect("write fixture source");
     // 暂存一份已校验的副本
@@ -37,7 +32,6 @@ fn queued_copy_survives_replaced_or_pruned_source() {
     fs::remove_file(&original).expect("prune source");
     // 暂存副本仍是原内容
     assert_eq!(fs::read(&staged).expect("immutable staging copy"), bytes);
-    // 清理暂存文件
     remove(&directory.0, &staged);
     assert!(!staged.exists());
 }

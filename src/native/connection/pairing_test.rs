@@ -1,7 +1,5 @@
-// 引入句柄与事件
 use super::super::{Command, Event, Handle};
 use super::*;
-// 引入配对库，用来模拟发送端
 use loki_metris_pairing::{AwaitingAck, SenderSession};
 use std::{
     sync::{atomic::Ordering, mpsc},
@@ -40,7 +38,6 @@ fn handle(capacity: usize) -> (Handle, mpsc::Receiver<Event>) {
 fn pairing_transcript_keeps_the_name_that_opened_the_window() {
     let now = Instant::now();
     let mut protocol = Protocol::default();
-    // 界面上显示的名称
     let mut displayed_name = "本轮名称".to_owned();
     protocol
         // 开窗时使用当时的名称
@@ -67,14 +64,12 @@ fn pairing_transcript_keeps_the_name_that_opened_the_window() {
 fn queued_cancel_revokes_ack_before_the_owner_can_drain_its_commands() {
     let now = Instant::now();
     let (mut protocol, _, commit) = pending(now);
-    // 保存资格此刻有效
     commit.check(&mut protocol, 0, now).unwrap();
     let (handle, rx) = handle(1);
     // 模拟 OS 保存阻塞期间 UI 提交取消；队列仍未由 owner 消费。
     // 模拟 OS 保存阻塞期间 UI 提交了取消；命令仍在队列里，owner 尚未消费
     handle.command(r#"{"op":"active","value":false}"#).unwrap();
     let revision = handle.revision.load(Ordering::SeqCst);
-    // 取消代数已递增
     assert_eq!(revision, 1);
     // 这时不能产出 ACK
     assert!(commit.finish(&mut protocol, revision, now).is_err());
@@ -117,9 +112,7 @@ fn forgetting_another_host_does_not_cancel_the_current_pairing() {
     handle
         .command(&serde_json::json!({"op":"forget","clientId":OTHER}).to_string())
         .unwrap();
-    // 取消代数不变
     assert_eq!(handle.revision.load(Ordering::SeqCst), 0);
-    // 当前配对仍能完成
     let ack = commit.finish(&mut protocol, 0, now).unwrap();
     assert_eq!(sender.verify(ack).unwrap().client_id(), CLIENT);
 }

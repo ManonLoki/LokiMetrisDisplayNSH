@@ -1,4 +1,3 @@
-// 引入被测模块
 use super::super::fixtures::file_url;
 use super::*;
 
@@ -10,7 +9,6 @@ impl Directory {
         fs::create_dir(&path).unwrap();
         Self(path)
     }
-    // 拼出文件 URL
     fn url(&self, name: &str) -> String {
         file_url(&self.0.join(name))
     }
@@ -45,16 +43,13 @@ fn sources_are_bounded_local_files_or_valid_base64_gifs() {
         "file:///tmp/../a",
         // 非法的 data URL
         "data:image/gif;base64,!",
-        // 逐项检查
     ] {
-        // 都应被拒绝
         assert!(load(invalid).is_err(), "untrusted source {invalid}");
     }
     // 超过大小上限的文件
     let large = fs::File::create(root.0.join("large.gif")).unwrap();
     large.set_len(MAX_SOURCE as u64 + 1).unwrap();
     assert!(load(&root.url("large.gif")).is_err());
-    // 目录不是普通文件
     assert!(load(&file_url(&root.0)).is_err());
     // 编码长度超限的内联 GIF
     assert!(
@@ -81,6 +76,5 @@ fn symlink_files_and_ancestors_are_rejected_without_touching_original_data() {
     fs::write(root.0.join("real/image.gif"), b"GIF89a").unwrap();
     symlink(root.0.join("real"), root.0.join("linked")).unwrap();
     assert!(load(&root.url("linked/image.gif")).is_err());
-    // 原数据未被触碰
     assert_eq!(fs::read(root.0.join("source.gif")).unwrap(), b"GIF89a");
 }

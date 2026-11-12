@@ -1,4 +1,3 @@
-// 引入被测命令相关类型
 use super::super::{
     Endpoint, Event,
     connection_test::{TestFiles, files, owner_for_test},
@@ -26,13 +25,11 @@ fn fixture(capacity: usize) -> (Handle, mpsc::Receiver<Event>, Owner, TestFiles)
     let (mut owner, _tx, _owner_rx) = owner_for_test(&files);
     // owner 与句柄共用取消代数
     owner.revision = handle.revision.clone();
-    // 当前选中 A
     owner.selected = Some(A.into());
     owner.view["selectedId"] = json!(A);
     // 后台 owner 可验证完整命令顺序，同时不会向无关进程发起 TCP。
     // 后台 owner 可以验证完整命令顺序，又不会向无关进程发起 TCP
     owner.lifecycle.permitted = false;
-    // 两台桌面都已发现
     for id in [A, B] {
         owner.endpoints.insert(
             id.into(),
@@ -67,7 +64,6 @@ fn select_b_then_forget_a_keeps_b_while_the_published_view_still_shows_a() {
         .enqueue(Command::Forget {
             client_id: A.into(),
         })
-        // 入队成功
         .unwrap();
     // 模拟 Keychain 保存阻塞：两条命令已成功入队，投影还没有前进。
     // 模拟钥匙串保存阻塞：命令已入队，但公开视图尚未前进
@@ -77,7 +73,6 @@ fn select_b_then_forget_a_keeps_b_while_the_published_view_still_shows_a() {
     // owner 依序处理两条命令
     owner.apply(next(&rx)).unwrap();
     owner.apply(next(&rx)).unwrap();
-    // 最终仍选中 B
     assert_eq!(owner.selected.as_deref(), Some(B));
     // B 的配对窗口已开启
     assert_eq!(owner.protocol.pairing_revision(), Some(1));
@@ -95,12 +90,9 @@ fn select_b_then_forget_b_does_not_leave_a_selected() {
         })
         .unwrap();
     handle
-        // 入队忘记命令
         .enqueue(Command::Forget {
-            // 目标客户端
             client_id: B.into(),
         })
-        // 入队成功
         .unwrap();
     // 先选 B 再忘记 B：两条都中断配对，代数为 2
     assert_eq!(handle.revision.load(Ordering::SeqCst), 2);
@@ -129,7 +121,6 @@ fn background_then_select_preserves_the_selection_without_connecting() {
         .unwrap();
     owner.apply(next(&rx)).unwrap();
     owner.apply(next(&rx)).unwrap();
-    // 选中项应为 B
     assert_eq!(owner.selected.as_deref(), Some(B));
     // owner 不活跃、没有套接字
     assert!(!owner.active());
@@ -196,14 +187,10 @@ fn rejected_selection_does_not_replace_the_last_successfully_queued_intent() {
             .is_err()
     );
     assert!(
-        // 句柄
         handle
-            // 入队忘记命令
             .enqueue(Command::Forget {
-                // 目标客户端
                 client_id: A.into()
             })
-            // 应被拒绝
             .is_err()
     );
     // 但取消代数仍已递增（保存资格保持失效）
@@ -222,7 +209,6 @@ fn a_full_command_queue_cannot_keep_the_owner_alive_after_vm_close() {
         &files.device,
         "NSH",
         &files.service,
-        // 克隆发送端
         handle.tx.clone(),
     );
     // owner 共享句柄的停止标记

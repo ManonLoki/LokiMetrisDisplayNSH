@@ -1,18 +1,10 @@
-// 引入滚动、文本、视图与响应式原语
 import { Scroll, Text, View, computed, type Bounds, type Size } from "nsh";
-// 引入连接视图类型
 import type { ViewState } from "../connection";
-// 引入面板配置类型
 import type { PanelConfig } from "../../shared/contracts/panel";
-// 引入 Hooks 面板与控制器
 import { HooksPane, createPanelController, type PanelController } from "../hooks";
-// 引入用量卡片
 import { UsageCard } from "../usage";
-// 引入入场动效容器与可按压容器
 import { CyberArrival, CyberPressable } from "../../shared/ui/effects";
-// 引入透明度函数与色板
 import { cyberAlpha, cyberColors as color } from "../../shared/ui/theme";
-// 引入信号读取器类型
 import type { Accessor } from "nsh";
 
 // 面板参数既可传值也可传读取器
@@ -20,20 +12,15 @@ export type PanelValue<T> = T | Accessor<T>;
 // 统一读取：函数则调用，否则直接返回
 const read = <T,>(value: PanelValue<T>): T => typeof value === "function" ? (value as Accessor<T>)() : value;
 
-// 展示台主体的属性
 export interface PanelBodyProps {
   /** 导航栏/导航轨之后的可用区域。 */
   // 可用宽度（扣除导航之后）
   width: PanelValue<number>;
-  // 面板高度
   height: PanelValue<number>;
-  // 连接视图
   state: PanelValue<ViewState>;
-  // 面板配置
   config: PanelValue<PanelConfig>;
   // Hooks 页码控制器，可由外部注入
   controller?: PanelController;
-  // 点击前往设置
   onSettings: () => void;
   // 测试用：上报卡片布局边界
   onFrame?: (id: "usage" | "hook", bounds: Bounds) => void;
@@ -46,11 +33,8 @@ export interface PanelBodyProps {
 export function PanelBody(props: PanelBodyProps) {
   // 宽高至少为 1，避免除零
   const width = () => Math.max(1, read(props.width));
-  // 高度至少为 1
   const height = () => Math.max(1, read(props.height));
-  // 读取视图与配置
   const state = () => read(props.state);
-  // 当前面板配置
   const config = () => read(props.config);
   // 是否显示用量卡片与 Hooks 面板
   const showUsage = computed(() => config().showUsage);
@@ -77,24 +61,19 @@ export function PanelBody(props: PanelBodyProps) {
     {/* 用量卡片区域 */}
     {showUsage() ? <View testID="usage-pane" style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
       <UsageCard width={paneWidth} height={paneHeight} snapshot={() => state().snapshot} detail={() => config().usageDetail}
-        // 上报用量区布局
         onFrame={(bounds) => props.onFrame?.("usage", bounds)} />
     </View> : null}
     {/* Hooks 面板区域 */}
     {showHooks() ? <HooksPane width={paneWidth} height={paneHeight} snapshot={() => state().snapshot}
       // 连接状态与图片警告
       connected={() => state().connected} assetWarning={() => state().assetWarning ?? null} layout={() => config().hookLayout}
-      // 控制器
       controller={controller}
       // 上报 Hook 区布局与图片加载
       onFrame={(bounds) => props.onFrame?.("hook", bounds)} onImageLoad={props.onImageLoad} /> : null}
     {/* 两个面板都关闭时显示空状态与跳转设置的入口 */}
     {!showUsage() && !showHooks() ? <CyberArrival order={2} testID="panel-empty"
-      // 样式：撑满与背景
       style={{ flex: 1, minWidth: 0, minHeight: 0, backgroundColor: color.surface, borderRadius: 18,
-        // 边框与内边距
         borderWidth: 1, borderColor: cyberAlpha(color.cyan, 0.14), padding: 18 }}
-      // 悬停样式
       hoverStyle={{ borderColor: cyberAlpha(color.cyan, 0.4), boxShadow: `0 0 7px ${cyberAlpha(color.cyan, 0.1)}` }}>
       <Scroll contentStyle={{ gap: 14 }} style={{ flex: 1 }}>
         <Text style={{ color: color.ink, fontSize: 16, lineHeight: 24, fontWeight: 500 }}>暂无卡片</Text>

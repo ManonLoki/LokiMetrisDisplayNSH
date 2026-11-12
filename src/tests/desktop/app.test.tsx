@@ -1,26 +1,16 @@
-// 引入测试 API
 import { expect, test } from "nsh/test";
-// 引入打开函数、常量与存储键
 import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_PANEL, KEY_DEVICE, KEY_PAIRED, KEY_CACHE, KEY_INJECT, KEY_FRAMES, safe } from "./app-environment";
-// 引入夹具快照
 import { representativeSnapshot } from "./app-fixtures";
-// 引入配对规则
 import { PAIRING_WINDOW_MS, formatSyncTime, makePairingCode } from "./support/fixture-rules";
 
 // 窄屏与宽屏导航，以及空展示台
 test("narrow and wide navigation and the empty stage", async () => {
-  // 以手机尺寸打开
   const app = await open("./test-app.tsx", { width: 390, height: 844, safeArea: safe });
-  // 等待根节点
   await app.waitFor("app-root");
-  // 窄屏使用底部导航
   expect(app.shows("nav-bottom")).toBe(true);
-  // 不显示侧栏
   expect(app.shows("nav-side")).toBe(false);
-  // 导航标签应可见
   expect(app.texts()).toContain("展示台");
   expect(app.texts()).toContain("设置");
-  // 窄屏竖向分割
   expect(app.shows("panel-split-column")).toBe(true);
   // 等待用量卡片和 Hooks 面板都有布局高度
   await app.waitUntil(() => {
@@ -52,26 +42,19 @@ test("narrow and wide navigation and the empty stage", async () => {
   expect(app.texts()).toContain("展示台");
   expect(app.texts()).toContain("设置");
 
-  // 回到手机尺寸
   await app.setViewport(390, 844);
-  // 进入设置页
   await app.press("设置");
-  // 关闭用量
   await app.press("settings-show-usage");
   // 关闭 Hooks
   await app.press("settings-show-hooks");
-  // 等待配置被保存
   await app.waitUntil(() => app.storage()[KEY_PANEL]?.includes('"showUsage":false') === true);
   // 设置页提示如何重新开启
   expect(app.texts()).toContain("开启一项内容，即可在展示台中显示。");
-  // 回到展示台
   await app.press("展示台");
   // 空状态提供跳转设置的入口
   expect(app.texts()).toContain("前往设置");
   expect(app.texts()).toContain("暂无卡片");
-  // 点击跳转
   await app.press("前往设置");
-  // 回到设置页
   expect(app.texts()).toContain("面板显示与设备连接");
 }, 60_000);
 
@@ -84,13 +67,10 @@ test("panel choices persist across a new open", async () => {
     storage: { [KEY_DEVICE]: JSON.stringify({ id: PHONE, name: "客厅手机" }) },
   });
   await app.waitFor("app-root");
-  // 点击“设置”
   await app.press("设置");
-  // 等待设置页出现
   await app.waitUntil(() => app.shows("settings-usage-detailed"));
   // 等待原生宿主完成布局，避免坐标点击落空
   await app.wait(100); // 等待原生宿主为设置页的点击目标完成布局,再进行坐标点击。
-  // 选择详细模式
   await app.press("settings-usage-detailed");
   await app.waitUntil(() => (app.storage()[KEY_PANEL] ?? "").includes('"usageDetail":"detailed"'));
   await app.wait(100);
@@ -119,13 +99,11 @@ test("panel choices persist across a new open", async () => {
   expect(again.texts()).toContain("每页四张，左右翻页查看更多");
   // 1x1 的说明不应显示
   expect(again.texts()).not.toContain("每页一张，完整展示图片");
-  // 存储内容保持不变
   expect(again.storage()[KEY_PANEL]).toBe(kept[KEY_PANEL]);
 });
 
 // 快照数字、Hooks 与连接阶段
 test("snapshot numbers, hooks and connection phases", async () => {
-  // 取夹具快照
   const snapshot = representativeSnapshot();
   // 使用假时钟，并注入一次握手和一次快照
   const app = await open("./test-app.tsx", {
@@ -151,34 +129,25 @@ test("snapshot numbers, hooks and connection phases", async () => {
   expect(app.texts().join("\n")).not.toContain("已连接");
   // 主机只出现在设置页
   expect(app.texts()).not.toContain("书房桌面");
-  // 进入设置页
   await app.press("设置");
-  // 等待主机出现
   await app.waitUntil(() => app.texts().includes("书房桌面"));
-  // 尚未配对的标题
   expect(app.texts()).toContain("自动发现桌面");
-  // 发起配对
   await app.press(`host-connect-${DESKTOP}`);
-  // 找到四位配对码
   const code = app.texts().find((text) => /^\d{4}$/.test(text));
   // 配对码应与夹具规则一致
   expect(code).toBe(makePairingCode(T0, DESKTOP));
-  // 显示有效期提示
   expect(app.texts()).toContain("60 秒内有效 · 保持应用在前台");
   expect(app.texts().join("\n")).not.toContain("已连接");
   // 推进 1 秒触发握手
   await app.clock!.runFor(1000);
   expect(app.texts().join("\n")).not.toContain("已连接");
-  // 握手后配对码消失
   expect(app.texts().includes(code ?? "")).toBe(false);
-  // 配对记录已保存
   expect(app.storage()[KEY_PAIRED]?.includes(DESKTOP)).toBe(true);
   // 再推进 1 秒收到快照
   await app.clock!.runFor(1000);
   // 收到快照后才算已连接
   await app.waitUntil(() => app.texts().join("\n").includes("已连接"));
   expect(app.texts()).toContain("已连接桌面");
-  // 快照应被缓存
   const cached = JSON.parse(app.storage()[KEY_CACHE]);
   // 接收时间保持事件里的值
   expect(cached.receivedAtMs).toBe(RECEIVED);
@@ -187,16 +156,12 @@ test("snapshot numbers, hooks and connection phases", async () => {
     snapshot.tokens?.agents.map((agent) => agent.agent),
   );
 
-  // 切到详细模式
   await app.press("详细");
   await app.press("展示台");
   // 详细模式特有的时区行
   await app.waitUntil(() => app.texts().includes("设备时区"));
-  // 取全部可见文本
   const texts = app.texts();
-  // 统计日期
   expect(texts).toContain(snapshot.tokens!.day.date);
-  // 不显示同步时间
   expect(texts.join("\n")).not.toContain(formatSyncTime(T0 + 2000));
   // 总量的紧凑与精确写法
   expect(texts).toContain("1.5K");
@@ -209,7 +174,6 @@ test("snapshot numbers, hooks and connection phases", async () => {
   // 未启用的代理不显示
   expect(texts).not.toContain("SecretBot");
   expect(texts).not.toContain("1M");
-  // 设备时区
   expect(texts).toContain("Asia/Shanghai");
   // 代理的显示顺序
   const order = ["Codex", "Claude Code", "Cursor", "Grok", "Other Agent", "WorkBuddy"].map((name) => texts.indexOf(name));
@@ -236,26 +200,21 @@ test("snapshot numbers, hooks and connection phases", async () => {
   // 它的无障碍树包含那些页面;当前页在下面断言。
   // 1x1 布局共 5 页
   expect(app.texts()).toContain("1 / 5 · 左右滑动");
-  // 向左滑到第二页
   await app.drag("hooks-pager", { x: -260 });
   expect(app.texts()).toContain("运行");
-  // 页码随之更新
   expect(app.texts()).toContain("2 / 5 · 左右滑动");
   await app.press("设置");
   // 切到 2x2 布局
   await app.press("settings-hooks-2x2");
   await app.press("展示台");
-  // 2x2 共两页
   expect(app.texts()).toContain("1 / 2 · 左右滑动");
   expect(app.texts()).toContain("空闲");
   expect(app.texts()).toContain("运行");
   // 第一页四张卡片的状态
   expect(app.texts()).toContain("询问");
   expect(app.texts()).toContain("出错");
-  // 卡片上不显示正文
   expect(app.texts()).not.toContain("桌面回传的正文");
   await app.drag("hooks-pager", { x: -260 });
-  // 第二页有占位
   expect(app.texts()).toContain("暂无活动");
   expect(app.texts()).toContain("2 / 2 · 左右滑动");
   // 卡片展示缓存状态，但没有点击动作。
@@ -264,20 +223,15 @@ test("snapshot numbers, hooks and connection phases", async () => {
   await expect(app.press("hook-card-5")).rejects.toMatchObject({ code: "ERR_NSH_TEST_NOT_FOUND" });
   expect(app.texts()).not.toContain("桌面回传的正文");
 
-  // 点击“设置”
   await app.press("设置");
   // 自动确认忘记对话框
   app.onDialog(() => "忘记");
-  // 忘记桌面
   await app.press(`host-forget-${DESKTOP}`);
-  // 缓存应被清除
   await app.waitUntil(() => app.storage()[KEY_CACHE] == null);
-  // 配对记录应被删除
   expect(app.storage()[KEY_PAIRED]?.includes(DESKTOP) ?? false).toBe(false);
   expect(app.texts().join("\n")).not.toContain("已连接");
   await app.press("展示台");
   expect(app.texts()).toContain("等待同步");
-  // 旧数字不应残留
   expect(app.texts()).not.toContain("1.5K");
 }, 60_000);
 
@@ -290,26 +244,17 @@ test("pairing window expires and can be started again", async () => {
     safeArea: safe,
     storage: {
       [KEY_DEVICE]: JSON.stringify({ id: PHONE, name: "客厅手机" }),
-      // 预置发现到的桌面
       [KEY_INJECT]: JSON.stringify({ discovered: [{ id: DESKTOP, name: "书房桌面" }], events: [] }),
     },
   });
-  // 等待应用根节点
   await app.waitFor("app-root");
-  // 点击“设置”
   await app.press("设置");
-  // 等到桌面名称出现
   await app.waitUntil(() => app.texts().includes("书房桌面"));
-  // 发起配对
   await app.press(`host-connect-${DESKTOP}`);
-  // 显示配对码
   expect(app.texts()).toContain(makePairingCode(T0, DESKTOP));
-  // 快进整个配对窗口
   await app.clock!.fastForward(PAIRING_WINDOW_MS);
-  // 提示窗口已过期
   await app.waitUntil(() => app.texts().includes("配对窗口已过期，请重新选择桌面。"));
   expect(app.texts().join("\n")).not.toContain("已连接");
-  // 旧配对码消失
   expect(app.texts().includes(makePairingCode(T0, DESKTOP))).toBe(false);
   await app.press(`host-connect-${DESKTOP}`);
   // 重新配对后的新配对码基于新的时间
@@ -325,29 +270,21 @@ test("device name validates while typing and only saves a legal dirty draft", as
     storage: { [KEY_DEVICE]: JSON.stringify({ id: PHONE, name: "客厅手机" }) },
   });
   await app.waitFor("app-root");
-  // 点击“设置”
   await app.press("设置");
   // 输入框载入已保存名称
   await app.waitUntil(() => app.value("settings-device-name") === "客厅手机");
   await app.clear("settings-device-name");
   // 构造超过 160 字节的名称
   const tooLong = "a".repeat(161);
-  // 输入超长名称
   await app.type("settings-device-name", tooLong);
   await app.waitUntil(() => app.value("settings-device-name") === tooLong);
-  // 保存按钮应被禁用
   expect(app.enabled("settings-save-name")).toBe(false);
-  // 显示错误提示
   expect(app.texts()).toContain("设备名称不能超过 160 个 UTF-8 字节");
-  // 存储中的名称未变
   expect(JSON.parse(app.storage()[KEY_DEVICE]).name).toBe("客厅手机");
   await app.clear("settings-device-name");
-  // 输入合法名称
   await app.type("settings-device-name", "书房展示");
-  // 保存
   await app.press("保存名称");
   await app.waitUntil(() => JSON.parse(app.storage()[KEY_DEVICE]).name === "书房展示");
-  // 保存后的反馈
   expect(app.texts()).toContain("已保存，下次连接生效");
   // 重新打开后应读到新名称
   const again = await open("./test-app.tsx", {
@@ -363,7 +300,6 @@ test("device name validates while typing and only saves a legal dirty draft", as
 // Hook 滑动翻页，缓存的 PNG 与 GIF 进入图片渲染器
 test("hook swipes change pages and cached PNG and GIF reach the image renderer", async () => {
   const snapshot = representativeSnapshot();
-  // 两张图片的哈希
   const pngHash = "cd".repeat(32);
   const gifHash = "ef".repeat(32);
   // 给前两条 Hook 绑定图片
@@ -384,13 +320,10 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
       ] }),
     },
   });
-  // 点击“设置”
   await app.press("设置");
-  // 连接桌面
   await app.press(`host-connect-${DESKTOP}`);
   await app.clock!.runFor(1000);
   await app.press("展示台");
-  // 第一张图片已挂载
   expect(app.shows("hook-image-1")).toBe(true);
   // 是否具备真实渲染平台
   let rendered = true;
@@ -405,30 +338,25 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
   if (rendered) {
     await app.waitUntil(() => (JSON.parse(app.storage()["loki.imageLoads"] ?? "{}"))[pngHash]?.width === 48);
   }
-  // 翻到第二页
   await app.drag("hooks-pager", { x: -260 });
   expect(app.texts()).toContain("2 / 5 · 左右滑动");
   // 第二页的图片已挂载
   expect(app.shows("hook-image-2")).toBe(true);
   if (rendered) {
     await app.waitUntil(() => (JSON.parse(app.storage()["loki.imageLoads"] ?? "{}"))[gifHash]?.width === 1);
-    // 读取解码记录
     const decoded = JSON.parse(app.storage()["loki.imageLoads"]);
     // PNG 为 48x48
     expect(decoded[pngHash]).toEqual({ width: 48, height: 48 });
     expect(decoded[gifHash]).toEqual({ width: 1, height: 1 });
   }
-  // 翻回第一页
   await app.drag("hooks-pager", { x: 260 });
   expect(app.texts()).toContain("1 / 5 · 左右滑动");
   expect(app.shows("hook-image-1")).toBe(true);
-  // 切到详细用量模式
   await app.press("menu-settings");
   await app.waitFor("settings-usage-detailed");
   await app.press("settings-usage-detailed");
   await app.press("展示台");
   expect(app.shows("usage-scroll")).toBe(true);
-  // 滚动用量卡片
   await app.scroll("usage-scroll", 500);
   // 明细末尾的代理可见
   expect(app.texts()).toContain("WorkBuddy");

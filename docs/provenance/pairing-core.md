@@ -17,4 +17,4 @@
 
 原有上游许可证原样保留：[English](pairing-license.en.md)、[简体中文](pairing-license.zh-CN.md)。NSH 来源与应用适配见 [运行时说明](nsh-runtime.md)。
 
-[mobile-origin.json](mobile-origin.json) 记录旧原生工程的导入路径、哈希和迁移历史；其中已退役的目录和工具是历史证据，当前维护结构以 [架构总览](../architecture/overview.md) 为准。
+旧原生工程的导入路径、哈希和迁移历史保存在 Git 历史中；当前维护结构以 [架构总览](../architecture/overview.md) 为准。

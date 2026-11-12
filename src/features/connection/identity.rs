@@ -2,7 +2,6 @@
 
 // 设备名称的 UTF-8 字节上限
 pub(crate) const MAX_NAME_BYTES: usize = 160;
-// 默认设备名称
 pub(crate) const DEFAULT_NAME: &str = "LokiMetris Display";
 
 /// 规范的小写非零 UUID;配对核心为两端共同持有这条规则。
@@ -11,26 +10,19 @@ pub(crate) use loki_metris_pairing::valid_device_id;
 
 // 判定名称问题：空白、含控制字符、超长，依次检查
 fn issue(value: &str, blank: bool) -> Option<&'static str> {
-    // 空白名称
     if blank {
-        // 请输入设备名称
         Some("请输入设备名称")
     // 含有 C0 或 C1 控制字符
     } else if value
-        // 逐字符
         .chars()
-        // 含控制字符
         .any(|ch| ch <= '\u{1f}' || ('\u{7f}'..='\u{9f}').contains(&ch))
     {
         // 不能含控制字符
         Some("设备名称不能包含控制字符")
-    // 超过字节上限
     } else if value.len() > MAX_NAME_BYTES {
         // 不能超过 160 个 UTF-8 字节
         Some("设备名称不能超过 160 个 UTF-8 字节")
-    // 合法
     } else {
-        // 合法
         None
     }
 }
@@ -40,13 +32,9 @@ fn issue(value: &str, blank: bool) -> Option<&'static str> {
 pub(crate) fn name_error(value: &str) -> Option<&'static str> {
     // 按条件给出问题提示
     issue(
-        // 值
         value,
-        // 值
         value
-            // 去掉比较用的空白
             .trim_matches(crate::shared::domain::text::comparison_whitespace)
-            // 结果为空
             .is_empty(),
     )
 }
@@ -74,11 +62,9 @@ pub(crate) fn android_default_name(model: &str) -> String {
     let model = model.trim_matches(kotlin_whitespace);
     // 型号合法则直接使用
     if android_name_error(model).is_none() {
-        // 型号转为字符串
         model.into()
     // 否则分支
     } else {
-        // 回落名称
         "Android 显示端".into()
     }
 }
@@ -89,18 +75,14 @@ pub(crate) fn android_default_name(model: &str) -> String {
 pub(crate) fn apple_name_error(value: &str) -> Option<&'static str> {
     // 按条件给出问题提示
     issue(
-        // 值
         value,
-        // 值
         value
-            // 逐字符
             .chars()
             // 全是空白或零宽空格
             .all(|ch| ch.is_whitespace() || ch == '\u{200b}'),
     )
 }
 
-// 测试模块
 #[cfg(test)]
 #[path = "identity_test.rs"]
 mod identity_test;

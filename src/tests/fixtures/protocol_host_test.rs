@@ -1,4 +1,3 @@
-// 引入被测夹具
 use super::*;
 
 /// 真实的拆分写入加套接字超时,不得消耗并丢失不完整的长度前缀。
@@ -29,7 +28,6 @@ fn fixture_preserves_fragmented_frames_across_timeout() {
     // 写完正文的剩余部分
     peer.write_all(&bytes[3..]).unwrap();
     assert!(reader.poll(&mut socket).unwrap().is_none());
-    // 最终得到完整的帧
     assert_eq!(reader.poll(&mut socket).unwrap(), Some(value));
 }
 

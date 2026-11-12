@@ -4,23 +4,18 @@
 pub fn read(service: &str, account: &str) -> Result<Option<String>, String> {
     // 先校验标识
     validate_key(service, account)?;
-    // 交给平台读取
     platform::read(service, account)
 }
 
-// 写入凭据
 pub fn write(service: &str, account: &str, value: &str) -> Result<(), String> {
     // 先校验标识
     validate_key(service, account)?;
-    // 交给平台写入
     platform::write(service, account, value)
 }
 
-// 删除凭据
 pub fn delete(service: &str, account: &str) -> Result<(), String> {
     // 先校验标识
     validate_key(service, account)?;
-    // 交给平台删除
     platform::delete(service, account)
 }
 
@@ -28,15 +23,12 @@ pub fn delete(service: &str, account: &str) -> Result<(), String> {
 fn validate_key(service: &str, account: &str) -> Result<(), String> {
     // 服务名与账户名不得含非法字符
     if [service, account]
-        // 遍历
         .iter()
         // 为空、过长或含控制字符
         .any(|s| s.is_empty() || s.len() > 512 || s.chars().any(char::is_control))
     {
-        // 标识无效
         return Err("无效的凭据标识".into());
     }
-    // 合法
     Ok(())
 }
 
@@ -44,7 +36,6 @@ fn validate_key(service: &str, account: &str) -> Result<(), String> {
 // Android：配置 Keystore 包裹密钥
 #[cfg(target_os = "android")]
 pub fn configure_vault(dir: std::path::PathBuf, key: [u8; 32]) -> Result<(), String> {
-    // 交给平台配置
     platform::configure(dir, key)
 }
 
@@ -75,10 +66,8 @@ mod platform;
 
 #[cfg(target_os = "android")]
 #[path = "android.rs"]
-// 其他平台实现
 mod platform;
 
-// 测试模块
 #[cfg(test)]
 #[path = "credentials_test.rs"]
 mod credentials_test;

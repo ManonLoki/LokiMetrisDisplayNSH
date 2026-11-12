@@ -1,7 +1,6 @@
 //! 调试构建专用的测试夹具连接:模拟桌面端的公开投影,不实现密码协议、网络或系统凭据。
 //! 真实协议由 Rust 的配对核心与实网专项验证;这里只让 UI 场景测试可重复。
 //! 时间全部由调用方传入(测试里是虚拟时钟),夹具自己从不读取系统时间。
-// 事件时间线场景
 mod scenario;
 // 读取夹具、配对记录和缓存
 mod load;
@@ -12,7 +11,6 @@ use nsh_core::storage::Storage;
 use scenario::Scenario;
 use serde_json::{Value, json};
 
-// 事件夹具的存储键
 const INJECT_KEY: &str = "loki.inject";
 // 固定投影夹具的存储键
 const STATIC_KEY: &str = "test.staticView";
@@ -57,7 +55,6 @@ impl Fixture {
         }
     }
 
-    // 处理命令
     pub(super) fn command(&mut self, command: &LinkCommand, now_ms: u64) {
         match self {
             Self::Scenario(scenario) => scenario.command(command, now_ms),
@@ -82,18 +79,13 @@ impl ChangedOnly {
     }
 }
 
-// 固定投影夹具
 pub(super) struct StaticView {
-    // 投影
     projection: Value,
-    // 收到的命令
     commands: Vec<Value>,
-    // 去重器
     changed: ChangedOnly,
 }
 
 impl StaticView {
-    // 读取固定投影
     fn new(raw: &str) -> Self {
         Self {
             projection: serde_json::from_str(raw).unwrap_or(Value::Null),
@@ -102,14 +94,12 @@ impl StaticView {
         }
     }
 
-    // 首个视图
     fn initialize(&mut self) -> Result<ViewState, String> {
         self.changed
             .view(self.projection.to_string())?
             .ok_or_else(|| "夹具投影无效".to_owned())
     }
 
-    // 轮询
     fn poll(&mut self) -> Result<Option<ViewState>, String> {
         self.changed.view(self.projection.to_string())
     }

@@ -1,4 +1,3 @@
-// 引入 owner 与命令等
 #[cfg(target_os = "macos")]
 use super::super::persistence;
 use super::super::{
@@ -9,7 +8,6 @@ use super::super::{
     },
     owner::Owner,
 };
-// 引入配对会话类型
 use loki_metris_pairing::session::AwaitingDeviceProof;
 use serde_json::{Value, json};
 use std::{
@@ -28,12 +26,10 @@ fn resume_and_snapshot(
     capabilities: Value,
     endpoint: Value,
 ) -> (TcpStream, loki_metris_pairing::session::SecureChannel) {
-    // 接受连接
     let mut socket = configured(listener.accept().unwrap().0);
     // 开场消息必须是恢复
     let intro = server_recv(&mut socket, HANDSHAKE_FRAME);
     assert_eq!(intro["kind"], "resume");
-    // 校验证明并回复
     let (waiting, reply) = AwaitingDeviceProof::accept(
         serde_json::from_value(intro["value"].clone()).unwrap(),
         CLIENT,
@@ -42,9 +38,7 @@ fn resume_and_snapshot(
         uuid::Uuid::new_v4().to_string(),
     )
     .unwrap();
-    // 服务端发送回复
     server_send(&mut socket, &serde_json::to_value(reply).unwrap());
-    // 得到加密通道
     let mut channel = waiting
         .verify(serde_json::from_value(server_recv(&mut socket, HANDSHAKE_FRAME)).unwrap())
         .unwrap();
@@ -67,7 +61,6 @@ fn trusted_owner(
 ) -> (Owner, SyncSender<Event>, Receiver<Event>, [u8; 32]) {
     let (mut owner, tx, rx) = owner_for_test(files);
     let secret = [7u8; 32];
-    // 登记配对记录
     owner.records.insert(
         CLIENT.into(),
         Material {
@@ -98,7 +91,6 @@ fn leaving_the_foreground_sends_pause_then_closes_and_reports_form_factor_once()
     let files = files();
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let (mut owner, tx, rx, secret) = trusted_owner(&files, listener.local_addr().unwrap());
-    // 本机是手机形态
     owner.form_factor = Some("phone".into());
     let published = owner.published.clone();
     let worker = thread::spawn(move || owner.run(rx));
@@ -127,9 +119,7 @@ fn leaving_the_foreground_sends_pause_then_closes_and_reports_form_factor_once()
         next(&mut socket),
         json!({"type":"deviceFormFactor","formFactor":"phone"})
     );
-    // 等待已连接
     until(&published, |v| v["connected"] == true);
-    // 应用离开前台
     tx.send(command(Command::Active { value: false })).unwrap();
     // 桌面应先收到 pause
     assert_eq!(next(&mut socket), json!({"type":"pause"}));
@@ -152,11 +142,9 @@ fn leaving_the_foreground_sends_pause_then_closes_and_reports_form_factor_once()
 // 已退役的配对簿不能被导入，也不会阻止新建
 fn a_retired_pairing_book_cannot_be_imported_or_block_a_new_book() {
     let files = files();
-    // 旧版的凭据服务名
     let retired = "com.manonloki.lokimetris.display.pairing.v1";
     // 在旧命名空间里写入一份无效记录
     crate::native::credentials::write(retired, &files.device, "retired, invalid records").unwrap();
-    // 读取当前命名空间
     let result = persistence::load_records(super::super::CREDENTIAL_SERVICE, &files.device);
     crate::native::credentials::delete(retired, &files.device).unwrap();
     // 当前配对簿为空，不读取旧记录
@@ -181,9 +169,7 @@ fn explicit_rediscovery_discards_endpoints_a_fresh_browser_cannot_remove() {
             address,
         },
     );
-    // 应有两个端点
     assert_eq!(owner.endpoints.len(), 2);
-    // 显式重新发现
     owner.command(Command::Discover).unwrap();
     // 所有端点被清空（新浏览器自己会补回真实的）
     assert!(owner.endpoints.is_empty());
@@ -197,14 +183,12 @@ fn explicit_rediscovery_discards_endpoints_a_fresh_browser_cannot_remove() {
 fn automatic_resume_does_not_override_a_bonjour_failure_backoff() {
     let files = files();
     let (mut owner, _, _, _) = trusted_owner(&files, "127.0.0.1:47321".parse().unwrap());
-    // 没有任何端点
     owner.endpoints.clear();
     // 模拟 Bonjour 失败，进入退避
     owner.found(super::super::discovery::Found::Failed(
         "temporary DNS failure".into(),
     ));
     let retry_at = owner.discovery.retry_at().unwrap();
-    // 自动重连失败
     assert!(owner.connect().is_err());
     // 且退避时间没有被改写
     assert_eq!(owner.discovery.retry_at(), Some(retry_at));

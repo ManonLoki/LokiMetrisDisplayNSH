@@ -1,21 +1,13 @@
 //! NSH 在每个目标上都持有连接;不需要外部应用宿主。
-// 引入启动配置与连接
 use super::{bootstrap, connection};
-// 引入 nsh 本地元素与模块宏
 use crate::features::connection::view_state;
 use crate::shared::contracts::models::{LinkCommand, LinkOp, ViewState, typed};
 use nsh_core::{JsonValue, element::Local, prelude::*};
-// 引入 JSON 值
-use serde_json::Value;
-// 引入内部可变性与共享指针
 use std::{cell::RefCell, sync::Arc};
 
-// 已建立的连接
 struct Attached {
     // 连接 owner 的句柄
     handle: Arc<connection::Handle>,
-    // 旧版移动端遗留的面板配置，仅在首次视图携带一次
-    legacy_panel: Option<Value>,
     // 随界面可见性变化的系统资源，随连接一起释放
     visibility: bootstrap::Visibility,
     // 上一次交给 UI 的投影文本，用于只在变化时返回新视图
@@ -28,44 +20,24 @@ struct LinkRuntime(RefCell<Option<Attached>>);
 
 // VM 关闭时释放连接
 impl Local for LinkRuntime {
-    // 关闭连接
     fn close(&self) {
-        // 取走并丢弃句柄
         self.0.borrow_mut().take();
     }
 }
 
 // 在已初始化的连接上执行操作，未初始化则报错
 fn with_handle<T>(sys: &System, f: impl FnOnce(&connection::Handle) -> T) -> Result<T, String> {
-    // 取连接运行时
     let runtime = sys.locals.get::<LinkRuntime>();
-    // 借用已挂载的句柄
     let attached = runtime.0.borrow();
-    // 未初始化则报错
     Ok(f(&attached.as_ref().ok_or("连接未初始化")?.handle))
 }
 
-/// 第一个视图还携带移动宿主的旧版面板;设置页会在 `initialized` 时
-/// 采纳它一次,因此常规轮询可以省去额外的 JSON 往返。
-// 首次视图附带旧面板配置，Settings 在 initialized 时采纳一次，之后的轮询不再多一次 JSON 往返
+/// 首个视图：校验后记录，之后的轮询只在变化时返回。
 fn initial_view(sys: &System) -> Result<JsonValue, String> {
-    // 取连接运行时
     let runtime = sys.locals.get::<LinkRuntime>();
-    // 借用已挂载的连接
     let mut attached = runtime.0.borrow_mut();
-    // 未初始化则报错
     let attached = attached.as_mut().ok_or("连接未初始化")?;
-    // 取当前投影
-    let mut raw = attached.handle.poll();
-    // 有旧配置则写进投影
-    if let Some(panel) = &attached.legacy_panel {
-        // 解析投影
-        let mut value: Value = serde_json::from_str(&raw).map_err(|_| "连接投影无效")?;
-        // 附上面板配置
-        value["panelConfig"] = panel.clone();
-        // 序列化，失败报连接投影无效
-        raw = serde_json::to_string(&value).map_err(|_| "连接投影无效")?;
-    }
+    let raw = attached.handle.poll();
     // 校验并转换为公开视图
     let view = view_state::native_view(&raw)?;
     // 记录，之后的轮询只在变化时返回
@@ -87,25 +59,20 @@ impl Link {
         idiom: &str,
         sys: &System,
     ) -> Result<ViewState, String> {
-        // 取连接运行时
         let runtime = sys.locals.get::<LinkRuntime>();
         // 只初始化一次
         if runtime.0.borrow().is_none() {
-            // 应用私有目录
             let root = sys.data_dir.clone().ok_or("应用私有目录不可用")?;
             // 调试构建允许用环境变量指定测试目录
             #[cfg(debug_assertions)]
             let root = match std::env::var_os("LOKI_TEST_DATA_DIR") {
-                // 指定了测试目录
                 Some(path) => {
-                    // 转为路径
                     let path = std::path::PathBuf::from(path);
                     // 必须是绝对路径
                     if !path.is_absolute() {
                         // 必须是绝对路径
                         return Err("测试目录必须是绝对路径".into());
                     }
-                    // 使用该路径
                     path
                 }
                 // 否则用默认根目录
@@ -113,7 +80,7 @@ impl Link {
             };
             // 生成各平台的连接配置
             let mut config = bootstrap::configure(&root, device_id, name)?;
-            if config.platform == "android" {
+            if config.platform == "android" || config.platform == "ios" {
                 // NSH 将平板称为 pad，连接协议使用 tablet。只上报手机和平板。
                 config.form_factor = match idiom {
                     "phone" => Some("phone".into()),
@@ -121,29 +88,15 @@ impl Link {
                     _ => None,
                 };
             }
-            // 读取旧版面板文件，没有则用配置里带的
-            let legacy_panel = std::fs::read(config.root.join("panel-v1.json"))
-                // 读取成功
-                .ok()
-                // 解析为 JSON
-                .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-                // 否则使用配置里的旧版面板
-                .or_else(|| config.legacy_panel.clone());
             // 创建连接 owner
             let handle = Arc::new(connection::Handle::new(config)?);
-            // 保存连接
             *runtime.0.borrow_mut() = Some(Attached {
-                // 可见性资源
                 visibility: bootstrap::Visibility::default(),
-                // 句柄
                 handle,
-                // 旧版面板
-                legacy_panel,
                 // 首次视图在下面的 initial_view 中记录
                 last_view: None,
             });
         }
-        // 返回首次视图
         typed(initial_view(sys)?)
     }
 
@@ -162,7 +115,6 @@ impl Link {
                 super::companion::foregrounded();
             }
         }
-        // 把命令交给句柄
         with_handle(sys, |handle| handle.command(&text))?
     }
 
@@ -187,15 +139,10 @@ impl Link {
     /// 返回已验证的公开连接视图;自上次返回以来没有变化时返回 null。
     // 只在投影变化时校验并返回新视图
     pub(crate) fn poll(sys: &System) -> Result<Option<ViewState>, String> {
-        // 取连接运行时
         let runtime = sys.locals.get::<LinkRuntime>();
-        // 借用已挂载的连接
         let mut attached = runtime.0.borrow_mut();
-        // 未初始化则报错
         let attached = attached.as_mut().ok_or("连接未初始化")?;
-        // 取当前投影
         let raw = attached.handle.poll();
-        // 没变化则不返回
         if attached.last_view.as_deref() == Some(raw.as_str()) {
             return Ok(None);
         }

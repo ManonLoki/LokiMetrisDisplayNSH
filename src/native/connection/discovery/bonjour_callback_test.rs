@@ -1,15 +1,12 @@
-// 引入被测模块
 use super::*;
 use std::sync::mpsc::{self, Receiver};
 
 // 测试用服务实例全名
 const KEY: &str = "cold._loki-host._tcp.local.";
-// 测试用设备 ID
 const ID: &str = "abababab-abab-4aba-8aba-abababababab";
 
 // 构造浏览线程的状态
 fn state() -> (Box<State>, Receiver<Event>) {
-    // 事件通道
     let (events, receiver) = mpsc::sync_channel(16);
     (
         // 一个空白的浏览线程状态
@@ -22,7 +19,6 @@ fn state() -> (Box<State>, Receiver<Event>) {
             interfaces: BTreeMap::new(),
             failure: None,
         }),
-        // 事件接收端
         receiver,
     )
 }
@@ -38,9 +34,7 @@ fn pending(state: &mut State) -> *mut c_void {
         name: Some("冷启动回归".into()),
         port: 47321,
         resolve: ptr::null_mut(),
-        // 尚无地址查询
         address: ptr::null_mut(),
-        // 解析期限
         deadline: Instant::now() + RESOLVE_TIMEOUT,
     });
     // 回调用的上下文指针
@@ -65,13 +59,9 @@ fn resolve_error_reaches_the_browser_retry_path_without_reading_undefined_argume
             -65563,
             ptr::null(),
             ptr::null(),
-            // 标志 0
             0,
-            // 网卡 0
             0,
-            // 空记录
             ptr::null(),
-            // 回调上下文
             context,
         )
     };
@@ -97,19 +87,14 @@ fn address_error_reaches_the_browser_retry_path() {
             ptr::null(),
             ptr::null(),
             0,
-            // 回调上下文
             context,
         )
     };
     // 失败原因应包含错误码
     assert!(
-        // 状态
         state
-            // 失败信息
             .failure
-            // 取字符串
             .as_deref()
-            // 必有值
             .unwrap()
             // 包含 GetAddrInfo 失败（-65554）
             .contains("GetAddrInfo 失败（-65554）")
@@ -143,15 +128,11 @@ fn a_remove_or_unusable_address_does_not_consume_the_only_resolution() {
             0,
             0,
             ptr::null(),
-            // 地址
             &address,
-            // 生存期 0
             0,
-            // 回调上下文
             context,
         )
     };
-    // 尚未完成
     assert!(state.finished.is_empty());
     // 再给私网地址并带“新增”：解析完成
     address.addr = [10, 0, 0, 221];
@@ -162,15 +143,11 @@ fn a_remove_or_unusable_address_does_not_consume_the_only_resolution() {
             0,
             0,
             ptr::null(),
-            // 地址
             &address,
-            // 生存期 0
             0,
-            // 回调上下文
             context,
         )
     };
-    // 现在才完成
     assert_eq!(state.finished, [KEY]);
     // 并向 owner 报告解析出的端点
     assert!(
@@ -212,11 +189,8 @@ fn remove_then_add_in_one_process_result_retains_the_latest_add_until_safe_clean
                 14,
                 0,
                 name.as_ptr(),
-                // 服务类型
                 regtype.as_ptr(),
-                // 域
                 domain.as_ptr(),
-                // 回调上下文
                 context,
             )
         };
@@ -249,22 +223,17 @@ fn invalid_txt_is_rejected_without_querying_an_address_or_poisoning_other_servic
             14,
             0,
             ptr::null(),
-            // 空主机名
             ptr::null(),
             // 端口（网络字节序）
             47321_u16.to_be(),
-            // TXT 长度
             txt.len() as u16,
-            // TXT 内容
             txt.as_ptr(),
-            // 回调上下文
             context,
         )
     };
     // 这次解析被结束，但不是整体失败
     assert_eq!(state.finished, [KEY]);
     assert!(state.failure.is_none());
-    // 没有发起地址查询
     assert!(state.pending[KEY].address.is_null());
     // 服务被忘记，不会反复重试
     assert!(!state.interfaces.contains_key(KEY));
@@ -287,11 +256,8 @@ fn removing_one_interface_keeps_the_same_desktop_until_the_last_interface_is_rem
                 interface,
                 0,
                 name.as_ptr(),
-                // 服务类型
                 regtype.as_ptr(),
-                // 域
                 domain.as_ptr(),
-                // 回调上下文
                 context,
             )
         };
@@ -314,7 +280,6 @@ fn removing_one_interface_keeps_the_same_desktop_until_the_last_interface_is_rem
             name.as_ptr(),
             regtype.as_ptr(),
             domain.as_ptr(),
-            // 回调上下文
             context,
         )
     };

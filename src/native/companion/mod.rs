@@ -43,29 +43,19 @@ pub(crate) fn install() {
 // iOS 上导出清单类型
 pub(super) use watch_outbox::{Manifest, read_manifest};
 
-// 引入 JSON 值
 use serde_json::Value;
-// 引入路径
 use std::path::Path;
 
 /// 由已认证的连接所有者调用,绝不由 UI 轮询定时器调用。
 // 由经认证的连接 owner 调用（不由界面轮询调用）：更新手表的公开快照
 pub(super) fn publish(
-    // 根目录
     root: &Path,
-    // 来源
     source: Option<&str>,
-    // 快照
     snapshot: Option<&Value>,
-    // 接收时间
     received: Option<u64>,
-    // 无返回值
 ) {
-    // 发件箱目录
     let directory = root.join("companion-v1");
-    // 更新发件箱
     match watch_outbox::update(&directory, root, source, snapshot, received) {
-        // 有变化
         Ok(changed) => {
             // iOS：有变化则通知手表会话
             #[cfg(target_os = "ios")]

@@ -5,18 +5,14 @@ use crate::shared::contracts::models::{LinkCommand, LinkOp, ViewState};
 use nsh_core::storage::Storage;
 use serde_json::{Map, Value, json};
 
-// 配对窗口：六十秒
 const PAIRING_WINDOW_MS: u64 = 60_000;
 // 已配对记录的存储键
 pub(super) const PAIRED_KEY: &str = "loki.paired";
-// 缓存快照的存储键
 pub(super) const CACHE_KEY: &str = "loki.cache";
 // 夹具设备的默认身份
 const FIXTURE_DEVICE: &str = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
-// 一个时间线事件
 pub(super) struct Event {
-    // 触发时间
     pub(super) at_ms: u64,
     // 种类：handshake、snapshot 或 transport-fail
     pub(super) kind: String,
@@ -28,28 +24,22 @@ pub(super) struct Event {
     pub(super) images: Value,
 }
 
-// 事件场景夹具
 pub(in crate::native) struct Scenario {
     // 公开投影状态（含 paired，不含 images）
     state: Value,
-    // 图片映射
     images: Value,
-    // 按时间排序的事件
     events: Vec<Event>,
     // 下一个未触发的事件
     next: usize,
     // 界面不再活动后不再触发事件
     cancelled: bool,
-    // 去重器
     changed: ChangedOnly,
 }
 
-// 取字符串字段
 fn text<'a>(value: &'a Value, key: &str) -> &'a str {
     value[key].as_str().unwrap_or("")
 }
 
-// 批量设置字段
 fn set(state: &mut Value, fields: &[(&str, Value)]) {
     for (key, value) in fields {
         state[*key] = value.clone();
@@ -84,7 +74,6 @@ pub(crate) fn pairing_code(now_ms: u64, host_id: &str) -> String {
     format!("{mixed:04}")
 }
 
-// 配对窗口是否已过
 fn pairing_expired(now_ms: u64, deadline_ms: u64) -> bool {
     now_ms >= deadline_ms
 }
@@ -144,7 +133,6 @@ impl Scenario {
         self.changed.view(raw)
     }
 
-    // 处理命令
     pub(super) fn command(&mut self, command: &LinkCommand, now_ms: u64) {
         self.fire_due(now_ms);
         let id = command.client_id.as_deref().unwrap_or("");
@@ -194,11 +182,9 @@ impl Scenario {
         value.to_string()
     }
 
-    // 应用一个事件
     fn apply(&mut self, index: usize) {
         let at_ms = self.events[index].at_ms;
         match self.events[index].kind.as_str() {
-            // 握手：保存配对
             "handshake" => {
                 let before = self.state["paired"].clone();
                 self.accept_handshake(at_ms);
@@ -221,7 +207,6 @@ impl Scenario {
                 self.images = images;
                 self.persist_cache();
             }
-            // 传输中断
             _ => set(
                 &mut self.state,
                 &[
@@ -271,7 +256,6 @@ impl Scenario {
         }
     }
 
-    // 配对窗口过期
     fn expire_pairing(&mut self, now_ms: u64) {
         let Some(deadline) = self.state["pairingDeadlineMs"].as_u64() else {
             return;
@@ -406,7 +390,6 @@ impl Scenario {
         );
     }
 
-    // 保存配对记录
     fn persist_paired(&self) {
         let _ = Storage::set_item(PAIRED_KEY, self.state["paired"].to_string());
     }

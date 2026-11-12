@@ -1,4 +1,3 @@
-// 引入测试用 GIF 构造函数
 use super::super::fixtures::{frame, gif};
 use super::*;
 
@@ -16,11 +15,8 @@ fn real_gif87a_and_minimal_gif89a_fixtures_decode_complete_canvases() {
         (animation.width, animation.height, animation.frames.len()),
         (64, 64, 2)
     );
-    // 无限循环
     assert_eq!(animation.plays, None);
-    // 第一帧 1 秒
     assert_eq!(animation.frames[0].duration_ms, 1000);
-    // 两帧像素不同
     assert_ne!(animation.frames[0].pixels, animation.frames[1].pixels);
     // 最小的 1x1 GIF
     let single = decode(include_bytes!("../../tests/fixtures/assets/hook.gif")).unwrap();
@@ -28,7 +24,6 @@ fn real_gif87a_and_minimal_gif89a_fixtures_decode_complete_canvases() {
         (single.width, single.height, single.frames.len()),
         (1, 1, 1)
     );
-    // 该像素是透明的
     assert_eq!(single.frames[0].pixels, [0, 0, 0, 0]);
 }
 
@@ -48,9 +43,7 @@ fn transparency_and_restore_previous_and_background_compose_rectangular_frames()
     let mut fourth = frame([0, 0, 1, 1], &[0]);
     fourth.transparent = Some(0);
     let animation = decode(&gif(2, 1, None, vec![first, second, third, fourth])).unwrap();
-    // 第一帧：两红
     assert_eq!(animation.frames[0].pixels, [RED, RED].concat());
-    // 第二帧：蓝红
     assert_eq!(animation.frames[1].pixels, [BLUE, RED].concat());
     // 第三帧：第二帧已恢复，所以左边回到红色
     assert_eq!(animation.frames[2].pixels, [RED, GREEN].concat());
@@ -65,13 +58,10 @@ fn transparency_and_restore_previous_and_background_compose_rectangular_frames()
         None,
         vec![
             frame([0, 0, 2, 1], &[1, 1]),
-            // 擦除帧
             erased,
-            // 一像素帧
             frame([0, 0, 1, 1], &[3]),
         ],
     ))
-    // 构造成功
     .unwrap();
     // 被清除的位置是黑色背景
     assert_eq!(animation.frames[2].pixels, [GREEN, [0, 0, 0, 255]].concat());
@@ -98,14 +88,10 @@ fn local_palette_and_four_interlace_passes_use_logical_rows() {
             BLUE,
             GREEN,
             [0, 0, 0, 255],
-            // 红
             RED,
-            // 蓝
             BLUE,
-            // 绿
             GREEN
         ]
-        // 拼接像素
         .concat()
     );
 }

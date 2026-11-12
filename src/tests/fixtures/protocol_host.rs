@@ -1,18 +1,14 @@
 //! 隔离的桌面夹具,使用实际的共享配对与加密传输。
 //! 用 `cargo run --example protocol_host` 启动;出现提示时输入手机上的四位数代码。
 //! 配对只存在于内存中,进程停止即消失。不会打开任何生产设备簿。
-// 引入真实的配对与加密传输库
 use loki_metris_pairing::{
     SenderSession,
     assets::AssetDescriptor,
     session::{AwaitingDeviceProof, SecureChannel},
     valid_device_id, valid_device_name,
 };
-// 引入 mDNS 守护进程，用于广播服务
 use mdns_sd::{IfKind, ServiceDaemon, ServiceInfo};
-// 引入 JSON
 use serde_json::{Value, json};
-// 引入集合、IO、网络、同步、线程与时间
 use std::{
     collections::BTreeMap,
     io::{self, Read, Write},
@@ -23,7 +19,6 @@ use std::{
     },
     // 线程
     thread,
-    // 时长与时刻
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 // 夹具桌面的默认设备 ID
@@ -45,12 +40,9 @@ fn recv(socket: &mut TcpStream, max: usize) -> io::Result<Value> {
         return Err(io::Error::other("frame limit"));
     }
     let mut b = vec![0; size];
-    // 读满帧体
     socket.read_exact(&mut b)?;
-    // 解析为 JSON
     Ok(serde_json::from_slice(&b)?)
 }
-// 加密后发送
 fn secure_send(
     s: &mut TcpStream,
     c: &mut SecureChannel,
@@ -98,10 +90,8 @@ fn serve(
     input: Arc<Mutex<()>>,
     config: Arc<Config>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // 读写超时
     s.set_read_timeout(Some(Duration::from_secs(65)))?;
     s.set_write_timeout(Some(Duration::from_secs(15)))?;
-    // 读取开场消息
     let intro = recv(&mut s, 4096)?;
     let device = intro["value"]["deviceId"]
         .as_str()
@@ -127,9 +117,7 @@ fn serve(
         )?;
         send(&mut s, &serde_json::to_value(hello)?)?;
         let (sender, confirmation) = sender.accept(serde_json::from_value(recv(&mut s, 4096)?)?)?;
-        // 发送确认消息
         send(&mut s, &serde_json::to_value(confirmation)?)?;
-        // 校验对端的确认
         let material = sender.verify(serde_json::from_value(recv(&mut s, 4096)?)?)?;
         // 配对秘密只保存在内存里
         let mut saved = records.lock().unwrap();
@@ -161,7 +149,6 @@ fn serve(
         uuid::Uuid::new_v4().to_string(),
     )?;
     send(&mut s, &serde_json::to_value(reply)?)?;
-    // 得到加密通道
     let mut channel = waiting.verify(serde_json::from_value(recv(&mut s, 4096)?)?)?;
     // 读取设备的首条加密消息
     let packet = serde_json::from_value(recv(&mut s, 96 * 1024)?)?;
@@ -180,7 +167,6 @@ fn serve(
     // 之后改用短超时轮询
     s.set_read_timeout(Some(Duration::from_millis(100)))?;
     let asset = AssetDescriptor::from_bytes(&config.picture)?;
-    // 心跳编号
     let mut nonce = 0u64;
     let mut last_ping = Instant::now();
     let mut last_received = Instant::now();
@@ -201,7 +187,6 @@ fn serve(
             continue;
         };
         last_received = Instant::now();
-        // 解密收到的消息
         let message: Value =
             serde_json::from_slice(&channel.open(&serde_json::from_value(packet)?)?)?;
         match message["type"].as_str() {
@@ -214,10 +199,8 @@ fn serve(
                 secure_send(
                     &mut s,
                     &mut channel,
-                    // 发送资源分块
                     &json!({"type":"assetChunk","chunk":asset.chunk(&config.picture,offset)?}),
                 )?;
-                // 最后一块发完
                 if offset + 16_384 >= asset.length {
                     println!("ASSET_COMPLETE {device} bytes={}", asset.length);
                 }
@@ -255,7 +238,6 @@ impl FrameReader {
         {
             return Err(io::Error::other("partial frame expired"));
         }
-        // 已有长度前缀
         if self.bytes.len() >= 4 {
             let size = u32::from_be_bytes(self.bytes[..4].try_into().unwrap()) as usize;
             if size == 0 || size > 96 * 1024 {
@@ -270,15 +252,11 @@ impl FrameReader {
                 } else {
                     Some(Instant::now())
                 };
-                // 返回解析出的值
                 return Ok(Some(value));
             }
         }
-        // 读缓冲区
         let mut chunk = [0; 8192];
-        // 读取更多数据
         match socket.read(&mut chunk) {
-            // 对端关闭
             Ok(0) => {
                 return Err(io::Error::new(
                     io::ErrorKind::UnexpectedEof,
@@ -290,7 +268,6 @@ impl FrameReader {
                     // 记下开始接收不完整帧的时刻
                     self.partial_since = Some(Instant::now());
                 }
-                // 追加读到的字节
                 self.bytes.extend_from_slice(&chunk[..n]);
             }
             // 超时只表示暂时没有数据
@@ -301,14 +278,12 @@ impl FrameReader {
                 ) => {}
             Err(e) => return Err(e),
         }
-        // 缓冲区超限
         if self.bytes.len() > 96 * 1024 + 4 {
             return Err(io::Error::other("frame limit"));
         }
         Ok(None)
     }
 }
-// 夹具配置
 struct Config {
     client_id: String,
     name: String,
@@ -317,7 +292,6 @@ struct Config {
 impl Config {
     // 解析命令行参数 --id、--name、--asset
     fn parse() -> Result<Self, Box<dyn std::error::Error>> {
-        // 默认值
         let mut result = Self {
             client_id: CLIENT.into(),
             name: "Loki 协议验证台".into(),
@@ -326,9 +300,7 @@ impl Config {
         let mut args = std::env::args().skip(1);
         while let Some(arg) = args.next() {
             match arg.as_str() {
-                // 客户端标识
                 "--id" => result.client_id = args.next().ok_or("missing --id value")?,
-                // 设备名
                 "--name" => result.name = args.next().ok_or("missing --name value")?,
                 // 自定义图片不得超过 32 MiB
                 "--asset" => {
@@ -372,37 +344,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let hostname = format!("loki-fixture-{}.local.", config.client_id);
     let info = ServiceInfo::new(
         "_loki-host._tcp.local.",
-        // 实例名
         &config.name,
-        // 主机名
         &hostname,
         // 空 IP，自动取地址
         "",
-        // 端口
         port,
-        // TXT 属性
         &properties[..],
     )?
-    // 自动检测地址
     .enable_addr_auto();
-    // 注册服务
     mdns.register(info)?;
     // 输出就绪标志，测试脚本据此继续
     println!(
-        // 就绪信息格式
         "FIXTURE_READY port={port} clientId={} name={} assetBytes={}; test data only.",
-        // 客户端标识
         config.client_id,
-        // 设备名
         config.name,
-        // 图片字节数
         config.picture.len()
     );
     // 内存中的配对簿，进程结束即消失
     let records = Arc::new(Mutex::new(BTreeMap::new()));
     // 终端输入锁
     let input = Arc::new(Mutex::new(()));
-    // 当前连接数
     let connections = Arc::new(AtomicUsize::new(0));
     for stream in listener.incoming() {
         // 连接许可：离开作用域时归还名额
@@ -434,7 +395,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-// 测试模块
 #[cfg(test)]
 #[path = "protocol_host_test.rs"]
 mod protocol_host_test;

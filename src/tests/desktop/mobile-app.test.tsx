@@ -1,37 +1,26 @@
-// 引入测试 API
 import { expect, test } from "nsh/test";
-// 引入打开函数与常量
 import { open, PHONE, safe } from "./app-environment";
-// 引入夹具快照
 import { representativeSnapshot } from "./app-fixtures";
 
-// 旧版本遗留的面板偏好
-const oldPanel = { showUsage: true, showHooks: true, usageDetail: "detailed", hookLayout: "2x2" };
-// 构造夹具：未选择、未连接的空视图加旧面板偏好（Rust 夹具连接原样返回它）
+// 构造夹具：未选择、未连接的空视图（Rust 夹具连接原样返回它）
 function fixture(formFactor = "phone") {
   return { formFactor, projection: {
     deviceId: PHONE, deviceName: "客厅手机", hosts: [], selectedId: null, status: "正在发现桌面端…", error: null,
     pairingCode: null, pairingDeadlineMs: null, connected: false, snapshot: null, receivedAtMs: null, live: false,
-    cacheSourceId: null, panelConfig: oldPanel,
+    cacheSourceId: null,
   } as Record<string, unknown> };
 }
 
-// 移动端身份与旧面板偏好被迁移到 NSH 存储
-test("mobile identity and previous panel choices are adopted into NSH storage", async () => {
+// 移动端身份被写入 NSH 存储，面板选择随后可保存
+test("mobile identity is adopted into NSH storage and panel choices are saved", async () => {
   const app = await open("./mobile-app.tsx", { width: 390, height: 2600, safeArea: safe,
     storage: { "test.mobileApp": JSON.stringify(fixture()) } });
-  // 等待迁移写入
-  await app.waitUntil(() => app.storage()["loki.panel"] != null && app.storage()["loki.device"] != null);
+  await app.waitUntil(() => app.storage()["loki.device"] != null);
   // 设备 ID 应为手机 ID
   expect(JSON.parse(app.storage()["loki.device"]).id).toBe(PHONE);
-  // 面板偏好应原样保留
-  expect(JSON.parse(app.storage()["loki.panel"])).toEqual(oldPanel);
-  // 进入设置页
   await app.press("menu-settings");
-  // 改成每页一张
-  await app.press("settings-hooks-1x1");
-  // 新布局应被保存
-  await app.waitUntil(() => JSON.parse(app.storage()["loki.panel"]).hookLayout === "1x1");
+  await app.press("settings-hooks-2x2");
+  await app.waitUntil(() => JSON.parse(app.storage()["loki.panel"] ?? "{}").hookLayout === "2x2");
 });
 
 // 移动端 Hook 卡片没有点击动作
@@ -51,7 +40,6 @@ test("mobile Hook cards have no press action", async () => {
 test("televisions keep remote navigation in the shared NSH application", async () => {
   const app = await open("./mobile-app.tsx", { width: 960, height: 540, safeArea: safe,
     storage: { "test.mobileApp": JSON.stringify(fixture("tv")) } });
-  // 宽屏使用侧栏
   await app.waitFor("nav-side");
   // 第一次按下：焦点落在“展示台”
   await app.keyboard.press("down");
@@ -59,7 +47,6 @@ test("televisions keep remote navigation in the shared NSH application", async (
   // 第二次按下：焦点移到“设置”
   await app.keyboard.press("down");
   await app.waitFor("remote-focus-menu-settings");
-  // 确认进入设置页
   await app.keyboard.press("enter");
   await app.waitFor("settings-panel-card");
 });
@@ -71,9 +58,9 @@ test("television focus reveals a Hook on the next Carousel page", async () => {
   value.projection.snapshot = snapshot;
   value.projection.receivedAtMs = 1_720_111_000_000;
   value.projection.connected = true;
-  value.projection.panelConfig = { ...oldPanel, showUsage: false, hookLayout: "1x1" };
+  const panel = { showUsage: false, showHooks: true, usageDetail: "detailed", hookLayout: "1x1" };
   const app = await open("./mobile-app.tsx", { width: 960, height: 540, safeArea: safe,
-    reducedMotion: true, storage: { "test.mobileApp": JSON.stringify(value) } });
+    reducedMotion: true, storage: { "test.mobileApp": JSON.stringify(value), "loki.panel": JSON.stringify(panel) } });
 
   await app.waitFor("hook-card-1");
   await app.keyboard.press("down");
@@ -94,19 +81,16 @@ test("phones and tablets ignore remote navigation keys", async () => {
     storage: { "test.mobileApp": JSON.stringify(fixture("tablet")) } });
   await app.waitFor("nav-side");
   await app.keyboard.press("down");
-  // 不应出现焦点框
   expect(app.shows("remote-focus-menu-panel")).toBe(false);
 });
 
 // 系统栏通过安全区缩小内容区域
 test("mobile system bars reduce the content area through NSH safe-area facts", async () => {
   const value = JSON.stringify(fixture());
-  // 无安全区
   const plain = await open("./mobile-app.tsx", { width: 390, height: 844, safeArea: safe,
     storage: { "test.mobileApp": value } });
   // 等待用量卡片布局被记录
   await plain.waitUntil(() => plain.storage()["loki.frames"]?.includes('"usage"') === true);
-  // 记录完整高度
   const fullHeight = JSON.parse(plain.storage()["loki.frames"]).usage.height;
   plain.dispose();
   // 顶部 48、底部 34 的安全区
@@ -118,6 +102,5 @@ test("mobile system bars reduce the content area through NSH safe-area facts", a
   expect(fullHeight - insetHeight).toBeGreaterThan(35);
   expect(fullHeight - insetHeight).toBeLessThan(45);
   await inset.press("menu-settings");
-  // 设置页仍可打开
   await inset.waitFor("settings-panel-card");
 });

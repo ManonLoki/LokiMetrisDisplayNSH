@@ -13,14 +13,12 @@ export function makePairingCode(nowMs: number, hostId: string): string {
   }
   // 再混入时间，取四位
   const mixed = Math.abs((hash + (nowMs % 10000)) % 10000);
-  // 补零到四位
   return String(mixed).padStart(4, "0");
 }
 
 // 把毫秒时间格式化为本地 “年-月-日 时:分”
 export function formatSyncTime(ms: number): string {
   const date = new Date(ms);
-  // 补零到两位
   const part = (value: number) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${part(date.getMonth() + 1)}-${part(date.getDate())} ${part(date.getHours())}:${part(date.getMinutes())}`;
 }

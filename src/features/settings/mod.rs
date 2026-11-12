@@ -2,10 +2,8 @@
 // 设置引擎：纯逻辑，不依赖 nsh 运行时
 mod engine;
 
-// 引入 nsh 的本地元素、模块宏与存储
 use crate::shared::contracts::models::{PanelConfig, SettingsResult, ViewState, typed};
 use nsh_core::{JsonValue, element::Local, prelude::*, storage::Storage};
-// 引入内部可变性
 use std::cell::RefCell;
 
 #[derive(Default)]
@@ -14,9 +12,7 @@ struct SettingsRuntime(RefCell<engine::Engine>);
 
 // VM 关闭时释放引擎
 impl Local for SettingsRuntime {
-    // 关闭
     fn close(&self) {
-        // 销毁引擎
         self.0.borrow_mut().dispose();
     }
 }
@@ -26,9 +22,7 @@ struct AppStorage;
 
 // 应用存储实现引擎所需的存储接口
 impl engine::Store for AppStorage {
-    // 读取
     fn get(&self, key: &str) -> Option<String> {
-        // 读取存储项
         Storage::get_item(key)
     }
 
@@ -49,7 +43,6 @@ pub(crate) struct Settings;
 fn apply(request: engine::Request, sys: &System) -> Result<SettingsResult, String> {
     // 取得（或创建）本 VM 的运行时
     let runtime = sys.locals.get::<SettingsRuntime>();
-    // 应用请求
     let result = runtime.0.borrow_mut().apply(request, &mut AppStorage)?;
     // 序列化响应，再按公开形状校验
     typed(serde_json::to_value(&result).map_err(|error| error.to_string())?)

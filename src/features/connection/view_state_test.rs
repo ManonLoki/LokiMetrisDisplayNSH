@@ -1,7 +1,5 @@
-// 引入被测模块
 use super::*;
 
-// 测试用设备 ID
 const DEVICE: &str = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 // 只有握手而没有收到快照时，不算在线

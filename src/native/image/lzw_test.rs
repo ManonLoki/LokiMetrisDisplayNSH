@@ -1,9 +1,7 @@
-// 引入被测模块
 use super::*;
 
 // 把（码, 位宽）序列打包为字节
 fn pack(codes: &[(usize, usize)]) -> Vec<u8> {
-    // 输出字节
     let mut out = Vec::new();
     // 位累加器与已累积的位数
     let (mut accumulator, mut bits) = (0u32, 0);
@@ -11,7 +9,6 @@ fn pack(codes: &[(usize, usize)]) -> Vec<u8> {
     for &(code, width) in codes {
         accumulator |= (code as u32) << bits;
         bits += width;
-        // 凑满一字节就输出
         while bits >= 8 {
             out.push(accumulator as u8);
             accumulator >>= 8;
@@ -81,16 +78,12 @@ fn invalid_dictionary_codes_sizes_and_pixel_counts_fail() {
             "invalid codes {codes:?}"
         );
     }
-    // 像素不足
     assert!(decode(&pack(&[(4, 3), (0, 3), (5, 3)]), 2, 2).is_err());
-    // 像素多于画布
     assert!(decode(&pack(&[(4, 3), (0, 3), (1, 3), (5, 3)]), 2, 1).is_err());
     // 最小码长超出 2 到 8 的范围
     assert!(decode(&[0x44], 1, 1).is_err());
     assert!(decode(&[0x44], 9, 1).is_err());
-    // 空数据
     assert!(decode(&[], 2, 1).is_err());
-    // 数据截断
     assert!(decode(&[0x44], 2, 2).is_err());
 }
 

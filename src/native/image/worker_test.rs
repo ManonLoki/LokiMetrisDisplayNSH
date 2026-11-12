@@ -1,9 +1,7 @@
-// 引入被测模块
 use super::*;
 use std::{sync::mpsc::Receiver, task::Wake};
 
 #[derive(Default)]
-// 统计被唤醒次数
 struct WakeCount(AtomicUsize);
 impl Wake for WakeCount {
     fn wake(self: Arc<Self>) {
@@ -45,7 +43,6 @@ fn polling_before_and_after_completion_never_loses_a_wakeup() {
     // 第二个任务在被轮询之前就已完成
     let mut late = service.submit("second".into()).unwrap();
     process(receiver.recv().unwrap(), |source| Ok(source.to_owned()));
-    // 直接得到结果
     assert_eq!(
         Pin::new(&mut late).poll(&mut context),
         Poll::Ready(Ok("second".into()))
@@ -73,7 +70,6 @@ fn full_queue_fails_without_blocking_and_releases_its_byte_reservation() {
     process(receiver.recv().unwrap(), |_| {
         panic!("a cancelled job must not decode")
     });
-    // 预算归还
     assert_eq!(service.budget.load(Ordering::SeqCst), 0);
     // 线程不可用时提交也失败，且预算不泄漏
     drop(receiver);
@@ -91,14 +87,12 @@ fn cancellation_skips_queued_work_and_discards_running_work() {
     let shared = Arc::clone(&job.shared);
     drop(pending);
     process(job, |_| panic!("a cancelled queued job ran"));
-    // 没有留下结果
     assert!(shared.completion.lock().unwrap().result.is_none());
     // 运行中被取消：结果被丢弃
     let pending = service.submit("running".into()).unwrap();
     let job = receiver.recv().unwrap();
     let shared = Arc::clone(&job.shared);
     process(job, |_| {
-        // 在解码过程中放弃
         drop(pending);
         Ok("discarded".into())
     });
@@ -120,11 +114,8 @@ fn replacing_a_waker_releases_captured_resources_outside_the_completion_lock() {
             self.wake_count.fetch_add(1, Ordering::SeqCst);
         }
     }
-    // 探针的析构
     impl Drop for DropProbe {
-        // 销毁时
         fn drop(&mut self) {
-            // 升级共享状态引用
             let shared = self.shared.upgrade().unwrap();
             // 析构时不能持有完成锁
             assert!(
@@ -135,9 +126,7 @@ fn replacing_a_waker_releases_captured_resources_outside_the_completion_lock() {
         }
     }
     let (service, _receiver) = service(1);
-    // 提交排队任务
     let mut pending = service.submit("queued".into()).unwrap();
-    // 释放标记
     let released = Arc::new(AtomicBool::new(false));
     // 先用探针唤醒器轮询
     let first = Waker::from(Arc::new(DropProbe {
@@ -148,7 +137,6 @@ fn replacing_a_waker_releases_captured_resources_outside_the_completion_lock() {
     assert!(
         Pin::new(&mut pending)
             .poll(&mut Context::from_waker(&first))
-            // 仍在等待
             .is_pending()
     );
     // 外部丢弃后，探针仍被保存的那份持有，尚未释放
