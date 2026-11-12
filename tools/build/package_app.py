@@ -420,20 +420,9 @@ def main():
     if output == ROOT or any(output.is_relative_to(ROOT / part) for part in ['src', 'platform', 'tools', 'signing', 'vendor', 'docs']):
         # 输出目录不得与受维护源码混用
         parser.error('Output must be separate from maintained source directories')
-    # 桌面目标交给对应的桌面打包脚本
+    # 桌面目标交给桌面打包脚本
     if args.target in ['macos', 'windows', 'linux']:
-        # macOS 上打 Windows 包走交叉构建脚本
-        cross = args.target == 'windows' and platform.system() == 'Darwin'
-        # 选择桌面打包脚本
-        script = 'package_windows_cross.py' if cross else 'package_desktop.py'
-        # 构造命令
-        command = [sys.executable, Path(__file__).with_name(script), '--out', output]
-        # 非交叉构建时
-        if not cross:
-            # 追加目标平台
-            command.extend(['--target', args.target])
-        # 执行
-        run(command)
+        run([sys.executable, Path(__file__).with_name('package_desktop.py'), '--target', args.target, '--out', output])
     # 移动端
     else:
         # 打包移动端

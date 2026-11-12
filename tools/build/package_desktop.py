@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Package on the target OS and reject executables for another platform.
+"""Package a desktop target and reject executables built for another platform.
 
-NSH 0.2.0 can report success for --target windows/linux on macOS while
-packaging a Mach-O runner. This entry point prevents that false success.
+nsh can report success for --target linux on macOS while packaging a Mach-O
+runner. This entry point prevents that false success.
 """
 # 引入标准库
 import argparse
@@ -65,10 +65,6 @@ def main():
     args = parser.parse_args()
     # 当前主机平台
     host = {"Darwin": "macos", "Windows": "windows", "Linux": "linux"}.get(platform.system())
-    # 必须在目标系统上构建
-    if host != args.target:
-        # 主机与目标平台不一致
-        raise SystemExit(f"Build {args.target} on a {args.target} host. Current host: {host}. No package was produced.")
     # 查找 nsh，不会尝试安装
     cli = shutil.which("nsh")
     # 没找到 nsh

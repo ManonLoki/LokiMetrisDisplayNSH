@@ -26,8 +26,7 @@ python3 tools/build/package_app.py --target macos --out output/packages/build-00
 | --- | --- | --- |
 | macOS | `macos/` | macOS |
 | Linux | `linux/` | Linux |
-| Windows | `windows/` | Windows / MSVC |
-| Windows（macOS 交叉构建） | `windows-cross/` | cargo-xwin、Xcode/libclang、windres |
+| Windows | `windows/` | Windows / MSVC；macOS 上可交叉构建，需要 cargo-xwin、LLVM 工具和 Rust 的 `x86_64-pc-windows-msvc` 目标 |
 | Android | `android/` | JDK、Android SDK/NDK、原签名文件 |
 | iOS 模拟器 | `ios/` | macOS、Xcode、对应 Rust target |
 | iOS 真机 | `ios-device/` | 加 `--ios-device`，安装前完成开发签名 |
@@ -76,6 +75,6 @@ python3 tools/build/package_app.py --target linux --out output/packages/build-li
 python3 tools/build/package_app.py --target windows --out output/packages/build-windows-001
 ```
 
-原生打包在对应系统执行。NSH 0.5.0 已支持通过 `cargo-xwin` 交叉构建 Windows 运行器，并生成窗口使用的 `nsh/icon.ico`。官方 CLI 在 Windows 上打包时才将图标写入 `.exe` 资源。项目的 macOS 交叉包装器仍使用 `cargo-xwin`、Xcode/libclang 和 `x86_64-w64-mingw32-windres` 嵌入资源管理器所需的图标，再重建 ZIP。交叉包的启动、Credential Manager 和配对须在 Windows 验证。Windows 包须保留可执行文件旁的 `nsh` 目录。
+macOS 上交叉构建 Windows 包时，`.exe` 在资源管理器里显示默认图标（官方 CLI 在 Windows 上打包才写入图标资源），窗口和通知使用应用图标。Linux 包须在 Linux 上构建，macOS 上会产出 Mach-O 并被格式核验拒绝。交叉包的启动、Credential Manager 和配对须在 Windows 验证。Windows 包须保留可执行文件旁的 `nsh` 目录。
 
 移动构建日志位于 `output/build/<目标>/package.log`。工具职责见 [tools](../../tools/README.md)，安装与使用见 [移动说明](../mobile/usage.md)。
