@@ -119,7 +119,7 @@ def main():
         build_widget_support(environment, simulator=True, sdk_path=sdk, developer=developer,
                              deployment=environment['IPHONEOS_DEPLOYMENT_TARGET'], root=ROOT,
                              run=run_support, runner_manifest=ROOT / '.nsh/rust/ios-host/Cargo.toml')
-        (ROOT / 'output/tests/nsh-0.5.0/ios').mkdir(parents=True, exist_ok=True)
+        (ROOT / 'output/tests/nsh-0.5.1/ios').mkdir(parents=True, exist_ok=True)
     # 逐条执行，失败立即停止
     for command in commands(args.suite, output):
         # 先打印命令便于排查

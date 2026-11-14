@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import platform
 import shlex
+import subprocess
 import sys
 import os
 from pathlib import Path
@@ -159,12 +160,15 @@ def build_widget_support(env, *, simulator, sdk_path, developer, deployment, roo
     output = root / '.nsh/widget-support' / target / digest.hexdigest()
     # 创建输出目录
     output.mkdir(parents=True, exist_ok=True)
-    # Rust 核心库的输出目录
-    rust_output = root / 'target/widget-core'
+    # 从 Cargo 配置读取静态库所在的共享输出目录。
+    manifest = root / 'Cargo.toml'
+    metadata = subprocess.check_output(
+        ['cargo', 'metadata', '--no-deps', '--format-version', '1', '--locked', '--manifest-path', manifest],
+        cwd=root, env=env, stderr=log)
+    rust_output = Path(json.loads(metadata)['target_directory'])
     # 编译小组件核心静态库
-    run(['cargo', 'build', '--manifest-path', root / 'Cargo.toml', '-p', 'loki_widget_core',
-         # 发布构建、锁定依赖、目标与目标目录
-         '--release', '--locked', '--target', target, '--target-dir', rust_output], env=env, log=log)
+    run(['cargo', 'build', '--manifest-path', manifest, '-p', 'loki_widget_core',
+         '--release', '--locked', '--target', target], env=env, log=log)
     # 静态库路径
     library = rust_output / target / 'release/libloki_widget_core.a'
     # 库不存在

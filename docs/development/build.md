@@ -1,8 +1,8 @@
 # 构建与打包
 
-主应用使用 NSH 0.5.0、共享 TSX 与 Rust，支持 macOS、Windows、Linux、Android 和 iOS/iPadOS。iOS 默认包含独立 WidgetKit 扩展，Apple Watch 通过选项配套打包。小组件的纯 Rust 核心只复用项目已锁定的依赖，无需 KMP。
+主应用使用 NSH 0.5.1、共享 TSX 与 Rust，支持 macOS、Windows、Linux、Android 和 iOS/iPadOS。iOS 默认包含独立 WidgetKit 扩展，Apple Watch 通过选项配套打包。小组件的纯 Rust 核心只复用项目已锁定的依赖，无需 KMP。
 
-所有命令在项目根目录执行。先准备 NSH CLI 0.5.0、Rust/Cargo 1.97+、Python 3.11+ 与目标平台工具链。Rust 依赖由 `Cargo.toml` 和 `Cargo.lock` 管理。
+所有命令在项目根目录执行。先准备 NSH CLI 0.5.1、Rust/Cargo 1.97+、Python 3.11+ 与目标平台工具链。Rust 依赖由 `Cargo.toml` 和 `Cargo.lock` 管理。
 
 ## 日常开发
 

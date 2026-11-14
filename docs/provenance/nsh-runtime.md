@@ -1,6 +1,8 @@
 # NSH 运行时来源与应用适配
 
-项目使用 crates.io 发布的官方 NSH 0.5.0，版本和来源由 `Cargo.toml`、`Cargo.lock` 固定。NSH CLI 与 Cargo 运行时使用同一版本，CLI 生成的 `.nsh/` 不进入版本控制。Apache-2.0 许可证保留在 [nsh-LICENSE-APACHE](nsh-LICENSE-APACHE)。
+项目使用 crates.io 发布的官方 NSH 0.5.1，版本和来源由 `Cargo.toml`、`Cargo.lock` 固定。NSH CLI 与 Cargo 运行时使用同一版本，CLI 生成的 `.nsh/` 不进入版本控制。Apache-2.0 许可证保留在 [nsh-LICENSE-APACHE](nsh-LICENSE-APACHE)。
+
+[NSH 0.5.1 发布说明](https://github.com/longbridge/nsh/releases/tag/v0.5.1)
 
 ## 0.5.0 迁移
 
@@ -28,7 +30,7 @@ iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访�
 
 ## Android SDK 输入
 
-构建器默认依据生成 runner 的锁文件校验缓存中的官方 `.crate`，核对 Java 文件清单和内容后编译。单独构建 Java 桥时也可以用 `--aar` 显式提供 0.5.0 的官方嵌入 SDK，应用桥接类与 AAR 中的类合并时检查同名冲突。
+构建器默认依据生成 runner 的锁文件校验缓存中的官方 `.crate`，核对 Java 文件清单和内容后编译。单独构建 Java 桥时也可以用 `--aar` 显式提供 0.5.1 的官方嵌入 SDK，应用桥接类与 AAR 中的类合并时检查同名冲突。
 
 本地 HTTP 所需的明文传输声明由 NSH 从 `nsh.json` 写入。包标识、多播权限、应用入口、小组件资源和签名由应用包装器组装。构建脚本位于 `tools/build/`，参数及平台要求见 [构建说明](../development/build.md)。
 

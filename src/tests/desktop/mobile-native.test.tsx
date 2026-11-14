@@ -3,7 +3,7 @@ import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_DEVICE, KEY_PANEL, KEY_PAIRED, 
 import { representativeSnapshot } from "./app-fixtures";
 
 // 用 --target ios 运行：不指定虚拟视口，截图与输入均来自模拟器的真实 UIKit 宿主。
-const output = "output/tests/nsh-0.5.0/ios";
+const output = "output/tests/nsh-0.5.1/ios";
 const device = JSON.stringify({ id: PHONE, name: "Simulator" });
 // 与 fixtures/assets/two-frame.gif 相同的 64×64 两帧资源；内联后不依赖宿主电脑的文件路径。
 const image = "data:image/gif;base64,R0lGODdhQABAAKIAAAAAAP8mAAQz/////wAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFZAAEACwAAAAAQABAAAADRxi63P4wykmrvTjrzbv/YCiOZGmeaKqubOu+cCzPdG3feK7vfO//wKBwSCwaj8ikcslsOp/QqHRKrVqv2Kx2y+16v+CwOJAAACH5BAVkAAQALAAAAABAAEAAAANHKLrc/jDKSau9OOvNu/9gKI5kaZ5oqq5s675wLM90bd94ru987//AoHBILBqPyKRyyWw6n9CodEqtWq/YrHbL7Xq/4LBYkAAAOw==";

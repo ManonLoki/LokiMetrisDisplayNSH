@@ -149,7 +149,8 @@ class WidgetBuildInputs(unittest.TestCase):
         # 真机与模拟器各测一次
         for simulator in [False, True]:
             with self.subTest(simulator=simulator), tempfile.TemporaryDirectory(prefix='widget fixture ') as directory:
-                root = Path(directory)
+                root = Path(directory) / 'project'
+                cargo_target = Path(directory) / 'shared cargo target'
                 # 用临时目录里的假源文件代替真实源码
                 shared = root / 'platform/ios/shared'; shared.mkdir(parents=True)
                 bridge = root / 'platform/ios/bridge'; bridge.mkdir()
@@ -165,18 +166,25 @@ class WidgetBuildInputs(unittest.TestCase):
                     # cargo：造出静态库
                     if command[0] == 'cargo':
                         target = command[command.index('--target') + 1]
-                        library = root / 'target/widget-core' / target / 'release/libloki_widget_core.a'
+                        library = cargo_target / target / 'release/libloki_widget_core.a'
                         library.parent.mkdir(parents=True); library.write_bytes(b'static core fixture')
                     # 其他编译命令：造出目标文件
                     else:
                         Path(command[command.index('-o') + 1]).write_bytes(b'native object fixture')
                 env = {}
-                with patch.object(package, 'ROOT', root), patch.object(package, 'run', side_effect=run):
+                with patch.object(package, 'ROOT', root), patch.object(package, 'run', side_effect=run), \
+                     patch.object(package.widget_support.subprocess, 'check_output',
+                                  return_value=json.dumps({'target_directory': str(cargo_target)})) as metadata:
                     library, report = package.build_widget_support(env, simulator=simulator,
                         sdk_path=Path('/fixture SDK'), developer=Path('/fixture Xcode'), deployment='15.0')
-                # cargo 使用锁定的依赖
+                metadata.assert_called_once_with(
+                    ['cargo', 'metadata', '--no-deps', '--format-version', '1', '--locked',
+                     '--manifest-path', root / 'Cargo.toml'], cwd=root, env=env, stderr=None)
+                # 编译使用锁定的依赖，静态库路径沿用 Cargo 的输出目录。
                 self.assertIn('--locked', commands[0])
+                self.assertNotIn('--target-dir', commands[0])
                 self.assertEqual(report['target'], 'aarch64-apple-ios-sim' if simulator else 'aarch64-apple-ios')
+                self.assertEqual(library, cargo_target / report['target'] / 'release/libloki_widget_core.a')
                 # Swift 使用整模块优化并包含桥接源码
                 swift = next(command for command in commands if 'swiftc' in command)
                 self.assertIn('-whole-module-optimization', swift)

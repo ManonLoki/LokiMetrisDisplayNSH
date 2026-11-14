@@ -74,13 +74,13 @@ nsh test src/tests/desktop/app.test.tsx --target windows
 
 ## iOS 模拟器验收
 
-NSH 0.5.0 的移动原生回归用例不指定虚拟窗口尺寸，由模拟器提供实际屏幕。它们使用隔离的 Rust 连接夹具，验证 UIKit 输入和保存、设置重新打开、GIF 解码后的原生图片尺寸、Hooks 触屏翻页、配对阶段及取消／确认忘记。无需真实桌面设备，不代表真实网络或 WatchConnectivity 联调。
+NSH 0.5.1 的移动原生回归用例不指定虚拟窗口尺寸，由模拟器提供实际屏幕。它们使用隔离的 Rust 连接夹具，验证 UIKit 输入和保存、设置重新打开、GIF 解码后的原生图片尺寸、Hooks 触屏翻页、配对阶段及取消／确认忘记。无需真实桌面设备，不代表真实网络或 WatchConnectivity 联调。
 
 ```sh
 python3 tools/test.py --suite simulator
 ```
 
-NSH 使用已启动的 iOS 模拟器，若没有则选择并启动可用 iPhone。入口沿用移动打包器的 Xcode Clang／SDK 配置，并把正式 Widget Swift 宿主桥接链接到测试宿主，避免缺少 iOS 系统头文件或 Rust FFI 符号。截图保存在 `output/tests/nsh-0.5.0/ios/`，JUnit 报告在 `output/tests/simulator/`（可由 `--output` 改变）；需要 Xcode 与对应 Rust target。测试和打包共用 `.nsh/`，继续保持串行。
+NSH 使用已启动的 iOS 模拟器，若没有则选择并启动可用 iPhone。入口沿用移动打包器的 Xcode Clang／SDK 配置，并把正式 Widget Swift 宿主桥接链接到测试宿主，避免缺少 iOS 系统头文件或 Rust FFI 符号。截图保存在 `output/tests/nsh-0.5.1/ios/`，JUnit 报告在 `output/tests/simulator/`（可由 `--output` 改变）；需要 Xcode 与对应 Rust target。测试和打包共用 `.nsh/`，继续保持串行。
 
 ## 设备验收
 
