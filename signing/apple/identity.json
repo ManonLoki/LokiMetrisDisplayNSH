@@ -1,8 +1,8 @@
 {
   "bundleId": "com.manonloki.lokimetrisdisplay.LokiMetrisDisplay",
   "teamId": "VV84X2M6C6",
-  "version": "1.0.23",
-  "build": 32,
+  "version": "1.0.24",
+  "build": 33,
   "widgetAppGroup": "group.com.manonloki.lokimetrisdisplay.LokiMetrisDisplay",
   "applicationIdentifier": "VV84X2M6C6.com.manonloki.lokimetrisdisplay.LokiMetrisDisplay"
 }
