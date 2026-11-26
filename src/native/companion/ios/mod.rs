@@ -7,7 +7,7 @@ mod session;
 use super::{Manifest, read_manifest};
 use crate::native::lifecycle;
 use objc2::rc::{Retained, autoreleasepool};
-use objc2_foundation::{NSDictionary, NSString, NSURL};
+use objc2_foundation::{NSData, NSDictionary, NSString, NSURL};
 use policy::Retry;
 use session::{Delegate, WCSession};
 // 标准库集合与同步原语
@@ -33,13 +33,13 @@ use std::{
 
 mod flush;
 mod presence;
-pub(in crate::native) use presence::command as presence_command;
 
 /// 操作系统持有排队的传输;应用从不构建无限增长的文件积压。
 // 操作系统拥有排队的传输；应用不会堆出无界的文件积压
 const MAX_TRANSFERS: usize = 2;
 // 完成回调的待处理上限
 const MAX_COMPLETIONS: usize = 64;
+const MAX_PRESENCE_BYTES: usize = 4096;
 
 #[derive(Clone)]
 // 一次文件传输：流、修订号、摘要与暂存路径
@@ -146,6 +146,40 @@ fn finished(transfer: Transfer, success: bool) {
     // 先释放锁
     drop(signals);
     // 再唤醒执行者
+    wake();
+}
+
+/// 合并连接 owner 的最新探测或撤销意图。
+pub(in crate::native) fn presence_command(command: super::presence::Command) {
+    SIGNALS.lock().unwrap_or_else(|p| p.into_inner()).presence = Some(command);
+    wake();
+}
+
+// 在 WatchConnectivity 的回调作用域内复制有界回执。
+fn presence_completed(challenge: String, data: Option<&NSData>) {
+    let bytes = data
+        .filter(|data| data.len() <= MAX_PRESENCE_BYTES)
+        .map(NSData::to_vec);
+    let mut signals = SIGNALS.lock().unwrap_or_else(|p| p.into_inner());
+    if signals.presence_completed.len() < 4 {
+        signals.presence_completed.push((challenge, bytes));
+    }
+    drop(signals);
+    wake();
+}
+
+// 撤销先入邮箱，溢出标记由工作线程用于拒绝迟到回执。
+fn presence_revoked(data: &NSData) {
+    if data.len() > MAX_PRESENCE_BYTES {
+        return;
+    }
+    let mut signals = SIGNALS.lock().unwrap_or_else(|p| p.into_inner());
+    if signals.presence_revoked.len() < 16 {
+        signals.presence_revoked.push(data.to_vec());
+    } else {
+        signals.presence_revoked_overflow = true;
+    }
+    drop(signals);
     wake();
 }
 

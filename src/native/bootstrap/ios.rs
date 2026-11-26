@@ -1,7 +1,7 @@
 //! 使用现有的 iOS 容器和私有钥匙串启动独立的 NSH。
+use super::Config;
 use crate::features::connection::identity::{DEFAULT_NAME, apple_name_error};
-use crate::native::{connection, identity};
-use serde_json::{Value, json};
+use crate::native::identity;
 use std::{
     ffi::c_void,
     path::{Path, PathBuf},
@@ -15,7 +15,7 @@ pub(super) fn configure(
     // 设备标识（未使用）
     _device_id: &str,
     _name: &str,
-) -> Result<connection::Config, String> {
+) -> Result<Config, String> {
     let bundle = bundle_id()?;
     // 设备身份存放在系统钥匙串
     let device_id = identity::device_identity(&format!("{bundle}.lan-identity-v1"))
@@ -30,23 +30,18 @@ pub(super) fn configure(
         .ok_or("应用私有目录不可用")?;
     let root = home.join("Library/Application Support");
     // 读取旧版保存的设备名称
-    let saved = preference("mdns.deviceName").and_then(|value| value.as_str().map(str::to_owned));
+    let saved = preference_string("mdns.deviceName");
     // 合法才采用，否则用默认名称
     let name = saved
         .filter(|value| apple_name_error(value).is_none())
         // 否则用默认名
         .unwrap_or_else(|| DEFAULT_NAME.into());
-    // 组装配置：移动端身份由宿主提供，并为手表和小组件开启共享
-    serde_json::from_value(json!({
-        // 根目录、设备标识与名称
-        "root": root, "deviceId": device_id, "name": name,
-        // 宿主身份、平台与手表配套
-        "hostIdentity": true, "platform": "ios", "watchCompanion": true,
-        "appVersion": bundle_string("CFBundleShortVersionString").unwrap_or_else(|| "1.0".into()),
-        // 小组件目录
-        "widgetDir": crate::native::widgets::directory(),
-    }))
-    .map_err(|error| format!("iOS连接配置无效: {error}"))
+    Ok(Config {
+        host_identity: true,
+        watch_companion: true,
+        widget_dir: crate::native::widgets::directory(),
+        ..Config::new(root, device_id, name)
+    })
 }
 
 // Core Foundation 对象引用
@@ -61,8 +56,6 @@ unsafe extern "C" {
     fn CFBundleGetMainBundle() -> Cf;
     // Bundle 标识
     fn CFBundleGetIdentifier(bundle: Cf) -> Cf;
-    // Info.plist 值
-    fn CFBundleGetValueForInfoDictionaryKey(bundle: Cf, key: Cf) -> Cf;
     fn CFStringCreateWithBytes(
         allocator: Cf,
         bytes: *const u8,
@@ -74,10 +67,6 @@ unsafe extern "C" {
     fn CFPreferencesCopyAppValue(key: Cf, application: Cf) -> Cf;
     fn CFGetTypeID(value: Cf) -> usize;
     fn CFStringGetTypeID() -> usize;
-    fn CFBooleanGetTypeID() -> usize;
-    fn CFBooleanGetValue(value: Cf) -> u8;
-    fn CFNumberGetTypeID() -> usize;
-    fn CFNumberGetValue(value: Cf, kind: isize, result: *mut c_void) -> u8;
     fn CFRelease(value: Cf);
     static kCFPreferencesCurrentApplication: Cf;
 }
@@ -136,50 +125,13 @@ fn bundle_id() -> Result<String, String> {
         .ok_or_else(|| "应用标识不可用".into())
 }
 
-// 读取 Info.plist 中的字符串
-fn bundle_string(name: &str) -> Option<String> {
-    let key = key(name);
-    // SAFETY: 主 bundle 由进程持有并被借用;key 持有它自己的 CFString。
-    let bundle = unsafe { CFBundleGetMainBundle() };
-    if bundle.is_null() || key.0.is_null() {
-        return None;
-    }
-    // SAFETY: 在这次同步查找期间 CFBundle 和 key 都有效。
-    // 读取信息字典里的值
-    string(unsafe { CFBundleGetValueForInfoDictionaryKey(bundle, key.0) })
-}
-
-// 读取偏好值，支持字符串、布尔与整数
-fn preference(name: &str) -> Option<Value> {
+fn preference_string(name: &str) -> Option<String> {
     let key = key(name);
     if key.0.is_null() {
         return None;
     }
     // SAFETY: key 有效;current-application 是不可变的 CF 常量。
     let value =
-        // 读取偏好值并接管所有权
         Owned(unsafe { CFPreferencesCopyAppValue(key.0, kCFPreferencesCurrentApplication) });
-    if value.0.is_null() {
-        return None;
-    }
-    if let Some(text) = string(value.0) {
-        return Some(Value::String(text));
-    }
-    // SAFETY: 复制出来的值在整个类型/值检查期间保持被持有。
-    let kind = unsafe { CFGetTypeID(value.0) };
-    // SAFETY: CF 类型标识函数只读取不可变的运行时元数据。
-    if kind == unsafe { CFBooleanGetTypeID() } {
-        // SAFETY: 已检查该值的 CFBoolean 类型。
-        return Some(Value::Bool(unsafe { CFBooleanGetValue(value.0) } != 0));
-    }
-    // SAFETY: CF 类型标识函数只读取不可变的运行时元数据。
-    // 整数（kCFNumberSInt64Type = 4）
-    if kind == unsafe { CFNumberGetTypeID() } {
-        let mut number = 0_i64;
-        // SAFETY: 已检查 CFNumber 类型,kCFNumberSInt64Type=4,输出是 i64。
-        if unsafe { CFNumberGetValue(value.0, 4, (&mut number as *mut i64).cast()) } != 0 {
-            return Some(json!(number));
-        }
-    }
-    None
+    string(value.0)
 }

@@ -1,12 +1,9 @@
 //! TSX 调用 Rust 业务规则的类型化入口：每条规则都是 `Rules` 模块上的一个方法。
 use nsh_core::prelude::*;
 
-use crate::features::{connection, hooks, usage};
+use crate::features::{connection, hooks, settings::Settings, usage};
 use crate::shared::{
-    contracts::{
-        models::{PanelConfig, Snapshot, UsageCardProjection, ViewState, typed},
-        panel,
-    },
+    contracts::models::{PanelConfig, Snapshot, UsageCardProjection, ViewState, typed},
     domain::agents,
 };
 
@@ -21,7 +18,7 @@ pub struct Rules;
 impl Rules {
     /// 默认面板配置。
     pub fn default_panel() -> Result<PanelConfig, String> {
-        typed(panel::default_panel())
+        Settings::default_panel()
     }
 
     /// 智能体的展示名称。

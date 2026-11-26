@@ -4,7 +4,9 @@ use super::Link;
 #[cfg(debug_assertions)]
 use super::fixture::Fixture;
 use crate::features::settings::Settings;
-use crate::shared::contracts::models::{LinkCommand, PanelConfig, SettingsResult, ViewState};
+use crate::shared::contracts::models::{
+    Device, LinkCommand, PanelConfig, SettingsResult, ViewState,
+};
 use nsh_core::{element::Local, prelude::*};
 use std::cell::RefCell;
 #[cfg(debug_assertions)]
@@ -89,15 +91,19 @@ fn current_view(sys: &System) -> Result<ViewState, String> {
 fn link_initialize(
     sys: &System,
     backend: &Backend,
-    id: &str,
-    name: &str,
+    device: &Device,
     idiom: &str,
+    version: Option<String>,
     now_ms: u64,
 ) -> Result<ViewState, String> {
     match backend {
-        Backend::Real => Link::initialize(id, name, idiom, sys),
+        Backend::Real => Link::initialize(&device.id, &device.name, idiom, version, sys),
         #[cfg(debug_assertions)]
-        Backend::Fixture(fixture) => fixture.borrow_mut().initialize(id, name, now_ms),
+        Backend::Fixture(fixture) => {
+            fixture
+                .borrow_mut()
+                .initialize(&device.id, &device.name, now_ms)
+        }
     }
 }
 
@@ -190,7 +196,12 @@ pub struct Shell;
 impl Shell {
     /// 启动:恢复身份和偏好,初始化连接,返回首个公开状态。
     /// 调试构建里,存储中有测试夹具键时由 Rust 夹具扮演桌面端,否则使用真实连接。
-    pub async fn start(now_ms: u64, idiom: String, sys: System) -> Result<SettingsResult, String> {
+    pub async fn start(
+        now_ms: u64,
+        idiom: String,
+        version: Option<String>,
+        sys: System,
+    ) -> Result<SettingsResult, String> {
         #[cfg(debug_assertions)]
         let backend = Fixture::select().map_or(Backend::Real, |fixture| {
             Backend::Fixture(Rc::new(RefCell::new(fixture)))
@@ -204,28 +215,24 @@ impl Shell {
             .initialize
             .clone()
             .ok_or_else(|| "设置未提供设备身份".to_owned())?;
-        let view =
-            match link_initialize(&sys, &backend, &identity.id, &identity.name, &idiom, now_ms) {
-                Ok(view) => view,
-                Err(error) => {
-                    // 失败：用空视图占位并上报
-                    let device = restored
-                        .device
-                        .clone()
-                        .ok_or_else(|| "设置未提供设备身份".to_owned())?;
-                    let empty = crate::shared::contracts::models::typed::<ViewState>(
-                        crate::features::connection::view_state::empty_view(
-                            &device.id,
-                            &device.name,
-                        ),
-                    )?;
-                    with(&sys, |state| state.view = Some(empty.clone()));
-                    let failed = fail(&sys, "initialize", error)?;
-                    let mut merged = merge(restored, failed);
-                    merged.view = merged.view.or(Some(empty));
-                    return Ok(merged);
-                }
-            };
+        let view = match link_initialize(&sys, &backend, &identity, &idiom, version, now_ms) {
+            Ok(view) => view,
+            Err(error) => {
+                // 失败：用空视图占位并上报
+                let device = restored
+                    .device
+                    .clone()
+                    .ok_or_else(|| "设置未提供设备身份".to_owned())?;
+                let empty = crate::shared::contracts::models::typed::<ViewState>(
+                    crate::features::connection::view_state::empty_view(&device.id, &device.name),
+                )?;
+                with(&sys, |state| state.view = Some(empty.clone()));
+                let failed = fail(&sys, "initialize", error)?;
+                let mut merged = merge(restored, failed);
+                merged.view = merged.view.or(Some(empty));
+                return Ok(merged);
+            }
+        };
         with(&sys, |state| {
             state.started = true;
             state.view = Some(view.clone());

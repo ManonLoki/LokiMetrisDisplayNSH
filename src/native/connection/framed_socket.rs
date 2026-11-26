@@ -24,18 +24,36 @@ use io::{open, read_frames};
 
 // 读写超时 15 秒
 const IO_TIMEOUT: Duration = Duration::from_secs(15);
+const IDLE_TIMEOUT: Duration = Duration::from_secs(45);
+const PAUSE_BUDGET: Duration = Duration::from_secs(3);
 // 发送队列最多 8 帧
 const MAX_QUEUED: usize = 8;
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Phase {
     // 配对第一步：等待桌面问候
     Hello,
     // 配对第二步：等待确认
     Confirmation,
+    Acknowledging,
     Resume,
     // 已建立加密通道，推送快照
     Streaming,
+    Pausing,
+}
+
+pub(super) enum Progress {
+    HelloReplied { pairing_deadline: Instant },
+    ResumeConfirmed,
+    SnapshotAccepted,
+    PairingAckQueued,
+    PauseQueued,
+}
+
+pub(super) enum SocketTimeout {
+    Response,
+    Idle,
+    Pause,
 }
 
 /// 线程送回 owner 的连接事实；旧代次的事件由 owner 丢弃。
@@ -46,6 +64,13 @@ pub(super) enum SocketEvent {
     // 发送队列已全部写入内核；配对 ACK 与暂停通知据此收尾
     Drained,
     Closed(String),
+}
+
+pub(super) enum SocketAction {
+    Receive(Value),
+    PairingComplete,
+    Disconnect,
+    Failed(String),
 }
 
 #[derive(Default)]
@@ -61,18 +86,11 @@ struct Shared {
 
 // 一条带帧边界的 TCP 连接
 pub(super) struct FramedSocket {
-    pub(super) generation: u64,
-    pub(super) phase: Phase,
-    pub(super) deadline: Instant,
+    phase: Phase,
+    deadline: Option<Instant>,
     // 最近一次入站时间
-    pub(super) last_inbound: Instant,
-    /// 配对 ACK 已排队：写完即结束本次配对连接。
-    // 配对 ACK 已排队：写完即结束本次配对连接
-    pub(super) paired_close: bool,
-    /// 暂停通知已排队：写完即关闭，不再处理后续数据。
-    // 暂停通知已排队：写完即关闭，不再处理后续数据
-    pub(super) pausing: bool,
-    pub(super) peer: SocketAddr,
+    last_inbound: Instant,
+    peer: SocketAddr,
     shared: Arc<Mutex<Shared>>,
     // 排队中尚未写出的帧数
     pending: Arc<AtomicUsize>,
@@ -88,7 +106,7 @@ impl FramedSocket {
     // 在后台线程连接；连接前排队的帧在连上后按序写出
     pub(super) fn connect(
         address: SocketAddr,
-        pairing: bool,
+        pairing_deadline: Option<Instant>,
         generation: u64,
         events: SyncSender<Event>,
     ) -> Self {
@@ -127,14 +145,15 @@ impl FramedSocket {
         let now = Instant::now();
         // 初始阶段：配对从 Hello 开始，否则从 Resume 开始
         let socket = Self {
-            generation,
             // 阶段：配对问候或恢复
-            phase: if pairing { Phase::Hello } else { Phase::Resume },
-            deadline: now + IO_TIMEOUT,
+            phase: if pairing_deadline.is_some() {
+                Phase::Hello
+            } else {
+                Phase::Resume
+            },
+            deadline: Some(pairing_deadline.unwrap_or(now + IO_TIMEOUT)),
             // 最近收到数据的时刻
             last_inbound: now,
-            paired_close: false,
-            pausing: false,
             peer: address,
             shared,
             pending,
@@ -148,10 +167,71 @@ impl FramedSocket {
         socket
     }
 
+    pub(super) fn peer(&self) -> SocketAddr {
+        self.peer
+    }
+
+    pub(super) fn phase(&self) -> Phase {
+        self.phase
+    }
+
+    pub(super) fn progress(&mut self, progress: Progress) {
+        match progress {
+            Progress::HelloReplied { pairing_deadline } => {
+                self.phase = Phase::Confirmation;
+                self.deadline = Some((Instant::now() + IO_TIMEOUT).min(pairing_deadline));
+            }
+            Progress::ResumeConfirmed => {
+                let now = Instant::now();
+                self.phase = Phase::Streaming;
+                self.deadline = Some(now + IO_TIMEOUT);
+                self.last_inbound = now;
+            }
+            Progress::SnapshotAccepted => self.deadline = None,
+            Progress::PairingAckQueued => self.phase = Phase::Acknowledging,
+            Progress::PauseQueued => {
+                self.phase = Phase::Pausing;
+                self.deadline = Some(Instant::now() + PAUSE_BUDGET);
+            }
+        }
+    }
+
+    pub(super) fn handle_event(&mut self, event: SocketEvent) -> Option<SocketAction> {
+        let failure = match event {
+            SocketEvent::Frame(value) => {
+                self.last_inbound = Instant::now();
+                return (self.phase != Phase::Pausing).then_some(SocketAction::Receive(value));
+            }
+            SocketEvent::Drained => None,
+            SocketEvent::Closed(reason) => Some(reason),
+        };
+        match self.phase {
+            Phase::Acknowledging if failure.is_none() || self.drained() => {
+                Some(SocketAction::PairingComplete)
+            }
+            Phase::Pausing => Some(SocketAction::Disconnect),
+            _ => failure.map(SocketAction::Failed),
+        }
+    }
+
+    pub(super) fn next_deadline(&self) -> Option<(Instant, SocketTimeout)> {
+        let response = self.deadline.map(|at| {
+            let reason = if self.phase == Phase::Pausing {
+                SocketTimeout::Pause
+            } else {
+                SocketTimeout::Response
+            };
+            (at, reason)
+        });
+        let idle = (self.phase == Phase::Streaming)
+            .then(|| (self.last_inbound + IDLE_TIMEOUT, SocketTimeout::Idle));
+        response.into_iter().chain(idle).min_by_key(|(at, _)| *at)
+    }
+
     /// 握手阶段使用小帧上限；进入加密流后放宽到安全帧上限。
     // 握手阶段使用小帧上限；进入加密流后放宽到安全帧上限
     fn limit(&self) -> usize {
-        if self.phase == Phase::Streaming {
+        if matches!(self.phase, Phase::Streaming | Phase::Pausing) {
             MAX_FRAME
         // 否则分支
         } else {
@@ -193,7 +273,7 @@ impl FramedSocket {
     }
 
     /// 发送队列已经写空。
-    pub(super) fn drained(&self) -> bool {
+    fn drained(&self) -> bool {
         // 待发送帧为 0 时视为已清空
         self.pending.load(Ordering::SeqCst) == 0
     }
@@ -210,7 +290,7 @@ impl FramedSocket {
 
     /// 关闭 socket，读写线程随之退出；重复调用无副作用。
     // 关闭 socket，读写线程随之退出；重复调用无副作用
-    pub(super) fn close(&self) {
+    fn close(&self) {
         let mut shared = self.shared.lock().unwrap_or_else(|p| p.into_inner());
         shared.closed = true;
         // 放弃写线程

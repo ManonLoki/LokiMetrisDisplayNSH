@@ -1,15 +1,16 @@
-use super::*;
-use super::{commands::QueuedCommand, owner::Owner};
+use super::super::Owner;
+use crate::native::connection::*;
 use loki_metris_pairing::assets::AssetDescriptor;
 #[cfg(target_os = "macos")]
 use loki_metris_pairing::{SenderSession, session::AwaitingDeviceProof};
 use serde_json::{Value, json};
 #[cfg(target_os = "macos")]
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, net::TcpListener};
 use std::{
     fs,
     io::{Read, Write},
-    net::{TcpListener, TcpStream},
+    net::TcpStream,
+    path::PathBuf,
     sync::mpsc::Receiver,
     // 线程
     thread,
@@ -17,13 +18,13 @@ use std::{
 };
 
 // 测试用的桌面 ID
-pub(super) const CLIENT: &str = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+pub(in crate::native::connection) const CLIENT: &str = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 // 构造一项完整可用的用量
-pub(super) fn amount(total: &str) -> Value {
+pub(in crate::native::connection) fn amount(total: &str) -> Value {
     json!({"total":total,"availability":"available","completeness":"complete","confidence":"exact"})
 }
 // 构造一份快照；传入资源时带一条引用该图片的 Hook
-pub(super) fn snapshot(assets: Vec<AssetDescriptor>) -> Value {
+pub(in crate::native::connection) fn snapshot(assets: Vec<AssetDescriptor>) -> Value {
     json!({"version":1,"tokens":{"day":{"date":"2026-10-26","zone":"UTC","startMs":1,"endMs":100},"observedMs":50,"all":amount("18446744073709551615"),"agents":[{"agent":"codex","amount":amount("0")}]},"tokenError":null,"hooksAvailable":true,"hooks":assets.first().map(|d|vec![json!({"agent":"codex","slot":1,"behavior":"running","content":"真实 TCP 中文📱","contentTruncated":false,"image":d.hash})]).unwrap_or_default(),"assets":assets,"catalogError":null,"enabledAgents":[],"providerQuota":{"observedAtUnix":1,"providers":[]}})
 }
 // 模拟桌面端发送一帧：4 字节大端长度加 JSON
@@ -77,8 +78,8 @@ pub(super) fn command(command: Command) -> Event {
     })
 }
 // 测试文件：根目录、隔离的凭据服务名与设备 ID
-pub(super) struct TestFiles {
-    pub(super) root: PathBuf,
+pub(in crate::native::connection) struct TestFiles {
+    pub(in crate::native::connection) root: PathBuf,
     pub(super) service: String,
     pub(super) device: String,
 }
@@ -104,7 +105,7 @@ pub(super) fn owner_for_test(files: &TestFiles) -> (Owner, SyncSender<Event>, Re
     (owner, tx, rx)
 }
 // 生成随机 ID 并据此得到隔离的目录、服务名与设备 ID
-pub(super) fn files() -> TestFiles {
+pub(in crate::native::connection) fn files() -> TestFiles {
     let id = uuid::Uuid::new_v4().to_string();
     TestFiles {
         root: std::env::temp_dir().join(format!("loki-link-test-{id}")),
@@ -352,7 +353,7 @@ fn a_view_subscription_wakes_only_for_new_publications_or_close() {
         }
     }
 
-    let published = super::Published::default();
+    let published = Published::default();
     published.update("initial".into());
     let notifications = Arc::new(Notifications::default());
     let waker = Waker::from(notifications.clone());

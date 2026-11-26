@@ -16,7 +16,7 @@ mod bonjour;
 #[path = "bonjour_test.rs"]
 mod bonjour_test;
 
-use super::{Endpoint, Event, owner::Owner};
+use super::Event;
 use loki_metris_pairing::{valid_device_id, valid_device_name};
 use std::{
     net::{IpAddr, SocketAddr},
@@ -119,7 +119,7 @@ impl Discovery {
             match backend::Browser::start(events) {
                 Ok(browser) => self.browser = Some(browser),
                 Err(error) => {
-                    self.failed();
+                    self.record_failure();
                     return Err(error);
                 }
             }
@@ -139,76 +139,19 @@ impl Discovery {
     pub(super) fn clear_retry(&mut self) {
         self.retry_at = None;
     }
+
+    pub(super) fn record_resolution(&mut self) {
+        self.failures = 0;
+    }
+
     /// 浏览器失败后丢弃实例，按 1/2/4/8 秒退避重建。
     // 浏览器失败后丢弃实例，按 1/2/4/8 秒退避重建
-    fn failed(&mut self) {
+    pub(super) fn record_failure(&mut self) {
         // 先停止浏览
         self.stop();
         // 退避：1、2、4、8 秒封顶
         let delay = Duration::from_secs(1 << self.failures.min(3));
         self.failures = self.failures.saturating_add(1);
         self.retry_at = Some(Instant::now() + delay);
-    }
-}
-
-impl Owner {
-    // owner 处理发现事件
-    pub(super) fn found(&mut self, found: Found) {
-        match found {
-            Found::Resolved {
-                key,
-                id,
-                name,
-                address,
-            } => {
-                // 忽略自己，端点数量上限 64
-                if id == self.id
-                    // 或者端点已满且是新键
-                    || (self.endpoints.len() >= 64 && !self.endpoints.contains_key(&key))
-                {
-                    return;
-                }
-                // 成功解析后清零失败计数
-                self.discovery.failures = 0;
-                // 同一服务的地址是否变化
-                let moved = self
-                    .endpoints
-                    .get(&key)
-                    .is_some_and(|e| e.address != address);
-                self.endpoints.insert(
-                    key,
-                    Endpoint {
-                        id: id.clone(),
-                        name,
-                        address,
-                    },
-                );
-                // 是否为当前选中的桌面
-                let selected = self.selected.as_deref() == Some(id.as_str());
-                // 选中的桌面地址变了：当前连接失效，重新恢复
-                if moved && selected && self.socket.as_ref().is_some_and(|w| w.peer != address) {
-                    // 地址变了：记失败并等待恢复
-                    self.failed("桌面地址已变化，正在恢复连接…".into());
-                // 还没选择而发现了已配对的桌面：自动选择并连接
-                } else if self.selected.is_none() && self.records.contains_key(&id) {
-                    self.selected = Some(id.clone());
-                    // 更新视图里的选中项
-                    self.view["selectedId"] = serde_json::json!(id);
-                    self.retry_at = Some(Instant::now());
-                // 选中的桌面重新出现且当前没有连接：立即重试
-                } else if self.socket.is_none() && selected && self.active() {
-                    self.retries = 0;
-                    self.retry_at = Some(Instant::now());
-                }
-            }
-            Found::Removed(key) => {
-                self.endpoints.remove(&key);
-            }
-            Found::Failed(message) => {
-                self.view["error"] = serde_json::json!(message);
-                self.discovery.failed();
-            }
-        }
-        self.publish();
     }
 }

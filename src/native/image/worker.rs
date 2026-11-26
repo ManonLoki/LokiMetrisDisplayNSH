@@ -1,4 +1,5 @@
 //! 有界的解码工作线程让图片准备工作远离所有 NSH 引擎线程。
+use super::Prepared;
 use std::{
     // Future 特征
     future::Future,
@@ -27,7 +28,7 @@ const QUEUED_BYTES: usize = 48 * 1024 * 1024;
 #[derive(Default)]
 // 完成状态：结果与唤醒器
 struct Completion {
-    result: Option<Result<String, String>>,
+    result: Option<Result<Prepared, String>>,
     waker: Option<Waker>,
 }
 
@@ -44,7 +45,7 @@ struct Pending(Arc<Shared>);
 
 // 未完成任务的 Future 实现
 impl Future for Pending {
-    type Output = Result<String, String>;
+    type Output = Result<Prepared, String>;
 
     // 轮询：有结果则返回，否则登记唤醒器
     fn poll(self: Pin<&mut Self>, context: &mut Context<'_>) -> Poll<Self::Output> {
@@ -168,7 +169,7 @@ impl Service {
 }
 
 // 工作线程处理任务：已取消则跳过，完成后唤醒等待方
-fn process(job: Job, prepare: impl FnOnce(&str) -> Result<String, String>) {
+fn process(job: Job, prepare: impl FnOnce(&str) -> Result<Prepared, String>) {
     if job.shared.cancelled.load(Ordering::Acquire) {
         return;
     }
@@ -196,7 +197,7 @@ fn process(job: Job, prepare: impl FnOnce(&str) -> Result<String, String>) {
 }
 
 // 对外入口：懒启动服务并提交任务
-pub(super) async fn prepare(source: String) -> Result<String, String> {
+pub(super) async fn prepare(source: String) -> Result<Prepared, String> {
     static SERVICE: OnceLock<Result<Service, String>> = OnceLock::new();
     let service = SERVICE
         // 首次使用时启动服务

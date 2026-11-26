@@ -2,7 +2,7 @@ use super::*;
 
 impl Owner {
     // 事件循环：事件到来或最近期限到达才醒来，空闲、暂停、后台时不周期唤醒
-    pub(in crate::native::connection) fn run(&mut self, rx: Receiver<Event>) {
+    pub(super) fn run(&mut self, rx: Receiver<Event>) {
         loop {
             if self.stopped.load(Ordering::SeqCst) {
                 break;
@@ -35,11 +35,7 @@ impl Owner {
                 }
                 // 套接字事件：只处理当前代数的连接
                 Ok(Event::Socket(generation, event)) => {
-                    if self
-                        .socket
-                        .as_ref()
-                        .is_some_and(|w| w.generation == generation)
-                    {
+                    if self.socket.is_some() && self.generation == generation {
                         self.socket_event(event);
                     }
                 }

@@ -1,12 +1,19 @@
-use super::*;
-use super::{
-    connection_test::{amount, files, snapshot},
+use super::connection::{amount, files, snapshot};
+use crate::native::connection::{
+    Event, HANDSHAKE_FRAME,
     framed_socket::{FramedSocket, SocketEvent},
     persistence::{atomic_write, file_url, private_dir},
     snapshot_admission::validate_snapshot,
 };
 use serde_json::{Value, json};
-use std::{fs, io::Write, net::TcpListener, path::Path, time::Duration};
+use std::{
+    fs,
+    io::Write,
+    net::TcpListener,
+    path::Path,
+    sync::mpsc,
+    time::{Duration, Instant},
+};
 
 #[test]
 // 原生快照边界在报告在线之前就拒绝格式错误的快照
@@ -50,7 +57,8 @@ fn tcp_frame_limit_is_checked_before_allocating_remote_payload() {
     // 本机回环上的一条连接
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let (tx, rx) = mpsc::sync_channel(8);
-    let _wire = FramedSocket::connect(listener.local_addr().unwrap(), true, 1, tx);
+    let pairing_deadline = Some(Instant::now() + Duration::from_secs(15));
+    let _wire = FramedSocket::connect(listener.local_addr().unwrap(), pairing_deadline, 1, tx);
     let (mut peer, _) = listener.accept().unwrap();
     // 只发一个超出握手上限的长度前缀，不发正文
     peer.write_all(&((HANDSHAKE_FRAME + 1) as u32).to_be_bytes())
@@ -67,7 +75,8 @@ fn tcp_frame_limit_is_checked_before_allocating_remote_payload() {
 fn handshake_peer_cannot_send_the_next_phase_before_the_owner_advances() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let (tx, rx) = mpsc::sync_channel(8);
-    let _wire = FramedSocket::connect(listener.local_addr().unwrap(), true, 7, tx);
+    let pairing_deadline = Some(Instant::now() + Duration::from_secs(15));
+    let _wire = FramedSocket::connect(listener.local_addr().unwrap(), pairing_deadline, 7, tx);
     let (mut peer, _) = listener.accept().unwrap();
     // 一次性发出两帧：第二帧属于尚未到来的阶段
     let mut frames = Vec::new();

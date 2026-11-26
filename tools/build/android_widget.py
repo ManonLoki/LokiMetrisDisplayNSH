@@ -69,7 +69,7 @@ WIDGET_RES = Path(__file__).resolve().parents[2] / 'platform/android/widget/res'
 WIDGET_LABEL = '诡秘神谕'
 
 
-# 把基线清单还原为文本并扩展：类名、权限与小组件接收器
+# 把基线清单还原为文本并扩展应用入口与小组件接收器
 def extend_manifest(base_manifest, base_arsc, android_names):
     # 文档字符串：输出扩展后的文本清单
     """Restore the binary manifest to text and extend it for the widget."""
@@ -94,6 +94,9 @@ def extend_manifest(base_manifest, base_arsc, android_names):
     # 小组件的 LAN HTTP 通道由 nsh.json 声明，载荷由共享核心加密。
     if application.get(f'{{{ANDROID_NS}}}usesCleartextTraffic') != 'true':
         raise RuntimeError('NSH package must enable android.usesCleartextTraffic for widget refresh')
+    if not any(element.get(f'{{{ANDROID_NS}}}name') == MULTICAST_PERMISSION
+               for element in root.findall('uses-permission')):
+        raise RuntimeError('NSH package must declare CHANGE_WIFI_MULTICAST_STATE in android.permissions')
     # 改 Application 类名（幂等：已是目标名则不变）
     application.set(f'{{{ANDROID_NS}}}name', APPLICATION)
     # 收集活动
@@ -107,12 +110,6 @@ def extend_manifest(base_manifest, base_arsc, android_names):
         raise RuntimeError('Expected one standard NSH application and runner activity')
     # 改运行器类名
     runner[0].set(f'{{{ANDROID_NS}}}name', ACTIVITY)
-    # 在 Application 前补入缺失的多播权限。
-    existing = {element.get(f'{{{ANDROID_NS}}}name') for element in root.findall('uses-permission')}
-    if MULTICAST_PERMISSION not in existing:
-        element = ET.Element('uses-permission')
-        element.set(f'{{{ANDROID_NS}}}name', MULTICAST_PERMISSION)
-        root.insert(list(root).index(application), element)
     # 已有小组件接收器则幂等移除后重建
     for element in list(application):
         # 找到同名接收器

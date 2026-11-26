@@ -1,9 +1,13 @@
-use super::super::{
-    Endpoint, Event,
-    connection_test::{TestFiles, files, owner_for_test},
+use super::{
+    super::Owner,
+    connection::{TestFiles, files, owner_for_test},
 };
-use super::*;
-use std::sync::mpsc;
+use crate::native::connection::{Command, Endpoint, Event, Handle, commands::QueuedCommand};
+use serde_json::json;
+use std::{
+    sync::{atomic::Ordering, mpsc},
+    time::Instant,
+};
 
 // 两台测试桌面的 ID
 const A: &str = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -202,9 +206,9 @@ fn rejected_selection_does_not_replace_the_last_successfully_queued_intent() {
 #[test]
 // 命令队列已满时，也不能让 owner 在 VM 关闭后继续存活
 fn a_full_command_queue_cannot_keep_the_owner_alive_after_vm_close() {
-    let files = super::super::connection_test::files();
-    let (handle, receiver) = super::super::Handle::for_test(1, None);
-    let mut owner = super::super::owner::Owner::for_test(
+    let files = files();
+    let (handle, receiver) = Handle::for_test(1, None);
+    let mut owner = Owner::for_test(
         files.root.clone(),
         &files.device,
         "NSH",

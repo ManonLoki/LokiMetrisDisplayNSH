@@ -1,4 +1,4 @@
-import { cleanup, effect, platform, signal, untracked, type Bounds, type Signal, type Size } from "nsh";
+import { appInfo, cleanup, effect, platform, signal, untracked, type Bounds, type Signal, type Size } from "nsh";
 import { Shell, type LinkCommand, type SettingsResult } from "loki-metris-mobile-display/native";
 import type { ViewState } from "../features/connection";
 import type { PanelConfig } from "../shared/contracts/panel";
@@ -77,7 +77,7 @@ export function createRuntime(state: UiState, connectionVisible?: () => boolean)
 
   async function start() {
     const startedAt = Date.now();
-    await run(() => Shell.start(startedAt, platform.idiom));
+    await run(() => Shell.start(startedAt, platform.idiom, appInfo().version));
     started.set(true);
     while (!disposed) {
       const changed = await Shell.waitForViewChange();

@@ -9,13 +9,11 @@ use super::{
     Material,
     Published,
     QueuedCommand,
-    assets::AssetState,
     discovery::Discovery,
     // 带帧套接字及其阶段与事件
-    framed_socket::{FramedSocket, Phase, SocketEvent},
+    framed_socket::{FramedSocket, Phase, Progress, SocketEvent},
     pairing::Protocol,
     persistence,
-    public_view::empty_view,
 };
 use serde_json::{Value, json};
 use std::{
@@ -31,14 +29,25 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod assets;
+mod commands;
 mod events;
+mod run_loop;
+mod session;
+mod storage;
+mod transport;
+mod view;
+#[cfg(any(target_os = "ios", test))]
+mod watch;
+mod widget;
+
 #[cfg(test)]
 mod test_support;
+#[cfg(test)]
+pub(super) mod tests;
 
-mod run_loop;
-
-// 推送阶段 45 秒没有入站数据即视为超时
-const IDLE_TIMEOUT: Duration = Duration::from_secs(45);
+use assets::AssetState;
+use view::empty_view;
 
 /// owner 线程启动所需的全部输入；创建失败后可按用户重试重新读取。
 // owner 线程启动所需的全部输入；创建失败后可按用户重试重新读取
@@ -56,58 +65,58 @@ pub(super) struct Setup {
 /// 界面报告的生命周期事实。
 #[derive(Clone, Copy)]
 // 界面报告的生命周期事实
-pub(super) struct Lifecycle {
-    pub visible: bool,
+struct Lifecycle {
+    visible: bool,
     // 本地网络是否已授权
-    pub permitted: bool,
+    permitted: bool,
 }
 
 // owner 的全部状态，只在 owner 线程内使用
-pub(super) struct Owner {
-    pub root: PathBuf,
-    pub id: String,
-    pub name: String,
-    pub platform: String,
+struct Owner {
+    root: PathBuf,
+    id: String,
+    name: String,
+    platform: String,
     // 是否为手表发布缓存
-    pub watch_companion: bool,
-    pub widget: super::widget::WidgetShare,
-    pub app_version: String,
-    pub form_factor: Option<String>,
-    pub keep_snapshot: bool,
-    pub view: Value,
-    pub published: Arc<Published>,
+    watch_companion: bool,
+    widget: widget::WidgetShare,
+    app_version: String,
+    form_factor: Option<String>,
+    keep_snapshot: bool,
+    view: Value,
+    published: Arc<Published>,
     // 视图是否有待提交的变化
-    pub dirty: bool,
-    pub events: SyncSender<Event>,
-    pub stopped: Arc<AtomicBool>,
+    dirty: bool,
+    events: SyncSender<Event>,
+    stopped: Arc<AtomicBool>,
     // 配对与加密协议状态机
-    pub protocol: Protocol,
-    pub revision: Arc<AtomicU64>,
-    pub records: BTreeMap<String, Material>,
-    pub endpoints: BTreeMap<String, Endpoint>,
-    pub selected: Option<String>,
-    pub discovery: Discovery,
-    pub socket: Option<FramedSocket>,
+    protocol: Protocol,
+    revision: Arc<AtomicU64>,
+    records: BTreeMap<String, Material>,
+    endpoints: BTreeMap<String, Endpoint>,
+    selected: Option<String>,
+    discovery: Discovery,
+    socket: Option<FramedSocket>,
     // 连接代数，用于忽略旧连接的事件
-    pub generation: u64,
-    pub lifecycle: Lifecycle,
-    pub pairing_offer: Option<Value>,
-    pub pairing_deadline: Option<Instant>,
-    pub retry_at: Option<Instant>,
-    pub retries: u8,
-    pub assets: AssetState,
-    pub capabilities: BTreeSet<String>,
-    pub credential_service: String,
+    generation: u64,
+    lifecycle: Lifecycle,
+    pairing_offer: Option<Value>,
+    pairing_deadline: Option<Instant>,
+    retry_at: Option<Instant>,
+    retries: u8,
+    assets: AssetState,
+    capabilities: BTreeSet<String>,
+    credential_service: String,
     // 本连接是否已上报设备形态
-    pub form_factor_reported: bool,
+    form_factor_reported: bool,
     // 当前LAN的WC回调资格与真实桌面ping锚。
     #[cfg(any(target_os = "ios", test))]
-    pub watch: super::watch::Relay,
+    watch: watch::Relay,
 }
 
 impl Owner {
     // 构造 owner：读取已保存的配对记录并恢复缓存
-    pub(super) fn new(setup: &Setup) -> Result<Self, String> {
+    fn new(setup: &Setup) -> Result<Self, String> {
         let config = &setup.config;
         // 凭据库不可用时在此失败
         let records = persistence::load_records(super::CREDENTIAL_SERVICE, &setup.id)?;
@@ -117,7 +126,7 @@ impl Owner {
             name: setup.name.clone(),
             platform: config.platform.clone(),
             watch_companion: config.watch_companion,
-            widget: super::widget::WidgetShare::new(config.widget_dir.clone()),
+            widget: widget::WidgetShare::new(config.widget_dir.clone()),
             app_version: config.app_version.clone(),
             form_factor: config.form_factor.clone(),
             keep_snapshot: config.keep_snapshot,
@@ -161,19 +170,19 @@ impl Owner {
 
     /// 前台或用户开启的后台连接，且本地网络已授权。
     // 前台或用户开启的后台连接，且本地网络已授权
-    pub(super) fn active(&self) -> bool {
+    fn active(&self) -> bool {
         // 允许且可见时才算活动
         self.lifecycle.permitted && self.lifecycle.visible
     }
 
     /// 仅在内容变化后序列化一次，并唤醒等待投影的宿主。
     // 标记视图有变化，下一轮循环统一序列化
-    pub(super) fn publish(&mut self) {
+    fn publish(&mut self) {
         self.dirty = true;
     }
 
     // 仅在内容变化后序列化一次并提交
-    pub(super) fn commit(&mut self) {
+    fn commit(&mut self) {
         if !std::mem::take(&mut self.dirty) {
             return;
         }
@@ -196,6 +205,40 @@ impl Owner {
             );
         }
         self.published.update(view);
+    }
+
+    // 暂停：清掉重试、配对与实时状态，并礼貌地告知桌面
+    fn pause(&mut self) {
+        #[cfg(any(target_os = "ios", test))]
+        self.watch.reset();
+        self.retry_at = None;
+        self.clear_pairing();
+        self.clear_live();
+        // 正在推送快照且尚未暂停
+        let streaming = self
+            .socket
+            .as_ref()
+            .is_some_and(|socket| socket.phase() == Phase::Streaming);
+        // 发送 pause 后在 3 秒内等待桌面确认
+        if streaming && self.send_secure(json!({"type":"pause"})).is_ok() {
+            if let Some(socket) = self.socket.as_mut() {
+                socket.progress(Progress::PauseQueued);
+            }
+        // 否则直接断开
+        } else {
+            self.drop_socket();
+        }
+    }
+
+    // 丢弃套接字及其资源与能力
+    fn drop_socket(&mut self) {
+        #[cfg(any(target_os = "ios", test))]
+        self.watch.reset();
+        if self.socket.take().is_some() {
+            self.update_discovery();
+        }
+        self.assets.reset();
+        self.capabilities.clear();
     }
 }
 

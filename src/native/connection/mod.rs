@@ -1,35 +1,19 @@
 //! 展示端连接入口和单线程 owner，桌面与移动端共用。
 //! NSH 提交有限的命令并读取公开状态;网络与存储归一个所有者线程负责。
-// 前后台与网络变化对 owner 的影响
-mod app_visibility;
 mod asset_cache;
-// 图片资源下载与落盘
-mod assets;
-// 界面命令的入队与处理
 mod commands;
 mod discovery;
 mod framed_socket;
-// 单线程连接 owner
 mod owner;
 mod pairing;
 mod persistence;
-mod public_view;
-mod session;
 mod snapshot_admission;
-mod widget;
-// 已选Watch前台合同到桌面wire的租约绑定。
-#[cfg(any(target_os = "ios", test))]
-mod watch;
 
-// 仅 macOS 的配套设备测试
-#[cfg(all(test, target_os = "macos"))]
-mod companion_test;
-
+use super::bootstrap::Config;
 use commands::{CommandIntent, QueuedCommand};
 use loki_metris_pairing::{valid_device_id, valid_device_name};
 use serde::{Deserialize, Serialize};
 use std::{
-    path::PathBuf,
     sync::{
         // 原子引用计数与互斥锁
         Arc,
@@ -86,55 +70,6 @@ enum Command {
     #[serde(skip)]
     // 停止 owner
     Stop,
-}
-
-/// NSH 运行时配置,在移动目标上使用系统身份。
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-// 连接配置，移动端带系统身份
-pub(crate) struct Config {
-    /// 应用私有目录；owner 在其下建立 `loki-link-v1`。
-    // 应用私有目录；owner 在其下建立 loki-link-v1
-    pub root: PathBuf,
-    #[serde(default)]
-    pub device_id: String,
-    #[serde(default)]
-    pub name: String,
-    /// 为 true 时,由系统凭据存储持有移动端身份。
-    #[serde(default)]
-    // 为 true 时由系统凭据库持有移动端身份
-    pub host_identity: bool,
-    #[serde(default = "default_platform")]
-    pub platform: String,
-    /// 可信状态提交时为配对的 Apple Watch 发布公开缓存。
-    #[serde(default)]
-    // 是否为配对的 Apple Watch 发布公开缓存
-    pub watch_companion: bool,
-    /// 系统授予的 WidgetKit App Group;绝不由 JavaScript 提供。
-    #[serde(default)]
-    // 系统授予的小组件 App Group 目录，绝不由 JS 提供
-    pub widget_dir: Option<PathBuf>,
-    #[serde(default = "default_version")]
-    pub app_version: String,
-    /// `phone` 或 `tablet`；桌面不上报形态。
-    #[serde(default)]
-    // phone 或 tablet；桌面不上报
-    pub form_factor: Option<String>,
-    /// 离线时是否保留并恢复最近快照。
-    #[serde(default = "yes")]
-    // 离线时是否保留并恢复最近快照
-    pub keep_snapshot: bool,
-}
-// 默认取编译目标平台
-fn default_platform() -> String {
-    // 平台名取自编译目标
-    std::env::consts::OS.into()
-}
-fn default_version() -> String {
-    "1.0.0".into()
-}
-fn yes() -> bool {
-    true
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -242,7 +177,7 @@ pub(crate) struct Handle {
 }
 impl Handle {
     // 创建句柄并启动 owner 线程
-    pub fn new(config: Config) -> Result<Self, String> {
+    pub(super) fn new(config: Config) -> Result<Self, String> {
         let root = config.root.join("loki-link-v1");
         // 确保根目录为私有目录
         persistence::private_dir(&root)?;
@@ -340,15 +275,3 @@ impl Drop for Handle {
         let _ = self.enqueue(Command::Stop);
     }
 }
-
-#[cfg(test)]
-#[path = "connection_test.rs"]
-mod connection_test;
-
-#[cfg(test)]
-#[path = "boundary_test.rs"]
-mod boundary_test;
-
-#[cfg(test)]
-#[path = "watch_test.rs"]
-mod watch_test;

@@ -2,11 +2,7 @@
 use crate::{
     // 默认设备名、名称校验与设备标识校验
     features::connection::identity::{DEFAULT_NAME, name_error, valid_device_id},
-    shared::{
-        // 面板配置的解析与恢复
-        contracts::panel::{panel_from_value, restore_panel},
-        domain::text::comparison_whitespace,
-    },
+    shared::domain::text::comparison_whitespace,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -22,6 +18,27 @@ const DEVICE: &str = "loki.device";
 const NAME_CONFIRM_MS: u64 = 3_000;
 // 保存失败的统一文案
 const SAVE_FAILED: &str = "保存失败，请重试";
+
+pub(super) fn default_panel() -> Value {
+    panel_from_value(&Value::Null)
+}
+
+fn restore_panel(raw: Option<&str>) -> Value {
+    let value = raw
+        .and_then(|raw| serde_json::from_str(raw).ok())
+        .unwrap_or(Value::Null);
+    panel_from_value(&value)
+}
+
+// 只采用已知枚举值，并按相同规则恢复缺失或损坏的偏好。
+fn panel_from_value(value: &Value) -> Value {
+    json!({
+        "showUsage": value["showUsage"] != false,
+        "showHooks": value["showHooks"] != false,
+        "usageDetail": if value["usageDetail"] == "detailed" { "detailed" } else { "compact" },
+        "hookLayout": if value["hookLayout"] == "2x2" { "2x2" } else { "1x1" },
+    })
+}
 
 // 存储抽象，便于测试替换
 pub(super) trait Store {

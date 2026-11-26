@@ -1,16 +1,20 @@
 {
   "name": "诡秘神谕",
   "id": "com.manonloki.lokimetrisdisplay.desktop",
-  "version": "1.0.24",
-  "build": 33,
+  "version": "1.0.25",
+  "build": 34,
   "appearance": "dark",
   "statusBar": {
     "foreground": "light"
   },
   "icon": "src/assets/branding/app-icon.png",
   "rust": ".",
+  "watch": {
+    "ignore": ["output"]
+  },
   "android": {
-    "usesCleartextTraffic": true
+    "usesCleartextTraffic": true,
+    "permissions": ["CHANGE_WIFI_MULTICAST_STATE"]
   },
   "ios": {
     "infoPlist": {

@@ -1,6 +1,7 @@
 //! 图片分块接收与私有磁盘缓存。
 //! 只有长度和摘要都校验成功的私有缓存文件，才会转换成界面可读的 URI。
-use super::{err, owner::Owner, persistence};
+use super::Owner;
+use crate::native::connection::{asset_cache::verify_file, err, persistence};
 use loki_metris_pairing::assets::{AssetChunk, AssetDescriptor, AssetReceiver};
 use serde_json::{Value, json};
 use std::{
@@ -68,7 +69,7 @@ impl AssetState {
     }
 }
 
-pub(super) fn asset_dir(root: &Path) -> PathBuf {
+fn asset_dir(root: &Path) -> PathBuf {
     root.join("assets")
 }
 
@@ -102,7 +103,7 @@ impl Owner {
             };
             let path = asset_dir(&self.root).join(hash);
             // 本地缓存已有且校验通过：直接使用
-            if read_asset(&path, &d).is_ok() {
+            if verify_file(&path, &d).is_ok() {
                 // 已缓存：记录图片地址
                 self.view["images"][hash] = json!(persistence::file_url(&path));
                 continue;
@@ -148,7 +149,7 @@ impl Owner {
         // 落盘并再次校验
         let stored = persistence::private_dir(&dir)
             .and_then(|_| persistence::atomic_write(&path, &bytes))
-            .and_then(|_| read_asset(&path, &d));
+            .and_then(|_| verify_file(&path, &d));
         // 成功：登记图片地址
         if stored.is_ok() {
             self.view["images"][&d.hash] = json!(persistence::file_url(&path));
@@ -261,14 +262,9 @@ impl Owner {
         };
         for d in descriptors {
             let path = asset_dir(&self.root).join(&d.hash);
-            if read_asset(&path, &d).is_ok() {
+            if verify_file(&path, &d).is_ok() {
                 self.view["images"][&d.hash] = json!(persistence::file_url(&path));
             }
         }
     }
-}
-
-// 通过文件校验器检查缓存文件
-pub(super) fn read_asset(path: &Path, d: &AssetDescriptor) -> Result<(), String> {
-    super::asset_cache::verify_file(path, d)
 }

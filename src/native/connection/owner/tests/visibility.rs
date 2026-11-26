@@ -1,12 +1,14 @@
-#[cfg(target_os = "macos")]
-use super::super::persistence;
-use super::super::{
-    Command, Endpoint, Event, HANDSHAKE_FRAME, MAX_FRAME, Material,
-    connection_test::{
+use super::{
+    super::Owner,
+    connection::{
         CLIENT, TestFiles, command, configured, files, owner_for_test, server_recv, server_send,
         snapshot, until,
     },
-    owner::Owner,
+};
+#[cfg(target_os = "macos")]
+use crate::native::connection::{CREDENTIAL_SERVICE, persistence};
+use crate::native::connection::{
+    Command, Endpoint, Event, HANDSHAKE_FRAME, MAX_FRAME, Material, discovery::Found,
 };
 use loki_metris_pairing::session::AwaitingDeviceProof;
 use serde_json::{Value, json};
@@ -145,7 +147,7 @@ fn a_retired_pairing_book_cannot_be_imported_or_block_a_new_book() {
     let retired = "com.manonloki.lokimetris.display.pairing.v1";
     // 在旧命名空间里写入一份无效记录
     crate::native::credentials::write(retired, &files.device, "retired, invalid records").unwrap();
-    let result = persistence::load_records(super::super::CREDENTIAL_SERVICE, &files.device);
+    let result = persistence::load_records(CREDENTIAL_SERVICE, &files.device);
     crate::native::credentials::delete(retired, &files.device).unwrap();
     // 当前配对簿为空，不读取旧记录
     assert!(
@@ -185,9 +187,7 @@ fn automatic_resume_does_not_override_a_bonjour_failure_backoff() {
     let (mut owner, _, _, _) = trusted_owner(&files, "127.0.0.1:47321".parse().unwrap());
     owner.endpoints.clear();
     // 模拟 Bonjour 失败，进入退避
-    owner.found(super::super::discovery::Found::Failed(
-        "temporary DNS failure".into(),
-    ));
+    owner.found(Found::Failed("temporary DNS failure".into()));
     let retry_at = owner.discovery.retry_at().unwrap();
     assert!(owner.connect().is_err());
     // 且退避时间没有被改写

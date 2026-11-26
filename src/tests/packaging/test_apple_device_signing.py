@@ -103,8 +103,17 @@ class DeviceSigning(unittest.TestCase):
             root = Path(directory); source = root / 'Source.app'; source.mkdir()
             marker = source / 'original'; marker.write_bytes(b'keep original')
             # 用符号链接别名也要拒绝
-            alias = root / 'source-alias'; alias.symlink_to(source, target_is_directory=True)
-            for parent in [source, alias]:
+            alias = root / 'source-alias'
+            parents = [source]
+            with self.subTest(alias=alias):
+                try:
+                    alias.symlink_to(source, target_is_directory=True)
+                except OSError as error:
+                    if getattr(error, 'winerror', None) != 1314:
+                        raise
+                    self.skipTest('The Windows test process cannot create directory symlinks')
+                parents.append(alias)
+            for parent in parents:
                 for execute in [[], ['--execute']]:
                     arguments = ['sign_apple_device.py', '--app', str(source),
                                  '--output', str(parent / 'Nested.app'), '--bundle-id', BUNDLE,

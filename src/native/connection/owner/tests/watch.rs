@@ -1,13 +1,11 @@
 //! 生产WC终态控制器→有界owner事件→真实加密TCP的回归，夹具只用隔离身份和本机回环。
-use super::{
-    Event, HANDSHAKE_FRAME, MAX_FRAME, Material,
-    connection_test::{
-        CLIENT, command, configured, files, owner_for_test, server_recv, server_send, snapshot,
-    },
+use super::connection::{
+    CLIENT, command, configured, files, owner_for_test, server_recv, server_send, snapshot,
 };
 use crate::native::companion::presence::{
     Command as PresenceCommand, Controller, ExpectedSnapshot, ProbeRequest, WireReport,
 };
+use crate::native::connection::{Command, Endpoint, Event, HANDSHAKE_FRAME, MAX_FRAME, Material};
 use loki_metris_pairing::session::AwaitingDeviceProof;
 use serde_json::{Value, json};
 use std::{
@@ -85,7 +83,7 @@ fn true_watch_callback_uses_current_authenticated_capability_generation_and_zero
     owner.selected = Some(CLIENT.into());
     owner.endpoints.insert(
         "fixture".into(),
-        super::Endpoint {
+        Endpoint {
             id: CLIENT.into(),
             name: "隔离桌面".into(),
             address: listener.local_addr().unwrap(),
@@ -195,6 +193,6 @@ fn true_watch_callback_uses_current_authenticated_capability_generation_and_zero
         error.kind(),
         std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
     ));
-    tx.send(command(super::Command::Stop)).unwrap();
+    tx.send(command(Command::Stop)).unwrap();
     worker.join().unwrap();
 }

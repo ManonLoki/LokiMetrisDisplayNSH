@@ -1,7 +1,5 @@
-use super::{
-    Command, Material,
-    connection_test::{CLIENT, files, owner_for_test, snapshot},
-};
+use super::connection::{CLIENT, files, owner_for_test, snapshot};
+use crate::native::connection::{Command, Material};
 use serde_json::{Value, json};
 
 #[test]

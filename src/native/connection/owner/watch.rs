@@ -1,7 +1,8 @@
 //! 当前认证iOS父连接将实际Watch回执发送为既有companionStatus；不自行证明在线。
 
-use super::{Event, framed_socket::Phase, owner::Owner};
+use super::Owner;
 use crate::native::companion::presence::{Command, ProbeRequest, WireReport};
+use crate::native::connection::{Event, framed_socket::Phase};
 use std::{
     sync::Arc,
     time::{Duration, Instant},
@@ -80,7 +81,7 @@ impl Owner {
             && self
                 .socket
                 .as_ref()
-                .is_some_and(|socket| socket.phase == Phase::Streaming && !socket.pausing)
+                .is_some_and(|socket| socket.phase() == Phase::Streaming)
             && self.watch.ping.is_some_and(|(current, at)| {
                 current == nonce && at.elapsed() < Duration::from_secs(45)
             })

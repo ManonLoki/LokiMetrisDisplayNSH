@@ -6,7 +6,7 @@ import json
 import os
 import plistlib
 import shlex
-import subprocess
+import runpy
 import sys
 # 临时目录
 import tempfile
@@ -213,14 +213,9 @@ class WidgetBuildInputs(unittest.TestCase):
             manifest = root / 'Cargo.toml'
             manifest.write_text('[[bin]]\nname = "nsh-app-example-ios-app"\npath = "main.rs"\n')
             response = root / 'host objects.rsp'; response.write_text('WidgetHostBridge.o\n')
-            capture = root / 'link.json'
-            # 假的链接器：把收到的参数写入文件
-            fake_linker = root / 'fake clang.py'
-            fake_linker.write_text('import json, sys\nfrom pathlib import Path\n'
-                                   + 'Path(' + repr(str(capture)) + ').write_text(json.dumps(sys.argv[1:]))\n')
             # 生成包装脚本
             wrapper = package.widget_linker(root, response, sdk='iphoneos', runner_manifest=manifest,
-                                             linker=[sys.executable, str(fake_linker)])
+                                             linker=['fixture-clang'])
             # 带哈希后缀的最终运行器名
             executable = root / 'deps/nsh_app_example_ios_app-0123456789abcdef'
             # Rust 自己的响应文件也要被展开识别
@@ -237,11 +232,15 @@ class WidgetBuildInputs(unittest.TestCase):
             for arguments, applies in cases:
                 # 每组参数一个子用例
                 with self.subTest(arguments=arguments):
-                    # 执行包装脚本
-                    subprocess.run([sys.executable, str(wrapper), *arguments], env=env,
-                                   check=True, capture_output=True)
-                    # 读取捕获到的参数
-                    actual = json.loads(capture.read_text())
+                    # 执行包装脚本并捕获交给真实链接器的参数
+                    with patch.dict(os.environ, env), patch.object(sys, 'argv', [str(wrapper), *arguments]), \
+                            patch.object(os, 'execvp') as execute:
+                        runpy.run_path(str(wrapper), run_name='__main__')
+                    execute.assert_called_once()
+                    executable_name, command = execute.call_args.args
+                    self.assertEqual(executable_name, 'fixture-clang')
+                    self.assertEqual(command[0], executable_name)
+                    actual = command[1:]
                     # 原有参数不变
                     self.assertEqual(actual[:len(arguments)], arguments)
                     # 需要时追加响应文件与模拟器权限

@@ -4,7 +4,7 @@ use super::*;
 impl Owner {
     /// 不读写真实凭据位置的 owner：记录使用 `service` 指定的隔离安全存储条目。
     // 不读写真实凭据位置的 owner：记录使用 service 指定的隔离条目
-    pub(in crate::native::connection) fn for_test(
+    pub(super) fn for_test(
         root: PathBuf,
         id: &str,
         name: &str,
@@ -18,7 +18,7 @@ impl Owner {
             name: name.into(),
             platform: "ios".into(),
             watch_companion: true,
-            widget: crate::native::connection::widget::WidgetShare::default(),
+            widget: widget::WidgetShare::default(),
             app_version: "1.0.0".into(),
             form_factor: None,
             keep_snapshot: true,
@@ -55,7 +55,7 @@ impl Owner {
 
     /// 测试读取最近一次提交的公开投影。
     // 测试读取最近一次提交的公开投影
-    pub(in crate::native::connection) fn published_view(&mut self) -> Value {
+    pub(super) fn published_view(&mut self) -> Value {
         self.commit();
         // 锁定已发布状态
         let state = self.published.state.lock().unwrap();

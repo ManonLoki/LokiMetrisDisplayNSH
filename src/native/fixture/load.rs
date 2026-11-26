@@ -1,7 +1,16 @@
 //! 读取并校验测试夹具、已配对记录和缓存快照：任何一处不合法就整体忽略。
-use super::scenario::Event;
 use crate::features::connection::{identity::valid_device_id, snapshot::project_snapshot};
 use serde_json::{Map, Value, json};
+
+pub(super) struct Event {
+    pub(super) at_ms: u64,
+    // 种类：handshake、snapshot 或 transport-fail
+    pub(super) kind: String,
+    pub(super) snapshot: Value,
+    pub(super) received_at_ms: u64,
+    // 图片哈希到本地地址的映射
+    pub(super) images: Value,
+}
 
 // 安全整数：非负且不超过 2^53-1
 fn safe_int(value: &Value) -> Option<u64> {

@@ -1,4 +1,4 @@
-use super::super::{connection_test::files, persistence};
+use super::super::{owner::tests::connection::files, persistence};
 use super::*;
 
 fn image() -> Vec<u8> {

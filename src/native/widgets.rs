@@ -13,9 +13,6 @@ use jni::{
     JNIEnv,
     objects::{JClass, JString},
 };
-// 仅 Android：引入路径类型
-#[cfg(target_os = "android")]
-use std::path::PathBuf;
 
 #[cfg(target_os = "ios")]
 // Swift 垫片导出的函数
@@ -71,14 +68,6 @@ pub(super) fn directory() -> Option<PathBuf> {
     path.filter(|path| path.is_absolute() && path.is_dir())
 }
 
-/// Android 的共享目录是应用私有的 files/widget；小组件提供器与主应用同进程同用户，
-/// 经同一条规范化路径访问，避免 /data/user/0 与 /data/data 别名不一致。
-#[cfg(target_os = "android")]
-pub(super) fn directory() -> Option<PathBuf> {
-    // 由 Android 引导层给出规范化的私有目录
-    super::bootstrap::android_widget_directory()
-}
-
 /// 小组件提供器经 JNI 调用小组件核心：一次 JSON 请求换一个 JSON 结果。
 /// 请求解析、校验与加密全部在 widget-core 内完成，Java 只执行传输与绘制。
 #[cfg(target_os = "android")]
@@ -94,8 +83,7 @@ pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_na
         String::new()
     // 否则分支
     } else {
-        // SAFETY: JNI 合同保证 request 是有效的本地引用字符串。
-        match unsafe { env.get_string(&request) } {
+        match env.get_string(&request) {
             Ok(text) => text.to_string_lossy().into_owned(),
             Err(_) => String::new(),
         }
@@ -112,7 +100,7 @@ pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_na
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_com_manonloki_lokimetrisdisplay_widget_WidgetCore_nativeWidgetDir(
-    mut env: JNIEnv<'_>,
+    env: JNIEnv<'_>,
     _class: JClass<'_>,
 ) -> jni::sys::jstring {
     // 取共享目录；未就绪时返回 null，调用方按未同步处理

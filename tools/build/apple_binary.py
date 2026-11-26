@@ -131,7 +131,7 @@ def archived_application(archive):
     # 应用相对路径
     relative = Path(info['ApplicationProperties']['ApplicationPath'])
     # 路径为绝对路径或含上级目录
-    if relative.is_absolute() or '..' in relative.parts:
+    if relative.anchor or '..' in relative.parts:
         # 报错
         raise RuntimeError('Invalid application path in Xcode archive metadata')
     # 返回归档内的应用路径

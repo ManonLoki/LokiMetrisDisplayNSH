@@ -54,6 +54,10 @@ fn json<T: serde::Serialize>(value: &T) -> Result<JsonValue, String> {
 }
 
 impl Settings {
+    pub(crate) fn default_panel() -> Result<PanelConfig, String> {
+        typed(engine::default_panel())
+    }
+
     pub(crate) fn name_confirmation_deadline(sys: &System) -> Option<u64> {
         let runtime = sys.locals.get::<SettingsRuntime>();
         runtime.0.borrow().name_confirmation_deadline()

@@ -1,5 +1,6 @@
 //! 私有 WidgetKit 摘要、只读授权与撤销,遵循所有者的事件顺序。
-use super::{now_ms, owner::Owner};
+use super::Owner;
+use crate::native::connection::now_ms;
 use loki_widget_core::{store::Store, summary, widget_http};
 use serde_json::Value;
 use std::path::PathBuf;
@@ -7,7 +8,7 @@ use std::path::PathBuf;
 #[derive(Default)]
 pub(super) struct WidgetShare {
     // 共享存储，没有 App Group 时为空
-    pub(super) store: Option<Store>,
+    store: Option<Store>,
     // 当前连接是否已通过认证
     authenticated: bool,
 }
@@ -79,7 +80,7 @@ impl Owner {
                 message,
                 source,
                 &self.id,
-                &socket.peer.ip().to_string(),
+                &socket.peer().ip().to_string(),
             )
         });
         // 保存成功才标记已认证并刷新小组件
@@ -172,5 +173,5 @@ fn lead_activity_payload(message: &serde_json::Value, received: u64) -> String {
 }
 
 #[cfg(test)]
-#[path = "widget_test.rs"]
-mod widget_test;
+#[path = "tests/widget.rs"]
+mod tests;

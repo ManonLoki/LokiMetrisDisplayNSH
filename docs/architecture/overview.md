@@ -9,7 +9,7 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 ## 从入口到展示台
 
 1. `App.tsx` 挂载 `createApp`，由 NSH 提供界面生命周期、设备形态和安全区。
-2. `src/app/runtime.ts` 调用 Rust `Shell.start` 恢复身份和偏好并创建连接实例，连接发布变化时唤醒 NSH 异步任务，界面再读取最新投影。名称确认由单独的截止时间驱动。
+2. `src/app/runtime.ts` 将 NSH 的设备形态和应用版本交给 Rust `Shell.start`，恢复身份和偏好并创建连接实例。连接发布变化时唤醒 NSH 异步任务，界面再读取最新投影。名称确认由单独的截止时间驱动。
 3. `src/native/shell.rs` 是 Rust 控制器：启动、公开投影、保存名称/面板、失败回滚和命令转发都在这里。它内部调用 `src/native/link.rs`（把连接实例绑定到 NSH `System.locals` 和应用私有目录，VM 关闭时释放）和设置用例。连接 owner 串行处理发现、配对、认证、快照与资源事件。
 4. Rust 校验桌面输入并生成公开快照。TSX 根据窗口尺寸、面板偏好和导航状态渲染，纯展示规则通过 `#[module]` 类型化的 `Rules` 方法（`src/native/rules.rs`）直接调用。`Shell`、`ImageFrames` 同样是类型化的 `#[module]`，收发的面板、视图、快照、卡片投影等结构定义在 `src/shared/contracts/models.rs`（`#[derive(JsObject)]`），TS 类型由 `nsh check` 据此生成到 `.nsh/types`，TSX 不再手写这些类型，也不拼装或解析 JSON。
 
@@ -48,6 +48,63 @@ iOS WidgetKit 扩展为主屏幕、锁屏和待机显示提供系统界面。`cr
 
 feature 通过公开入口互相依赖，不导入 app；shared 不导入 feature 或 app。TS 类型由 Rust 数据形状生成，Rust 执行规则。目录组织与导入约定见 [代码约定](../development/code-style.md)。
 
+## 连接与夹具的依赖
+
+```mermaid
+flowchart LR
+  subgraph Before["迁移前"]
+    OldOwner["连接 owner"] --> OldDiscovery["发现"]
+    OldDiscovery --> OldOwner
+    OldOwner --> OldSocket["套接字公开字段"]
+    OldScenario["测试场景"] --> OldParser["夹具解析"]
+    OldParser --> OldScenario
+    OldBootstrap["Android 引导"] --> OldConnection["连接层的配置"]
+    OldConnection --> OldWidgets["小组件"]
+    OldWidgets --> OldBootstrap
+  end
+  subgraph After["迁移后"]
+    Owner["连接 owner"] --> Discovery["发现与退避"]
+    Owner --> Socket["套接字阶段、期限与收尾"]
+    Scenario["测试场景"] --> Parser["夹具解析与事件类型"]
+    Connection["连接层"] --> Bootstrap["Android 引导与配置"]
+    Connection --> Widgets["小组件"]
+    Widgets --> Bootstrap
+  end
+```
+
+连接 owner 消费发现事件并决定选择和重连。套接字管理握手、入站空闲和暂停期限，向 owner 返回待处理的消息或关闭原因。
+
+## 连接状态机、Watch 回调与面板偏好
+
+```mermaid
+flowchart LR
+  subgraph Before["调整前"]
+    OldVisibility["连接生命周期"] --> OldWatch["Watch 转发"]
+    OldWatch --> OldSession["连接会话"]
+    OldSession --> OldVisibility
+    OldProbe["iOS 探测"] --> OldWC["WCSession 适配"]
+    OldWC --> OldProbe
+    OldPanelUsers["Rules 与设置引擎"] --> OldPanel["共享面板规则"]
+  end
+  subgraph After["调整后"]
+    Owner["连接 owner"] --> Session["入站会话"]
+    Owner --> Assets["资源接收"]
+    Owner --> Watch["Watch 转发"]
+    Owner --> Transport["传输"]
+    Session --> Transport
+    Assets --> Transport
+    Watch --> Transport
+    Probe["iOS 工作线程探测"] --> WC["WCSession 适配"]
+    WC --> Signals["iOS 回调邮箱"]
+    Rules["Rules"] --> Settings["设置入口"]
+    Settings --> Panel["设置引擎的面板规则"]
+  end
+```
+
+连接 owner 负责断线和暂停时的清理顺序。入站会话、资源接收和 Watch 转发通过传输层访问认证连接。iOS 的系统回调把有界数据放入邮箱，再唤醒工作线程处理探测回复和撤销通知。
+
+设置引擎使用同一套面板规则处理默认值、旧偏好恢复和保存。
+
 ## 生命周期、缓存与图片
 
 移动连接按界面经 NSH `lifecycle()` 报告的前后台运行：进入后台暂停并关闭桌面连接，短暂失焦仍保持。界面把状态以 `active` 命令交给 owner，Android 同时据此持有或释放多播锁，iOS 回到前台时唤醒 Watch 缓存重试。Android 通过 JNI 获取 Application 只用于身份与多播锁。
@@ -64,16 +121,16 @@ iPhone 的灵动岛实时活动走应用内通道：连接 owner 在认证快照
 
 ## 构建与源码证据
 
-`nsh.json` 声明应用信息，`src/lib.rs` 注册 Rust 模块，官方 NSH 生成 `.nsh/` runner。`tools/build/` 补齐移动权限、应用接线、平台身份与签名，并校验最终包格式。独立 Watch 工程通过包装器与 iPhone 组成配套归档。
+`nsh.json` 声明应用信息和移动权限，`src/lib.rs` 注册 Rust 模块，官方 NSH 生成 `.nsh/` runner。`tools/build/` 组装平台接线、身份与签名，并校验最终包格式。独立 Watch 工程通过包装器与 iPhone 组成配套归档。
 
 | 关系 | 源码入口 |
 | --- | --- |
 | UI 与原生模块注入 | [App.tsx](../../App.tsx)、[运行时](../../src/app/runtime.ts)、[模块注册](../../src/lib.rs)、[公开数据形状](../../src/shared/contracts/models.rs) |
 | VM 到连接 owner | [Link 操作](../../src/native/link.rs)、[连接实例](../../src/native/connection/mod.rs)、[事件循环](../../src/native/connection/owner.rs) |
 | 规则、控制器与设置存储 | [Rules](../../src/native/rules.rs)、[Shell](../../src/native/shell.rs)、[设置用例](../../src/features/settings/mod.rs)、[测试夹具](../../src/native/fixture/mod.rs) |
-| 移动前台与缓存差异 | [生命周期推进](../../src/native/connection/app_visibility.rs)、[Android 初始化](../../src/native/bootstrap/android/mod.rs) |
-| 资源验证与播放 | [资源接收](../../src/native/connection/assets.rs)、[图片模块](../../src/native/image/mod.rs)、[界面图片](../../src/shared/ui/image.tsx) |
-| 小组件通道 | [摘要发布与撤销](../../src/native/connection/widget.rs)、[共享存储](../../crates/widget-core/src/store.rs)、[Swift 入口](../../crates/widget-core/src/ffi.rs)、[系统调度](../../platform/ios/bridge/WidgetHostBridge.swift)、[Android 提供器](../../src/native/android/java/com/manonloki/lokimetrisdisplay/widget/LokiWidgetProvider.java)、[小组件打包](../../tools/build/android_widget.py) |
+| 移动前台与缓存差异 | [生命周期推进](../../src/native/connection/owner/transport.rs)、[Android 初始化](../../src/native/bootstrap/android/mod.rs) |
+| 资源验证与播放 | [资源接收](../../src/native/connection/owner/assets.rs)、[图片模块](../../src/native/image/mod.rs)、[界面图片](../../src/shared/ui/image.tsx) |
+| 小组件通道 | [摘要发布与撤销](../../src/native/connection/owner/widget.rs)、[共享存储](../../crates/widget-core/src/store.rs)、[Swift 入口](../../crates/widget-core/src/ffi.rs)、[系统调度](../../platform/ios/bridge/WidgetHostBridge.swift)、[Android 提供器](../../src/native/android/java/com/manonloki/lokimetrisdisplay/widget/LokiWidgetProvider.java)、[小组件打包](../../tools/build/android_widget.py) |
 | iPhone 到 Watch | [缓存发布](../../src/native/companion/mod.rs)、[系统投递](../../src/native/companion/ios/session.rs)、[手表缓存](../../platform/watchos/Sources/SnapshotCache.swift) |
 
 开发命令见 [构建说明](../development/build.md)，自动测试与设备验收边界见 [测试说明](../development/test.md)。

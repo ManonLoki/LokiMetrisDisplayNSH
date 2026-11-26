@@ -1,8 +1,8 @@
 use super::*;
 use crate::native::connection::{
     Material,
-    connection_test::{CLIENT, amount, snapshot},
     framed_socket::FramedSocket,
+    owner::tests::connection::{CLIENT, amount, snapshot},
 };
 use serde_json::json;
 use std::{collections::BTreeMap, net::TcpListener, sync::mpsc};
@@ -33,7 +33,7 @@ fn authenticated_widget_grants_use_socket_peer_and_never_enter_public_view() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     owner.socket = Some(FramedSocket::connect(
         listener.local_addr().unwrap(),
-        false,
+        None,
         1,
         tx,
     ));

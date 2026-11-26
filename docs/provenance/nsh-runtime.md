@@ -1,8 +1,16 @@
 # NSH 运行时来源与应用适配
 
-项目使用 crates.io 发布的官方 NSH 0.6.0，版本和来源由 `Cargo.toml`、`Cargo.lock` 固定。NSH CLI 与 Cargo 运行时使用同一版本，CLI 生成的 `.nsh/` 不进入版本控制。Apache-2.0 许可证保留在 [nsh-LICENSE-APACHE](nsh-LICENSE-APACHE)。
+项目使用 crates.io 发布的官方 NSH 0.7.1，版本和来源由 `Cargo.toml`、`Cargo.lock` 固定。NSH CLI 与 Cargo 运行时使用同一版本，CLI 生成的 `.nsh/` 不进入版本控制。Apache-2.0 许可证保留在 [nsh-LICENSE-APACHE](nsh-LICENSE-APACHE)。
 
-[NSH 0.6.0 发布说明](https://github.com/longbridge/nsh/releases/tag/v0.6.0)
+[NSH 0.7.1 发布说明](https://github.com/longbridge/nsh/releases/tag/v0.7.1)
+
+## 0.7.1 迁移
+
+- `nsh.json` 声明 Android 的局域网多播权限和明文传输设置。应用组装器核对 NSH 写入的声明，再组装自定义入口和小组件。生成的 `output/` 目录通过 NSH 的 `watch.ignore` 从开发监听中排除。
+- `appInfo().version` 提供局域网设备握手所用的应用版本。平台引导直接构造 Rust 连接配置，iOS 的旧设备名称和钥匙串标识继续从系统读取。
+- `Image` 根据布局尺寸更新解码，图片层随控件存活。GIF 帧结果以 NSH 的 `JsObject` 返回，PNG 编码器和官方宿主共用 0.18.1，移除了单独的 0.17 版。
+
+[NSH 0.7 Android 打包选项](https://github.com/longbridge/nsh/blob/v0.7.1/website/docs/packaging.md#android) · [NSH Windows 图片解码](https://github.com/longbridge/nsh/blob/v0.7.1/crates/nsh-platform-windows/src/image.rs)
 
 ## 0.5.0 迁移
 
@@ -30,9 +38,9 @@ iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访�
 
 ## Android SDK 输入
 
-构建器默认依据生成 runner 的锁文件校验缓存中的官方 `.crate`，核对 Java 文件清单和内容后编译。单独构建 Java 桥时也可以用 `--aar` 显式提供 0.6.0 的官方嵌入 SDK，应用桥接类与 AAR 中的类合并时检查同名冲突。
+打包流程将生成的 `R.java` 传给桥接构建器。构建器从应用 `Cargo.lock` 读取 NSH 版本，依据生成 runner 的锁文件校验缓存中的官方 `.crate`，核对 Java 文件清单和内容后编译。通过 `--aar` 提供相同版本的官方嵌入 SDK 时，构建器在合并 Java 类时检查同名冲突。
 
-本地 HTTP 所需的明文传输声明由 NSH 从 `nsh.json` 写入。包标识、多播权限、应用入口、小组件资源和签名由应用包装器组装。构建脚本位于 `tools/build/`，参数及平台要求见 [构建说明](../development/build.md)。
+当前 Android 打包器负责替换启动 Activity、接入进程级 Application 并生成小组件资源。0.7.1 的组件声明只能追加组件，官方包固定使用自己的启动 Activity，AAR 自定义 Application 会被拒绝。iOS 的 `extensions` 接收预先构建的扩展，当前 WidgetKit 与 Watch 继续由 Xcode 组合并检查共享授权。构建参数及平台要求见 [构建说明](../development/build.md)。
 
 ## GIF 与播放边界
 
@@ -46,4 +54,6 @@ iOS 在 Rust registry 入口注册观察者，收到应用启动通知后再访�
 | 编码清单 | 24 MiB |
 | 共享缓存 | 32 MiB，最多 4 项 |
 
-标准 Image 显示静态 PNG，应用时钟决定切帧。NSH 0.5 的原生 GIF 播放没有公开的暂停和续播控制，当前实现继续在控件隐藏、应用退到后台或启用减少动态效果时暂停，恢复时从当前帧继续，有限循环停在末帧。输入、排队及输出分别有界，错误显式返回。测试入口和像素验证范围见 [测试说明](../development/test.md)。
+标准 Image 显示静态 PNG，应用时钟决定切帧。NSH 0.7.1 的原生 GIF 播放没有公开的逐帧暂停和续播控制。应用在控件隐藏、退到后台或启用减少动态效果时暂停，恢复时从当前帧继续，有限循环停在末帧。测试入口和像素验证范围见 [测试说明](../development/test.md)。
+
+应用还负责局域网服务发现、认证会话及系统凭据存储。NSH 的 `network()` 提供网络状态，应用用 mDNS 或 Bonjour 找到可配对桌面。普通偏好由 NSH Storage 保存，配对材料使用系统凭据存储。配对协议见 [连接协议](../architecture/protocol.md)。

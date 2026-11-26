@@ -32,17 +32,15 @@ export function CyberImage(props: ImageProps & MotionProps) {
     clearTimeout(swapTimer); target = -1; shown.set(slot);
   };
   const player = signal<ImagePlayback | null>(null);
-  const frame = signal<{ width: number; height: number } | null>(null);
   // 代数：丢弃过期的异步结果
   let generation = 0;
-  // 是否已触发加载完成
-  let loaded = false;
   // 加载结果（成功或失败）是否已上报
   let settled = false;
-  // 当前图片是否为动图
-  let animated = false;
   // 取出需要自行处理的属性，其余透传给原生 Image
-  const [, nativeProps] = split(props, ["active", "src", "style", "onLayout", "onLoad", "onLoadStart", "onLoadEnd", "onError"] as const);
+  const [, nativeProps] = split(props, [
+    "active", "src", "style", "testID", "fadeDuration", "accessibilityElementsHidden",
+    "onLayout", "onLoad", "onLoadStart", "onLoadEnd", "onError",
+  ] as const);
   // 出错时销毁播放器，并只上报一次
   const onError = (error: { message: string }) => {
     untracked(player)?.dispose();
@@ -54,13 +52,12 @@ export function CyberImage(props: ImageProps & MotionProps) {
     const original = props.src;
     const current = ++generation;
     untracked(player)?.dispose(); player.set(null);
-    loaded = false; settled = false; animated = false; source.set(undefined);
+    settled = false; source.set(undefined);
     if (!original) return;
     // 副作用是否已被清理
     let disposed = false;
     void ImageFrames.prepare(typeof original === "string" ? original : original.url).then((prepared) => {
       if (disposed || current !== generation) return;
-      animated = prepared.animated;
       // 静态图直接使用原地址
       if (!prepared.animated) { source.set(original); return; }
       // 动图：创建播放器并用真实时钟驱动
@@ -99,32 +96,17 @@ export function CyberImage(props: ImageProps & MotionProps) {
     // 隐藏层加载完成，立即切换
     reveal(slot);
     // 首次加载成功时上报尺寸并结束加载
-    if (!loaded && !settled) { loaded = true; settled = true; props.onLoad?.({ size }); props.onLoadEnd?.(); }
+    if (!settled) { settled = true; props.onLoad?.({ size }); props.onLoadEnd?.(); }
   };
-  // 等尺寸明确后才挂载原生 Image；放大后重建图片视图以触发官方解码。
-  // 等尺寸明确后才挂载原生 Image；尺寸明显变化时重建以触发解码
-  return <View style={props.style} onLayout={(event) => {
-    const { bounds } = event;
-    // 先转发外部布局回调
-    props.onLayout?.(event);
-    // 对比旧尺寸与新尺寸
-    const old = untracked(frame), next = bounds.size;
-    // 有效且变化超过 0.5 才更新
-    if (next.width > 0 && next.height > 0 && (!old || Math.abs(old.width - next.width) > 0.5 || Math.abs(old.height - next.height) > 0.5)) {
-      frame.set({ width: next.width, height: next.height });
-    }
-  }}>
-    {/* 以尺寸为 key，尺寸变化时重建 Image；两层叠放，只显示加载完成的一层 */}
-    <Each of={frame() ? [frame()!] : []} key={(size) => `${size.width}x${size.height}`}>{(size) =>
-      <View style={{ width: size().width, height: size().height }}>
-        <Each of={[0, 1]} key="index">{(slot) =>
-          <Image {...nativeProps} src={slots[slot()]()}
-            style={[imageStyle(props.style), { position: "absolute", top: 0, left: 0, width: size().width, height: size().height, opacity: shown() === slot() ? 1 : 0 }]}
-            fadeDuration={animated ? 0 : props.fadeDuration}
-            // 加载开始、成功与出错回调
-            onLoadStart={() => { if (!loaded && !settled) props.onLoadStart?.(); }} onLoad={({ size: loadedSize }) => onLoad(loadedSize, slot())} onError={onError} />}
-        </Each>
-      </View>}
+  // 保持两层 Image 的身份稳定，由 NSH 根据布局尺寸选择解码尺寸。
+  return <View style={props.style} onLayout={props.onLayout}>
+    <Each of={[0, 1]} key="index">{(slot) =>
+      <Image {...nativeProps} src={slots[slot()]()}
+        testID={shown() === slot() ? props.testID : undefined}
+        accessibilityElementsHidden={shown() !== slot() || props.accessibilityElementsHidden}
+        style={[imageStyle(props.style), { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", opacity: shown() === slot() ? 1 : 0 }]}
+        fadeDuration={player() ? 0 : props.fadeDuration}
+        onLoadStart={() => { if (!settled) props.onLoadStart?.(); }} onLoad={({ size: loadedSize }) => onLoad(loadedSize, slot())} onError={onError} />}
     </Each>
   </View>;
 }

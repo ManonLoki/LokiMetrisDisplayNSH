@@ -1,4 +1,5 @@
 use super::*;
+use crate::native::image::STATIC_IMAGE;
 use std::{sync::mpsc::Receiver, task::Wake};
 
 #[derive(Default)]
@@ -33,19 +34,22 @@ fn polling_before_and_after_completion_never_loses_a_wakeup() {
     let mut pending = service.submit("first".into()).unwrap();
     assert!(Pin::new(&mut pending).poll(&mut context).is_pending());
     // 工作线程处理：应唤醒一次
-    process(receiver.recv().unwrap(), |source| Ok(source.to_owned()));
+    process(receiver.recv().unwrap(), |source| {
+        assert_eq!(source, "first");
+        Ok(STATIC_IMAGE)
+    });
     assert_eq!(wake.0.load(Ordering::SeqCst), 1);
     // 再轮询得到结果
     assert_eq!(
         Pin::new(&mut pending).poll(&mut context),
-        Poll::Ready(Ok("first".into()))
+        Poll::Ready(Ok(STATIC_IMAGE))
     );
     // 第二个任务在被轮询之前就已完成
     let mut late = service.submit("second".into()).unwrap();
-    process(receiver.recv().unwrap(), |source| Ok(source.to_owned()));
+    process(receiver.recv().unwrap(), |source| Err(source.to_owned()));
     assert_eq!(
         Pin::new(&mut late).poll(&mut context),
-        Poll::Ready(Ok("second".into()))
+        Poll::Ready(Err("second".into()))
     );
     // 没登记唤醒器的消费者不需要被唤醒
     assert_eq!(
@@ -94,7 +98,7 @@ fn cancellation_skips_queued_work_and_discards_running_work() {
     let shared = Arc::clone(&job.shared);
     process(job, |_| {
         drop(pending);
-        Ok("discarded".into())
+        Ok(STATIC_IMAGE)
     });
     assert!(shared.completion.lock().unwrap().result.is_none());
     assert_eq!(service.budget.load(Ordering::SeqCst), 0);

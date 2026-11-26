@@ -1,4 +1,5 @@
 import { expect, test } from "nsh/test";
+import { pathToFileURL } from "url";
 import { open, PHONE, DESKTOP, T0, RECEIVED, KEY_PANEL, KEY_DEVICE, KEY_PAIRED, KEY_CACHE, KEY_INJECT, KEY_FRAMES, safe } from "./app-environment";
 import { representativeSnapshot } from "./app-fixtures";
 import { PAIRING_WINDOW_MS, formatSyncTime, makePairingCode } from "./support/fixture-rules";
@@ -305,9 +306,12 @@ test("hook swipes change pages and cached PNG and GIF reach the image renderer",
   // 给前两条 Hook 绑定图片
   snapshot.hooks[0].image = pngHash;
   snapshot.hooks[1].image = gifHash;
+  // Windows 测试宿主可能提供盘符路径，图片投影需要 file URI。
+  const origin = import.meta.url;
+  const base = origin.startsWith("file:") ? origin : pathToFileURL(origin).href;
   const images = {
-    [pngHash]: new URL("../fixtures/assets/hook.png", import.meta.url).href,
-    [gifHash]: new URL("../fixtures/assets/hook.gif", import.meta.url).href,
+    [pngHash]: new URL("../fixtures/assets/hook.png", base).href,
+    [gifHash]: new URL("../fixtures/assets/hook.gif", base).href,
   };
   // 已配对的桌面在 1 秒后推送带图片的快照
   const app = await open("./test-app.tsx", {

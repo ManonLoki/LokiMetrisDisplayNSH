@@ -20,7 +20,7 @@ crate-type = ["rlib"]
 # 小组件核心，与主应用共享规则
 loki_widget_core = { path = "crates/widget-core" }
 # 与 NSH CLI 和生成的宿主使用同一官方版本
-nsh-core = "=0.6.0"
+nsh-core = "=0.7.1"
 # 序列化
 serde = { version = "1", features = ["derive"] }
 # JSON 序列化
@@ -33,9 +33,8 @@ loki_metris_pairing = { git = "https://github.com/ManonLoki/LokiMetis.git", rev 
 base64 = "0.23.1"
 # 生成随机 UUID
 uuid = { version = "1.28.0", features = ["v4"] }
-# 复用 NSH 已锁定的编码器版本,处理应用自有的 GIF 帧。
-# 复用 NSH 已锁定的编码器版本来生成应用自有的 GIF 帧
-png = "=0.17.16"
+# 与 NSH 0.7.1 宿主的 image 使用同一版本的 PNG 编码器
+png = "=0.18.1"
 
 # 非 iOS 平台
 [target.'cfg(not(target_os = "ios"))'.dependencies]

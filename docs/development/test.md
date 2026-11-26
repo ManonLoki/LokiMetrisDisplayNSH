@@ -16,6 +16,8 @@ python3 tools/test.py
 4. macOS 上编译并执行 Widget 后台执行器与取消／提交竞态的 Swift 回归。
 5. `nsh check` 及四个 NSH 用例文件，检查应用交互、移动身份、安全区、电视遥控和图片播放时钟。
 
+单独运行 NSH 测试时，请指定用例文件。根目录的 `nsh test` 会递归发现 UIKit 专用用例和 `output/` 中保留的历史测试副本。修改 Rust 模块边界后，从仓库根目录运行 `deslop-please`，用 `--target` 检查平台条件分支。
+
 Rust workspace 测试同时覆盖主应用和 `crates/widget-core/`，负责格式化、快照校验、配对认证、缓存、GIF 解码、生命周期和设置状态机；小组件另覆盖租约、读取凭据、加密 HTTP、来源撤销及旧响应竞态。NSH 测试负责页面和交互，避免重复穷举 Rust 已覆盖的纯业务规则。
 
 macOS 统一入口会把每个原样测试二进制复制到独立临时目录再运行，避免系统安全框架遍历庞大的 Cargo 输出目录而拖延钥匙串调用。测试参数、工作目录和真实凭据测试保持原样，临时副本在退出后回收；显式设置的 Cargo runner 环境变量优先。
@@ -74,13 +76,13 @@ nsh test src/tests/desktop/app.test.tsx --target windows
 
 ## iOS 模拟器验收
 
-NSH 0.6.0 的移动原生回归用例不指定虚拟窗口尺寸，由模拟器提供实际屏幕。它们使用隔离的 Rust 连接夹具，验证 UIKit 输入和保存、设置重新打开、GIF 解码后的原生图片尺寸、Hooks 触屏翻页、配对阶段及取消／确认忘记。无需真实桌面设备，不代表真实网络或 WatchConnectivity 联调。
+移动原生回归用例不指定虚拟窗口尺寸，由模拟器提供实际屏幕。它们使用隔离的 Rust 连接夹具，验证 UIKit 输入和保存、设置重新打开、GIF 解码后的原生图片尺寸、Hooks 触屏翻页、配对阶段及取消／确认忘记。无需真实桌面设备，不代表真实网络或 WatchConnectivity 联调。
 
 ```sh
 python3 tools/test.py --suite simulator
 ```
 
-NSH 使用已启动的 iOS 模拟器，若没有则选择并启动可用 iPhone。入口沿用移动打包器的 Xcode Clang／SDK 配置，并把正式 Widget Swift 宿主桥接链接到测试宿主，避免缺少 iOS 系统头文件或 Rust FFI 符号。截图保存在 `output/tests/nsh-0.6.0/ios/`，JUnit 报告在 `output/tests/simulator/`（可由 `--output` 改变）；需要 Xcode 与对应 Rust target。测试和打包共用 `.nsh/`，继续保持串行。
+NSH 使用已启动的 iOS 模拟器，若没有则选择并启动可用 iPhone。入口沿用移动打包器的 Xcode Clang／SDK 配置，并把正式 Widget Swift 宿主桥接链接到测试宿主，避免缺少 iOS 系统头文件或 Rust FFI 符号。截图保存在 `output/tests/nsh-0.7.1/ios/`，JUnit 报告在 `output/tests/simulator/`（可由 `--output` 改变）。运行需要 Xcode 与对应 Rust target。测试和打包共用 `.nsh/`，继续保持串行。
 
 ## 设备验收
 

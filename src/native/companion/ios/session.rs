@@ -141,6 +141,23 @@ impl WCSession {
         self.set_delegate(Some(ProtocolObject::from_ref(delegate)));
     }
 
+    /// 发送前台探测，异步结果只携带探测标识和回执数据。
+    pub(super) fn probe(&self, challenge: String, bytes: &[u8]) {
+        let success_challenge = challenge.clone();
+        let success = block2::RcBlock::new(move |data: *mut NSData| {
+            // SAFETY: 数据由系统持有至回调结束，邮箱入口在返回前完成复制。
+            super::presence_completed(success_challenge.clone(), unsafe { data.as_ref() });
+        });
+        let failure = block2::RcBlock::new(move |_error: *mut NSError| {
+            super::presence_completed(challenge.clone(), None);
+        });
+        let data = NSData::with_bytes(bytes);
+        // SAFETY: 选择器和参数符合 WCSession 的签名，系统复制两个异步回调 block。
+        let _: () = unsafe {
+            msg_send![self, sendMessageData: &*data, replyHandler: &*success, errorHandler: &*failure]
+        };
+    }
+
     // 更新应用上下文：字典里只有一份复制的属性列表数据
     pub(super) fn context(&self, bytes: &[u8]) -> Result<(), isize> {
         let context = NSDictionary::from_slices(
@@ -251,7 +268,7 @@ define_class!(
         #[unsafe(method(session:didReceiveMessageData:))]
         // 回调内有界复制，worker再验证身份/前台代次，不由WC线程修改连接状态。
         fn received_data(&self, _session: &WCSession, data: &NSData) {
-            super::presence::revoked(data);
+            super::presence_revoked(data);
         }
         #[unsafe(method(session:didFinishFileTransfer:error:))]
         // 文件传输结束：记录成功与否

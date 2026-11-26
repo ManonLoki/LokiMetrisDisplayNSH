@@ -57,6 +57,7 @@ impl Link {
         device_id: &str,
         name: &str,
         idiom: &str,
+        version: Option<String>,
         sys: &System,
     ) -> Result<ViewState, String> {
         let runtime = sys.locals.get::<LinkRuntime>();
@@ -80,6 +81,9 @@ impl Link {
             };
             // 生成各平台的连接配置
             let mut config = bootstrap::configure(&root, device_id, name)?;
+            if let Some(version) = version.filter(|version| !version.is_empty()) {
+                config.app_version = version;
+            }
             if config.platform == "android" || config.platform == "ios" {
                 // NSH 将平板称为 pad，连接协议使用 tablet。只上报手机和平板。
                 config.form_factor = match idiom {

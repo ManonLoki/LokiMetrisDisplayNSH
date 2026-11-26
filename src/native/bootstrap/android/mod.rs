@@ -4,6 +4,7 @@ mod jni_support;
 // Keystore 包裹密钥
 mod keys;
 
+use super::Config;
 use crate::features::connection::identity::{
     // 默认设备名、名称校验与设备标识校验
     android_default_name,
@@ -16,7 +17,6 @@ use jni::{
     objects::{JObject, JValue},
 };
 use jni_support::{Failure, Result};
-use serde_json::json;
 use std::path::{Path, PathBuf};
 
 // 取应用 files 目录的规范路径
@@ -73,7 +73,7 @@ pub(super) fn configure(
     _root: &Path,
     _device_id: &str,
     _name: &str,
-) -> std::result::Result<crate::native::connection::Config, String> {
+) -> std::result::Result<Config, String> {
     // 取得应用上下文并执行
     context::with_context(|env, context| -> Result<_> {
         let root = files_dir(env, context)?;
@@ -85,14 +85,12 @@ pub(super) fn configure(
         key.fill(0);
         result.map_err(Failure)?;
         // 组装配置：宿主提供身份，不保留离线快照
-        serde_json::from_value(json!({
-            // 根目录、设备标识、名称与宿主标识
-            "root":root, "deviceId":device_id, "name":name, "hostIdentity":true,
-            "platform":"android", "keepSnapshot":false,
-            // 小组件共享目录：files/widget
-            "widgetDir":Some(root.join("widget")),
-        }))
-        .map_err(|_| jni_support::invalid("Android 连接配置无效。"))
+        Ok(Config {
+            host_identity: true,
+            keep_snapshot: false,
+            widget_dir: Some(root.join("widget")),
+            ..Config::new(root, device_id, name)
+        })
     })
     .map_err(|error: Failure| error.0)
 }

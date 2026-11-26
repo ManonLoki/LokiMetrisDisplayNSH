@@ -29,8 +29,10 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 # 应用自有的 Java 适配层源码目录
 SOURCE = ROOT / "src/native/android/java"
-# 官方 NSH 版本
-NSH_VERSION = '0.6.0'
+# Java SDK 与 Cargo 锁定的运行时使用同一版本
+NSH_VERSION = next(package['version']
+                   for package in tomllib.loads((ROOT / 'Cargo.lock').read_text(encoding='utf-8'))['package']
+                   if package['name'] == 'nsh-core')
 
 
 # 定位 Android SDK：命令行参数、环境变量，然后是常见安装位置

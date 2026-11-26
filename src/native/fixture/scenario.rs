@@ -1,5 +1,8 @@
 //! 事件时间线场景：握手、快照和传输中断按事件时间触发，配对和缓存落到 Storage。
-use super::{ChangedOnly, load};
+use super::{
+    ChangedOnly,
+    load::{self, Event},
+};
 use crate::features::connection::{snapshot::project_snapshot, view_state::empty_view};
 use crate::shared::contracts::models::{LinkCommand, LinkOp, ViewState};
 use nsh_core::storage::Storage;
@@ -11,18 +14,6 @@ pub(super) const PAIRED_KEY: &str = "loki.paired";
 pub(super) const CACHE_KEY: &str = "loki.cache";
 // 夹具设备的默认身份
 const FIXTURE_DEVICE: &str = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-
-pub(super) struct Event {
-    pub(super) at_ms: u64,
-    // 种类：handshake、snapshot 或 transport-fail
-    pub(super) kind: String,
-    // snapshot：桌面发来的快照
-    pub(super) snapshot: Value,
-    // snapshot：接收时间
-    pub(super) received_at_ms: u64,
-    // snapshot：图片哈希到本地地址的映射
-    pub(super) images: Value,
-}
 
 pub(in crate::native) struct Scenario {
     // 公开投影状态（含 paired，不含 images）

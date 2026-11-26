@@ -66,7 +66,7 @@ def string_pool(values, utf8):
 
 
 # 构造一份编译后风格的二进制清单：含启动器、导出标记、Rust 元数据和一个无关 Activity
-def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY, cleartext=True):
+def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY, cleartext=True, multicast=True):
     """A compiled-style manifest with launcher/exported/Rust metadata and an unrelated activity."""
     namespace = 'http://schemas.android.com/apk/res/android'
     values = ['manifest', 'application', 'activity', 'uses-sdk', 'meta-data', 'intent-filter',
@@ -74,7 +74,8 @@ def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY, clearte
               'exported', 'value', 'theme', 'label', 'icon', 'usesCleartextTraffic', 'android', namespace, runner,
               'org.example.product', 'org.example.OriginalApplication', 'org.example.HelpActivity',
               'com.longbridge.nsh.RUST', 'android.intent.action.MAIN',
-              'android.intent.category.LAUNCHER', 'android.permission.INTERNET', '诡秘神谕']
+              'android.intent.category.LAUNCHER', 'android.permission.INTERNET',
+              'android.permission.CHANGE_WIFI_MULTICAST_STATE', '诡秘神谕']
     index = values.index
     def attribute(name, value, kind=3, android=True):
         value = index(value) if kind == 3 else value
@@ -97,6 +98,9 @@ def manifest_fixture(*, utf8, named_application, runner=RUNNER_ACTIVITY, clearte
     body += start('manifest', attribute('package', 'org.example.product', android=False))
     body += start('uses-sdk', attribute('targetSdkVersion', 35, 0x10)) + end('uses-sdk')
     body += start('uses-permission', attribute('name', 'android.permission.INTERNET')) + end('uses-permission')
+    if multicast:
+        body += start('uses-permission', attribute('name', 'android.permission.CHANGE_WIFI_MULTICAST_STATE'))
+        body += end('uses-permission')
     # 主题指向系统资源，图标指向应用资源，与真实基线一致
     application = [attribute('theme', 0x0103022e, 1), attribute('icon', 0x7f010000, 1), attribute('label', '诡秘神谕')]
     if cleartext is not None:
@@ -189,7 +193,7 @@ class StandardBuildInputs(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'Expected only arm64-v8a'):
                 package.verify_android(apk)
 
-    # 清单还原与扩展：类名替换、权限与小组件接收器一次到位，输出确定
+    # 清单还原与扩展：保留权限，替换入口类并添加小组件接收器
     def test_widget_manifest_extension_preserves_launcher_contract(self):
         # 覆盖两种字符串编码与有无 Application 名称
         for utf8 in [False, True]:
@@ -219,7 +223,7 @@ class StandardBuildInputs(unittest.TestCase):
                     self.assertIn('android.intent.category.LAUNCHER', text)
                     # 无关 Activity 不被改动
                     self.assertIn('org.example.HelpActivity', text)
-                    # 保留 NSH 网络权限，补入 mDNS 多播权限。
+                    # 原样保留 NSH 写入的网络和多播权限。
                     permissions = [element.get(f'{android}name') for element in root.findall('uses-permission')]
                     self.assertCountEqual(permissions, ['android.permission.INTERNET',
                                                         'android.permission.CHANGE_WIFI_MULTICAST_STATE'])
@@ -251,6 +255,13 @@ class StandardBuildInputs(unittest.TestCase):
                 manifest = manifest_fixture(utf8=True, named_application=False, cleartext=cleartext)
                 with self.assertRaisesRegex(RuntimeError, r'android\.usesCleartextTraffic'):
                     extend_manifest(manifest, arsc_fixture(), android_names)
+
+    def test_widget_manifest_requires_nsh_multicast_permission(self):
+        config = json.loads((ROOT / 'nsh.json').read_text(encoding='utf-8'))
+        self.assertIn('CHANGE_WIFI_MULTICAST_STATE', config['android']['permissions'])
+        manifest = manifest_fixture(utf8=True, named_application=False, multicast=False)
+        with self.assertRaisesRegex(RuntimeError, r'android\.permissions'):
+            extend_manifest(manifest, arsc_fixture(), {0x0103022e: 'style/Theme.Material.NoActionBar'})
 
     # 无法识别的运行器会被拒绝
     def test_widget_manifest_rejects_an_unrecognized_runner(self):

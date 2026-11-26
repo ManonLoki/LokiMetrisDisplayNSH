@@ -1,5 +1,5 @@
 //! 面向 NSH VM 的公开连接投影;配对机密绝不越过这条边界。
-use super::owner::Owner;
+use super::Owner;
 use serde_json::{Value, json};
 use std::collections::BTreeSet;
 
@@ -46,5 +46,14 @@ impl Owner {
         }
         self.view["paired"] = Value::Object(paired);
         self.view.to_string()
+    }
+
+    pub(super) fn clear_display(&mut self) {
+        self.view["connected"] = json!(false);
+        self.view["live"] = json!(false);
+        self.view["snapshot"] = Value::Null;
+        self.view["receivedAtMs"] = Value::Null;
+        self.view["cacheSourceId"] = Value::Null;
+        self.view["images"] = json!({});
     }
 }
